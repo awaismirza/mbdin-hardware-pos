@@ -1,0 +1,57 @@
+/* ---- Scanner overlay ---------------------------------------------------- */
+.scanner {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  background: #0b0f0d;
+  color: #fff;
+}
+.scanner__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  padding-block-start: calc(var(--s3) + env(safe-area-inset-top));
+}
+.scanner__title {
+  flex: 1;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+.scanner__close {
+  color: #fff;
+}
+.scanner__stage {
+  flex: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.scanner__video {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.scanner__frame {
+  position: absolute;
+  inline-size: min(74vw, 380px);
+  block-size: min(38vw, 200px);
+  border: 2px solid var(--seal);
+  border-radius: var(--radius);
+}
+.scanner__error {
+  max-inline-size: 34ch;
+  padding: var(--s4);
+  text-align: center;
+}
+.scanner__hint {
+  padding: var(--s4);
+  padding-block-end: calc(var(--s4) + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: var(--size-meta);
+  color: #cfd6d1;
+  min-block-size: 3em;
+}

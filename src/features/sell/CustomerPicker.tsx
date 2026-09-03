@@ -1,23 +1,20 @@
 import { useEffect, useState } from 'react';
 
-import { useT } from '../../appStore';
-import { Dialog } from '../../components/Dialog';
-import { createCustomer, listCustomers } from '../../db/repos/customersRepo';
-import { formatPKR } from '../../lib/money';
-import type { CustomerWithBalance } from '../../types/domain';
+import { useT } from '@/appStore';
+import { Dialog } from '@/components/Dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { createCustomer, listCustomers } from '@/db/repos/customersRepo';
+import { formatPKR } from '@/lib/money';
+import type { CustomerWithBalance } from '@/types/domain';
 
 interface CustomerPickerProps {
   onPick: (customerId: number | null) => void;
   onClose: () => void;
 }
 
-/**
- * Choosing or creating a customer, without leaving the sale.
- *
- * Creating asks for a name and a phone and nothing else. A shopkeeper mid-sale
- * with a queue behind the counter will not fill in an address, and a form that
- * demands one is a form that gets abandoned in favour of "Walk-in".
- */
+/** Choosing or creating a customer without leaving the sale. */
 export function CustomerPicker({ onPick, onClose }: CustomerPickerProps) {
   const t = useT();
   const [search, setSearch] = useState('');
@@ -54,85 +51,85 @@ export function CustomerPicker({ onPick, onClose }: CustomerPickerProps) {
   return (
     <Dialog title={t('sell.customer')} onClose={onClose}>
       {creating ? (
-        <div className="stack">
-          <label className="field">
-            <span className="field__label">{t('common.name')}</span>
-            <input
-              className="input"
+        <div className="grid gap-3">
+          <div className="grid gap-2">
+            <Label htmlFor="picker-name">{t('common.name')}</Label>
+            <Input
+              id="picker-name"
+              autoFocus
               value={name}
               onChange={(event) => setName(event.target.value)}
-              data-autofocus
             />
-          </label>
-          <label className="field">
-            <span className="field__label">{t('common.phone')}</span>
-            <input
-              className="input num"
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="picker-phone">{t('common.phone')}</Label>
+            <Input
+              id="picker-phone"
+              className="num"
               inputMode="tel"
               dir="ltr"
               value={phone}
               onChange={(event) => setPhone(event.target.value)}
               placeholder="03001234567"
             />
-          </label>
-          <div className="row">
-            <button type="button" className="btn grow" onClick={() => setCreating(false)}>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex-1" onClick={() => setCreating(false)}>
               {t('action.cancel')}
-            </button>
-            <button
-              type="button"
-              className="btn btn--primary grow"
+            </Button>
+            <Button
+              className="flex-1"
               onClick={() => void create()}
               disabled={!name.trim() || busy}
             >
               {t('action.save')}
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <div className="stack">
-          <input
-            className="input"
+        <div className="grid gap-3">
+          <Input
+            autoFocus
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder={t('people.searchPlaceholder')}
-            data-autofocus
           />
 
-          <button type="button" className="btn btn--block" onClick={() => onPick(null)}>
+          <Button variant="outline" className="w-full" onClick={() => onPick(null)}>
             {t('common.walkIn')}
-          </button>
+          </Button>
 
-          <div>
+          <div className="max-h-64 divide-y overflow-y-auto">
             {customers.map((customer) => (
               <button
                 key={customer.id}
                 type="button"
-                className="list__row"
                 onClick={() => onPick(customer.id)}
+                className="flex min-h-12 w-full items-center gap-3 py-2 text-start hover:bg-accent"
               >
-                <span className="list__main">
-                  <span className="list__name truncate">{customer.name}</span>
-                  {customer.phone && <span className="list__meta num">{customer.phone}</span>}
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">{customer.name}</span>
+                  {customer.phone && (
+                    <span className="num block text-sm text-muted-foreground">{customer.phone}</span>
+                  )}
                 </span>
                 {customer.balancePaisa !== 0 && (
-                  <span className="money">{formatPKR(customer.balancePaisa)}</span>
+                  <span className="money text-sm">{formatPKR(customer.balancePaisa)}</span>
                 )}
               </button>
             ))}
           </div>
 
-          <button
-            type="button"
-            className="btn btn--primary btn--block"
+          <Button
+            className="w-full"
             onClick={() => {
               setName(search);
               setCreating(true);
             }}
           >
             {t('people.addCustomer')}
-          </button>
+          </Button>
         </div>
       )}
     </Dialog>

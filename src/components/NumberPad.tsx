@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
+import { Delete } from 'lucide-react';
 
-import { useT } from '../appStore';
-import { formatPKR, parsePaisa, TENDER_DENOMINATIONS } from '../lib/money';
+import { useT } from '@/appStore';
+import { Button } from '@/components/ui/button';
+import { formatPKR, parsePaisa, TENDER_DENOMINATIONS } from '@/lib/money';
 
 interface NumberPadProps {
   /** Starting text, in plain rupees or plain units — no symbol, no grouping. */
@@ -21,7 +23,7 @@ interface NumberPadProps {
 /**
  * A keypad, not a keyboard. The tablet's own keyboard covers half a landscape
  * screen and its decimal key varies by locale, so amounts and weights are typed
- * here. Keys are 56px, per the spec's touch floor for pads.
+ * here.
  */
 export function NumberPad({
   initial = '',
@@ -47,7 +49,6 @@ export function NumberPad({
     }
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-    // `text` is read inside, so the listener must be refreshed with it.
   }, [text, allowDecimal, onConfirm]);
 
   function push(key: string): void {
@@ -56,7 +57,6 @@ export function NumberPad({
         if (value.includes('.')) return value;
         return value === '' ? '0.' : `${value}.`;
       }
-      // Two decimal places is as fine as money or a weight ever needs to be.
       const [, fraction] = value.split('.');
       if (fraction !== undefined && fraction.length >= 2) return value;
       if (value === '0') return key;
@@ -68,68 +68,79 @@ export function NumberPad({
   const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
 
   return (
-    <div className="numpad">
-      {label && <div className="field__label">{label}</div>}
-      <div className="numpad__display" aria-live="polite">
+    <div className="grid gap-3">
+      {label && <div className="text-sm text-muted-foreground">{label}</div>}
+      <div
+        className="num flex h-14 items-center justify-end rounded-lg border bg-muted/40 px-4 text-2xl font-semibold tabular-nums"
+        aria-live="polite"
+      >
         {text || '0'}
       </div>
-      {hint && <div className="numpad__hint">{hint}</div>}
+      {hint && <div className="text-end text-sm text-muted-foreground">{hint}</div>}
 
       {denominations && (
-        <div className="numpad__quick">
+        <div className="grid grid-cols-3 gap-2">
           {TENDER_DENOMINATIONS.map((paisa) => (
-            <button
+            <Button
               key={paisa}
-              type="button"
-              className="btn num"
+              variant="outline"
+              className="num"
               onClick={() => setText(String(paisa / 100))}
             >
               {formatPKR(paisa, { symbol: false })}
-            </button>
+            </Button>
           ))}
         </div>
       )}
 
-      <div className="numpad__grid">
+      <div className="grid grid-cols-3 gap-2">
         {keys.map((key) => (
-          <button key={key} type="button" className="numpad__key" onClick={() => push(key)}>
+          <button
+            key={key}
+            type="button"
+            className="h-14 rounded-lg border bg-card text-xl font-semibold tabular-nums active:bg-muted"
+            onClick={() => push(key)}
+          >
             {key}
           </button>
         ))}
         <button
           type="button"
-          className="numpad__key"
+          className="h-14 rounded-lg border bg-card text-xl font-semibold active:bg-muted disabled:opacity-40"
           onClick={() => push('.')}
           disabled={!allowDecimal}
           aria-label="decimal point"
         >
           .
         </button>
-        <button type="button" className="numpad__key" onClick={() => push('0')}>
+        <button
+          type="button"
+          className="h-14 rounded-lg border bg-card text-xl font-semibold tabular-nums active:bg-muted"
+          onClick={() => push('0')}
+        >
           0
         </button>
         <button
           type="button"
-          className="numpad__key"
+          className="grid h-14 place-items-center rounded-lg border bg-card active:bg-muted"
           onClick={() => setText((value) => value.slice(0, -1))}
           aria-label={t('action.remove')}
         >
-          ⌫
+          <Delete className="size-5 rtl:-scale-x-100" />
         </button>
       </div>
 
-      <div className="row">
-        <button type="button" className="btn grow" onClick={onCancel}>
+      <div className="flex gap-2">
+        <Button variant="outline" className="flex-1" onClick={onCancel}>
           {t('action.cancel')}
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary grow"
+        </Button>
+        <Button
+          className="flex-1"
           onClick={() => onConfirm(text)}
           disabled={text === '' || parsePaisa(text) === null}
         >
           {confirmLabel}
-        </button>
+        </Button>
       </div>
     </div>
   );

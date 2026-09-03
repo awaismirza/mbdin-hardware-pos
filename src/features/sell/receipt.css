@@ -1,0 +1,61 @@
+/* The 58 mm slip, on screen. Print rules live in styles/print.css and target
+   these same class names. A receipt is white paper in either theme. */
+
+.slip {
+  inline-size: 100%;
+  padding: var(--s4);
+  background: #fff;
+  border: 1px solid #d8d8d8;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #000;
+}
+html[lang='ur'] .slip {
+  font-family: var(--font-arabic);
+}
+
+.slip__shop {
+  text-align: center;
+  font-weight: 600;
+  font-size: 16px;
+}
+.slip__meta {
+  text-align: center;
+  font-size: 12px;
+}
+.slip__rule {
+  border: 0;
+  border-block-start: 1px dashed #000;
+  margin-block: var(--s2);
+}
+.slip__line {
+  display: flex;
+  gap: var(--s2);
+  align-items: baseline;
+}
+.slip__line-name {
+  flex: 1;
+  min-inline-size: 0;
+}
+.slip__line-qty,
+.slip__line-amount {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+.slip__line-qty {
+  inline-size: 7ch;
+}
+.slip__line-amount {
+  inline-size: 9ch;
+}
+.slip__total {
+  font-weight: 700;
+  font-size: 15px;
+}
+.slip__footer {
+  text-align: center;
+  margin-block-start: var(--s2);
+}

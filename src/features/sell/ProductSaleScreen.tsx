@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Minus, Plus } from 'lucide-react';
 
-import { useLanguage, useT, useToast } from '../../appStore';
-import { ProductPhoto } from '../../components/ProductPhoto';
-import { getProduct } from '../../db/repos/productsRepo';
-import { pickName } from '../../i18n';
-import { formatPKR, formatQty, lineTotal, roundQty } from '../../lib/money';
-import { FRACTIONAL_UNITS, type Product } from '../../types/domain';
+import { useLanguage, useT, useToast } from '@/appStore';
+import { ProductPhoto } from '@/components/ProductPhoto';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { getProduct } from '@/db/repos/productsRepo';
+import { pickName } from '@/i18n';
+import { formatPKR, formatQty, lineTotal, roundQty } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import { FRACTIONAL_UNITS, type Product } from '@/types/domain';
 import { useCart } from './cartStore';
 
 /** A focused product page: choose quantity, see the arithmetic, then add it. */
@@ -39,9 +44,9 @@ export function ProductSaleScreen() {
 
   if (!product) {
     return (
-      <div className="screen">
-        <div className="screen__body empty">{t('common.loading')}</div>
-      </div>
+      <Screen title={t('sell.productTitle')} onBack={() => navigate('/sell')}>
+        <p className="p-8 text-center text-muted-foreground">{t('common.loading')}</p>
+      </Screen>
     );
   }
 
@@ -50,26 +55,24 @@ export function ProductSaleScreen() {
   const low = !out && product.lowStockThreshold > 0 && product.stockQty <= product.lowStockThreshold;
 
   return (
-    <div className="screen product-sale">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/sell')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title">{t('sell.productTitle')}</h1>
-      </div>
-
-      <div className="screen__body product-sale__body">
-        <div className="product-sale__hero">
+    <Screen title={t('sell.productTitle')} onBack={() => navigate('/sell')} scroll={false}>
+      <div className="mx-auto grid w-full max-w-2xl content-start gap-6 p-4">
+        <div className="flex items-center gap-4">
           <ProductPhoto
             productId={product.id}
             hasPhoto={product.hasPhoto}
             name={name}
-            className="product-sale__photo"
+            className="size-28 flex-none rounded-xl border bg-muted object-cover text-2xl font-semibold text-muted-foreground [&:is(span)]:grid [&:is(span)]:place-items-center sm:size-40"
           />
-          <div className="product-sale__summary">
-            <h2 className="product-sale__name">{name}</h2>
-            <span className="product-sale__price money">{formatPKR(product.pricePaisa)}</span>
-            <span className={`product-sale__stock${out ? ' product-sale__stock--out' : low ? ' product-sale__stock--low' : ''}`}>
+          <div className="grid min-w-0 gap-1">
+            <h2 className="text-lg font-semibold">{name}</h2>
+            <span className="money text-2xl">{formatPKR(product.pricePaisa)}</span>
+            <span
+              className={cn(
+                'text-sm',
+                out ? 'text-destructive' : low ? 'text-warning' : 'text-success',
+              )}
+            >
               {out
                 ? t('sell.productOut')
                 : t('sell.productAvailable', {
@@ -80,14 +83,16 @@ export function ProductSaleScreen() {
           </div>
         </div>
 
-        <div className="product-sale__quantity">
-          <span className="field__label">{t('common.qty')} · {t(`unit.${product.unit}` as never)}</span>
-          <div className="product-sale__stepper">
-            <button type="button" className="btn" onClick={() => change(-step)} aria-label="Decrease quantity">
-              −
-            </button>
-            <input
-              className="input num product-sale__input"
+        <div className="grid max-w-md gap-2">
+          <span className="text-sm text-muted-foreground">
+            {t('common.qty')} · {t(`unit.${product.unit}` as never)}
+          </span>
+          <div className="grid grid-cols-[3.5rem_1fr_3.5rem] gap-2">
+            <Button variant="outline" size="icon-lg" onClick={() => change(-step)} aria-label="Decrease quantity">
+              <Minus className="size-5" />
+            </Button>
+            <Input
+              className="num h-14 text-center text-lg font-bold"
               inputMode={FRACTIONAL_UNITS.has(product.unit) ? 'decimal' : 'numeric'}
               value={String(quantity)}
               onChange={(event) => {
@@ -97,23 +102,25 @@ export function ProductSaleScreen() {
               aria-label={t('common.qty')}
               data-testid="product-quantity"
             />
-            <button type="button" className="btn" onClick={() => change(step)} aria-label="Increase quantity">
-              +
-            </button>
+            <Button variant="outline" size="icon-lg" onClick={() => change(step)} aria-label="Increase quantity">
+              <Plus className="size-5" />
+            </Button>
           </div>
-          <span className="field__hint">{formatPKR(product.pricePaisa)} × {formatQty(quantity)}</span>
+          <span className="num text-sm text-muted-foreground">
+            {formatPKR(product.pricePaisa)} × {formatQty(quantity)}
+          </span>
         </div>
 
-        <div className="product-sale__total">
-          <span>{t('sell.lineTotal')}</span>
-          <span className="money money--total">{formatPKR(linePaisa)}</span>
+        <div className="flex max-w-md items-baseline gap-3 border-t-2 border-foreground pt-4 text-lg font-semibold">
+          <span className="flex-1">{t('sell.lineTotal')}</span>
+          <span className="money text-2xl font-bold text-primary">{formatPKR(linePaisa)}</span>
         </div>
       </div>
 
-      <div className="product-sale__actions">
-        <button
-          type="button"
-          className="btn btn--primary btn--lg btn--block"
+      <div className="shrink-0 border-t bg-card p-4">
+        <Button
+          size="lg"
+          className="mx-auto flex w-full max-w-2xl"
           onClick={() => {
             addProduct(product, quantity);
             toast(name);
@@ -122,8 +129,8 @@ export function ProductSaleScreen() {
           data-testid="add-product-to-cart"
         >
           {t('sell.addToCart')} · {formatPKR(linePaisa)}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Screen>
   );
 }

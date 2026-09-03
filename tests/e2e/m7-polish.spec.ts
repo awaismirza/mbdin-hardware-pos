@@ -51,12 +51,12 @@ test.describe('layout', () => {
     // nowrap, and a grid track sized 1fr will grow to fit it unless told not to.
     await page.goto('/sell');
     await page.waitForTimeout(800);
-    const tiles = page.locator('.tile:not(.tile--quick)');
+    const tiles = page.locator('[data-testid="product-tile"]');
     await tiles.nth(0).click();
     await page.getByTestId('add-product-to-cart').click();
     await page.goto('/sell');
     await page.waitForTimeout(400);
-    const refreshedTiles = page.locator('.tile:not(.tile--quick)');
+    const refreshedTiles = page.locator('[data-testid="product-tile"]');
     await refreshedTiles.nth(1).click();
     await page.getByTestId('add-product-to-cart').click();
     await page.waitForTimeout(400);
@@ -159,12 +159,12 @@ test.describe('the till frame on a portrait tablet', () => {
     await seed(page);
     await useEnglish(page);
     await page.goto('/sell');
-    await page.locator('.catalogue__grid').waitFor();
+    await page.locator('[data-testid="catalogue-scroll"]').waitFor();
     await page.waitForTimeout(800);
 
     // The grid holds far more than one screen of product tiles...
     const gridOverflow = await page
-      .locator('.catalogue__grid')
+      .locator('[data-testid="catalogue-scroll"]')
       .evaluate((el) => el.scrollHeight - el.clientHeight);
     expect(gridOverflow).toBeGreaterThan(200);
 
@@ -173,7 +173,7 @@ test.describe('the till frame on a portrait tablet', () => {
     await page.mouse.wheel(0, 20_000);
     await page.evaluate(() => {
       document.scrollingElement!.scrollTop = 99_999;
-      document.querySelector('.catalogue__grid')!.scrollTop = 99_999;
+      document.querySelector('[data-testid="catalogue-scroll"]')!.scrollTop = 99_999;
     });
     await page.waitForTimeout(200);
 
@@ -183,7 +183,7 @@ test.describe('the till frame on a portrait tablet', () => {
         .getBoundingClientRect();
       return {
         bodyScroll: document.scrollingElement!.scrollTop,
-        gridScrolled: document.querySelector('.catalogue__grid')!.scrollTop,
+        gridScrolled: document.querySelector('[data-testid="catalogue-scroll"]')!.scrollTop,
         navBottom: Math.round(nav.bottom),
         viewport: window.innerHeight,
       };

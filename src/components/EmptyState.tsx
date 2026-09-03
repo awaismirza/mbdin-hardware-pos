@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { Switch as UISwitch } from '@/components/ui/switch';
+
 interface EmptyStateProps {
   /** Points at the next action. "No products yet. Add one, or import a CSV." */
   text: string;
@@ -8,15 +10,21 @@ interface EmptyStateProps {
 
 export function EmptyState({ text, action }: EmptyStateProps) {
   return (
-    <div className="empty">
-      <p className="empty__text">{text}</p>
+    <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+      <p className="max-w-sm text-sm text-muted-foreground">{text}</p>
       {action}
     </div>
   );
 }
 
 export function Spinner() {
-  return <span className="spinner" role="status" aria-hidden="true" />;
+  return (
+    <span
+      role="status"
+      aria-hidden="true"
+      className="inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
+    />
+  );
 }
 
 interface SwitchProps {
@@ -27,15 +35,9 @@ interface SwitchProps {
 
 export function Switch({ checked, onChange, label }: SwitchProps) {
   return (
-    <button
-      type="button"
-      className="switch"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-    >
-      <span className="switch__box" />
+    <label className="flex min-h-11 cursor-pointer items-center gap-3">
+      <UISwitch checked={checked} onCheckedChange={onChange} />
       <span>{label}</span>
-    </button>
+    </label>
   );
 }
