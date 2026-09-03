@@ -124,7 +124,9 @@
   display: flex;
   align-items: center;
   gap: var(--s3);
-  padding: var(--s3) var(--s4);
+  min-block-size: 56px;
+  padding: var(--s2) var(--s3);
+  background: var(--card);
   border-block-end: var(--rule);
 }
 
@@ -249,8 +251,11 @@
   background: none;
   color: inherit;
 }
+.list__row:hover {
+  background: var(--accent);
+}
 .list__row:active {
-  background: var(--ink-wash);
+  background: var(--accent);
 }
 .list__row--flag {
   border-inline-start: 3px solid var(--brass);
