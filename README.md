@@ -138,6 +138,62 @@ CDN, because it is expected to cold-launch in aeroplane mode.
 
 ---
 
+## Deploying to GitHub Pages
+
+A workflow at `.github/workflows/deploy.yml` builds and publishes `main` to
+Pages. It gates on lint, typecheck, the unit tests and the full browser suite,
+so nothing reaches the shop's tablet without passing them.
+
+**Two settings have to be turned on by hand once** (the API cannot do either):
+
+1. **Settings → General → Danger Zone → Change visibility → Public.**
+   Pages is only free on public repositories.
+2. **Settings → Pages → Build and deployment → Source → GitHub Actions.**
+
+Then push to `main`, or run the workflow from the Actions tab. The site lands at
+`https://<owner>.github.io/<repo>/`.
+
+### What a subpath changes
+
+A Pages *project* site is served from `/<repo>/`, not the domain root, so the
+build takes `VITE_BASE`. The workflow derives it from the repository name rather
+than hard-coding it, so renaming the repo cannot silently publish a site with
+broken asset paths. Locally:
+
+```sh
+VITE_BASE=/mbdin-hardware-pos/ npm run build:pages
+```
+
+Vite rewrites the asset URLs in `index.html` and the `url()` calls in the CSS on
+its own. Three things it cannot, and how they are handled:
+
+- **`public/manifest.webmanifest`** is copied verbatim, so every path in it is
+  relative (`./sell`, `./icons/icon-192.png`). Relative URLs in a manifest
+  resolve against the manifest's own URL, so one file works at the root and at
+  any subpath.
+- **Routing** — `BrowserRouter` takes `basename={import.meta.env.BASE_URL}`, and
+  the two full-page navigations after a restore and a reset build their URL from
+  the same value.
+- **Deep links** — Pages has no rewrite rules, so `/<repo>/sell` has no file
+  behind it and would 404 on a first launch, before the service worker exists to
+  answer navigations. `scripts/pages-fallback.mjs` copies `index.html` to
+  `404.html`, which Pages serves for any unknown path; the app boots and the
+  router shows the right screen. It also writes `.nojekyll`.
+
+Verified in a browser against a server that mimics Pages (subpath, 404 fallback,
+404 status): the deep link boots and keeps its URL, OPFS opens, both fonts load,
+the manifest's relative URLs resolve into the subpath, client-side routing works,
+a full sale completes, the service worker registers at the subpath scope, and no
+request goes off-origin.
+
+### Before you make it public
+
+There are no secrets in this repository — no tokens, no environment variables,
+nothing server-side; the app has no backend to hold credentials. Going public
+does expose the commit history, including author names and email addresses.
+
+---
+
 ## The PIN
 
 Settings and Reports can be put behind an optional 4-digit PIN. Selling, stock

@@ -16,7 +16,9 @@ if (!container) throw new Error('#root is missing from index.html');
 
 createRoot(container).render(
   <StrictMode>
-    <BrowserRouter>
+    {/* BASE_URL is "/" normally and "/<repo>/" on a GitHub Pages project
+        site, so every route is relative to wherever the app is served. */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <App />
     </BrowserRouter>
   </StrictMode>,
