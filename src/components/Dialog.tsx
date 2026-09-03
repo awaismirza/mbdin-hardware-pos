@@ -1,6 +1,24 @@
-import { useEffect, useRef, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
-import { useT } from '../appStore';
+import {
+  Dialog as UIDialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Sheet as UISheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+/**
+ * Thin wrappers that keep the old imperative `onClose` API while rendering on
+ * the shadcn/Radix primitives. Callers mount them conditionally, so they open
+ * on mount and call `onClose` on any dismissal.
+ */
 
 interface DialogProps {
   title: string;
@@ -12,47 +30,34 @@ interface DialogProps {
 }
 
 export function Dialog({ title, onClose, children, footer, hideClose }: DialogProps) {
-  const t = useT();
-  const panel = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(true);
 
-  useEffect(() => {
-    const previous = document.activeElement as HTMLElement | null;
-    focusFirst(panel.current);
-
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') {
-        event.stopPropagation();
-        onClose();
-      }
-      if (event.key === 'Tab') trapTab(event, panel.current);
-    }
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      previous?.focus?.();
-    };
-  }, [onClose]);
+  function change(next: boolean) {
+    if (next) return;
+    setOpen(false);
+    onClose();
+  }
 
   return (
-    <div
-      className="dialog-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget && !hideClose) onClose();
-      }}
-    >
-      <div className="dialog" role="dialog" aria-modal="true" aria-label={title} ref={panel} tabIndex={-1}>
-        <div className="dialog__head">
-          <h2 className="dialog__title">{title}</h2>
-          {!hideClose && (
-            <button type="button" className="btn btn--quiet" onClick={onClose}>
-              {t('action.close')}
-            </button>
-          )}
-        </div>
-        <div className="dialog__body">{children}</div>
-        {footer && <div className="dialog__foot">{footer}</div>}
-      </div>
-    </div>
+    <UIDialog open={open} onOpenChange={change}>
+      <DialogContent
+        showCloseButton={!hideClose}
+        aria-describedby={undefined}
+        onInteractOutside={(event) => {
+          if (hideClose) event.preventDefault();
+        }}
+        onEscapeKeyDown={(event) => {
+          if (hideClose) event.preventDefault();
+        }}
+        className="max-h-[90dvh] gap-0 overflow-y-auto"
+      >
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="py-2">{children}</div>
+        {footer && <DialogFooter>{footer}</DialogFooter>}
+      </DialogContent>
+    </UIDialog>
   );
 }
 
@@ -63,65 +68,26 @@ interface SheetProps {
 }
 
 export function Sheet({ title, onClose, children }: SheetProps) {
-  const t = useT();
-  const panel = useRef<HTMLDivElement>(null);
+  const [open, setOpen] = useState(true);
 
-  useEffect(() => {
-    focusFirst(panel.current);
-    function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-      if (event.key === 'Tab') trapTab(event, panel.current);
-    }
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  function change(next: boolean) {
+    if (next) return;
+    setOpen(false);
+    onClose();
+  }
 
   return (
-    <div
-      className="sheet-backdrop"
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div className="sheet" role="dialog" aria-modal="true" aria-label={title} ref={panel} tabIndex={-1}>
-        <div className="sheet__grip" />
-        {title && (
-          <div className="sheet__head">
-            <h2 className="sheet__title">{title}</h2>
-            <button type="button" className="btn btn--quiet" onClick={onClose}>
-              {t('action.close')}
-            </button>
-          </div>
-        )}
-        <div className="sheet__body">{children}</div>
-      </div>
-    </div>
+    <UISheet open={open} onOpenChange={change}>
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        className="max-h-[92dvh] gap-0 overflow-y-auto rounded-t-xl px-4 pb-[max(1rem,env(safe-area-inset-bottom))]"
+      >
+        <SheetHeader className="px-0">
+          <SheetTitle>{title ?? ''}</SheetTitle>
+        </SheetHeader>
+        <div className="pb-2">{children}</div>
+      </SheetContent>
+    </UISheet>
   );
-}
-
-/** Focus what the panel marked as its entry point, else the panel itself. */
-function focusFirst(panel: HTMLElement | null): void {
-  const target = panel?.querySelector<HTMLElement>('[data-autofocus]');
-  if (target) target.focus();
-  else panel?.focus();
-}
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
-
-function trapTab(event: KeyboardEvent, container: HTMLElement | null): void {
-  if (!container) return;
-  const items = Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE)).filter(
-    (element) => element.offsetParent !== null,
-  );
-  if (items.length === 0) return;
-  const first = items[0]!;
-  const last = items[items.length - 1]!;
-  if (event.shiftKey && document.activeElement === first) {
-    event.preventDefault();
-    last.focus();
-  } else if (!event.shiftKey && document.activeElement === last) {
-    event.preventDefault();
-    first.focus();
-  }
 }
