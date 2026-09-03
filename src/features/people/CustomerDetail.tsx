@@ -141,11 +141,16 @@ export function CustomerDetail() {
                 <span className="ledger-row__what">
                   <span className="ledger-row__kind">
                     {t(`people.entry.${entry.kind}` as never)}
-                    {entry.invoiceNo ? ` · ${entry.invoiceNo}` : ''}
+                    {entry.invoiceNo && (
+                      <>
+                        {' · '}
+                        <span className="num">{entry.invoiceNo}</span>
+                      </>
+                    )}
                   </span>
                   <br />
                   <span className="ledger-row__when">
-                    {formatDateTime(entry.createdAt)}
+                    <span className="num">{formatDateTime(entry.createdAt)}</span>
                     {entry.method ? ` · ${t(`checkout.method.${entry.method}` as never)}` : ''}
                     {entry.note ? ` · ${entry.note}` : ''}
                   </span>

@@ -6,6 +6,7 @@ import { setSettings } from '../../db/repos/settingsRepo';
 import { LANGUAGES, type Language } from '../../i18n';
 import { installAvailable, isIosSafari, isStandalone, onInstallAvailabilityChange, promptInstall } from '../../pwa';
 import { DataSection } from './DataSection';
+import { PinSection } from './PinSection';
 
 const SHOP_FIELDS = [
   ['shop_name', 'settings.shopName'],
@@ -111,6 +112,8 @@ export function SettingsScreen() {
             </div>
           </>
         )}
+
+        <PinSection />
 
         <DataSection />
 

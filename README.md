@@ -116,6 +116,18 @@ receipt, not on the buttons.
 Numerals stay Latin (`1234`) in both languages. Shopkeepers read Latin digits;
 Eastern Arabic numerals would be a mistake here.
 
+**Every figure and timestamp is an LTR island** (`direction: ltr;
+unicode-bidi: isolate`). This is load-bearing, not tidiness. Inside an RTL
+paragraph the bidi algorithm treats a leading `+`, the `Rs`, and the separators
+in a date as neutral characters and reorders them around the digits: a ledger
+entry written `+487.20` renders as `487.20+`, and `03 Sept 2026, 03:11 pm`
+renders as `Sept 2026, 03:11 pm 03`. Both were real, and both are covered by a
+test. The element's *box* is still placed by the RTL flow; only its contents are
+isolated.
+
+Money is right-aligned in every context, in both directions, so a column of
+figures lines up on its last digit and the eye can run down it.
+
 Fonts are self-hosted in `public/fonts` and copied from the Fontsource packages
 by `npm run fonts` (also wired into `prebuild`). The app never touches a font
 CDN, because it is expected to cold-launch in aeroplane mode.
@@ -123,6 +135,47 @@ CDN, because it is expected to cold-launch in aeroplane mode.
 > **The Urdu strings need a human pass before this ships.** `src/i18n/ur.ts` is
 > written in plain shop Urdu, but a money app deserves a native speaker reading
 > every line aloud before it goes on a counter.
+
+---
+
+## The PIN
+
+Settings and Reports can be put behind an optional 4-digit PIN. Selling, stock
+and the customer ledger never are — the till must not stop with a queue at the
+counter because somebody forgot four digits.
+
+**It is not security and the app says so.** Anyone holding the tablet can read
+the database through devtools; four digits is 10,000 guesses; there is no rate
+limiting because there is no server to enforce one. It exists to stop a customer
+leaning over the counter and reading the day's takings. It is stored hashed only
+so that a backup opened in a text editor does not reveal a PIN the shopkeeper
+has very likely also used on something that matters.
+
+---
+
+## Size
+
+    initial JS        ~100 KB gzipped   (budget: 250 KB)
+    initial CSS       ~6 KB gzipped
+    SQLite WASM       ~840 KB           (precached, loaded in the worker)
+    fonts             ~210 KB           (two families, subset, self-hosted)
+    ZXing             ~109 KB gzipped   (loaded only when the scanner opens)
+
+---
+
+## Tests
+
+    96 unit and integration tests   paisa arithmetic, CSV, dates, and the
+                                    repositories against a real in-memory SQLite
+    27 browser tests                both storage paths, offline cold boot, the
+                                    sale transaction, a tab kill mid-cart, the
+                                    udhaar ledger, backup/restore round trips,
+                                    report reconciliation, RTL, and the PIN
+
+`tests/e2e/a-day-in-the-shop.spec.ts` is the whole day in one script, driven
+entirely through the Urdu interface, right to left: add a product, sell for
+cash, sell on credit, take a payment, export, reset, restore, and check every
+total came back.
 
 ---
 

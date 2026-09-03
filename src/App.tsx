@@ -5,6 +5,7 @@ import { useApp, useT } from './appStore';
 import { Toasts } from './components/EmptyState';
 import { BackupBar } from './features/settings/BackupBar';
 import { DebugScreen } from './features/settings/DebugScreen';
+import { PinGate } from './features/settings/PinGate';
 import { PeopleRoutes } from './features/people/PeopleRoutes';
 import { ReportsScreen } from './features/reports/ReportsScreen';
 import { ReceiptView } from './features/sell/ReceiptView';
@@ -80,9 +81,32 @@ function Shell() {
           <Route path="/sell/receipt/:id" element={<ReceiptView />} />
           <Route path="/stock/*" element={<StockRoutes />} />
           <Route path="/people/*" element={<PeopleRoutes />} />
-          <Route path="/reports" element={<ReportsScreen />} />
-          <Route path="/settings" element={<SettingsScreen />} />
-          <Route path="/settings/storage" element={<DebugScreen />} />
+          {/* Reports and Settings sit behind the optional PIN. Sell, Stock and
+              People never do: the till must never be locked mid-queue. */}
+          <Route
+            path="/reports"
+            element={
+              <PinGate>
+                <ReportsScreen />
+              </PinGate>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <PinGate>
+                <SettingsScreen />
+              </PinGate>
+            }
+          />
+          <Route
+            path="/settings/storage"
+            element={
+              <PinGate>
+                <DebugScreen />
+              </PinGate>
+            }
+          />
           <Route path="*" element={<Navigate to="/sell" replace />} />
         </Routes>
       </main>

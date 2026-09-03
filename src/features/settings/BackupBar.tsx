@@ -43,7 +43,10 @@ export function BackupBar() {
   const overdue = hours > 24;
   const days = Number.isFinite(hours) ? Math.floor(hours / 24) : null;
 
-  const onBackupScreen = location.pathname.startsWith('/settings');
+  // The spec puts this bar on the Sell screen, and that is where it belongs:
+  // it is the screen the shop lives on, so it is seen every day without
+  // pushing the content of a screen opened for some other reason down.
+  const onSellScreen = location.pathname === '/' || location.pathname.startsWith('/sell');
   const bannerDismissed = settings['persist_banner_dismissed'] === '1';
   const showPersistWarning = persisted === false && !bannerDismissed;
 
@@ -62,7 +65,7 @@ export function BackupBar() {
         </div>
       )}
 
-      {overdue && !onBackupScreen && (
+      {overdue && onSellScreen && (
         <div className="amber-bar" role="status" data-testid="backup-overdue">
           <span className="amber-bar__text">
             {days && days >= 1

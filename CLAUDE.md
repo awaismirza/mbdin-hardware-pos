@@ -14,6 +14,11 @@ no analytics. SQLite WASM on OPFS inside a Web Worker is the source of truth.
 - Logical CSS properties only, so RTL works without a second stylesheet.
 - A customer's balance is always `SUM(ledger_entries.amount_paisa)`. Never denormalise it.
 - Never silently open a different database. See "Storage" below.
+- Numbers and dates carry `.num` (or `.money`), which isolates them as LTR runs.
+  Without it the bidi algorithm reorders signs, symbols and date separators in
+  Urdu — "+487.20" comes out as "487.20+".
+- Reports and Settings sit behind the optional PIN. Sell, Stock and People never
+  do: the till must never lock mid-queue.
 
 ## Storage
 

@@ -87,7 +87,17 @@ html[lang='ur'] body {
   font-family: var(--font-arabic);
 }
 
-/* Latin digits in both languages: shopkeepers read 1234, not ١٢٣٤. */
+/*
+ * Latin digits in both languages: shopkeepers read 1234, not ١٢٣٤.
+ *
+ * `direction: ltr` with `unicode-bidi: isolate` is not decoration. Inside an
+ * RTL paragraph the bidi algorithm treats a leading "+", a "Rs", and the
+ * separators in a date as neutral and reorders them around the digits: a
+ * ledger entry rendered "+487.20" comes out as "487.20+", and "03 Sept 2026,
+ * 03:08 pm" comes out as "Sept 2026, 03:08 pm 03". Isolating every numeric run
+ * as its own LTR island fixes both, while the element's box is still placed by
+ * the RTL flow around it.
+ */
 .num,
 input[inputmode='decimal'],
 input[inputmode='numeric'],
@@ -95,6 +105,8 @@ input[type='number'] {
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
+  direction: ltr;
+  unicode-bidi: isolate;
 }
 
 img,
@@ -160,14 +172,17 @@ button {
   color: var(--ink-soft);
 }
 
-/* Money is right-aligned in every context without exception, so figures form
-   a column the eye can run down. */
+/* Money is right-aligned in every context without exception, so figures form a
+   column the eye can run down — and that stays true in RTL, because a number is
+   an LTR object wherever it sits. */
 .money {
   font-family: var(--font-sans);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
   font-weight: var(--weight-money);
-  text-align: end;
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: right;
   white-space: nowrap;
 }
 
@@ -374,4 +389,47 @@ button {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/*
+ * Every element that renders a figure or a timestamp is an LTR island, for the
+ * reason given above `.num`. Listed explicitly rather than relying on a shared
+ * class, because these each own their column width and alignment.
+ */
+.kv__value,
+.cart__row-value,
+.cart-line__total,
+.cart-line__unit,
+.cart-bar__total,
+.stepper__value,
+.tile__price,
+.tile__stock,
+.ledger-row__amount,
+.ledger-row__running,
+.figure__value,
+.rank__value,
+.rank__meta,
+.movement__delta,
+.movement__when,
+.report-hero__value,
+.report-hero__sub,
+.balance-panel__value,
+.slip__line-qty,
+.slip__line-amount,
+.numpad__display {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+/* Right-aligned within their own LTR box, so a column of figures lines up on
+   its last digit in both languages. */
+.kv__value,
+.cart__row-value,
+.cart-line__total,
+.ledger-row__amount,
+.ledger-row__running,
+.movement__delta,
+.slip__line-qty,
+.slip__line-amount {
+  text-align: right;
 }

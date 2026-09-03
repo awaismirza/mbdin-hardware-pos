@@ -58,6 +58,7 @@ export function SellScreen() {
   const [held, setHeld] = useState<HeldCart[]>([]);
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -198,6 +199,9 @@ export function SellScreen() {
           />
         </div>
 
+        {/* Landscape: the cart is a permanent right-hand pane. Portrait: it
+            collapses to a summary bar that opens it as a bottom sheet, so the
+            catalogue keeps the whole screen while items are being tapped in. */}
         <div className="sell__cart">
           <CartPane
             customerLabel={customerName ?? t('common.walkIn')}
@@ -207,6 +211,38 @@ export function SellScreen() {
           />
         </div>
       </div>
+
+      <button
+        type="button"
+        className="cart-bar"
+        onClick={() => setCartOpen(true)}
+        data-testid="cart-bar"
+      >
+        <span className="cart-bar__count">
+          {t('sell.cart')} · <span className="num">{lines.length}</span> ·{' '}
+          {customerName ?? t('common.walkIn')}
+        </span>
+        <span className="cart-bar__total">{formatPKR(total)}</span>
+      </button>
+
+      {cartOpen && (
+        <Sheet title={t('sell.cart')} onClose={() => setCartOpen(false)}>
+          <div className="cart-sheet">
+            <CartPane
+              customerLabel={customerName ?? t('common.walkIn')}
+              onPickCustomer={() => setOverlay('customer')}
+              onCheckout={() => {
+                setCartOpen(false);
+                setCheckoutOpen(true);
+              }}
+              onHold={() => {
+                setCartOpen(false);
+                setOverlay('hold');
+              }}
+            />
+          </div>
+        </Sheet>
+      )}
 
       {overlay === 'scan' && (
         <BarcodeScanner onClose={() => setOverlay('none')} onScan={(code) => void onScan(code)} />
@@ -253,7 +289,9 @@ export function SellScreen() {
           {held.map((cart) => (
             <div key={cart.id} className="list__row">
               <span className="list__main">
-                <span className="list__name">{cart.label ?? formatDateTime(cart.createdAt)}</span>
+                <span className="list__name">
+                  {cart.label ?? <span className="num">{formatDateTime(cart.createdAt)}</span>}
+                </span>
                 <span className="list__meta num">
                   {cart.lineCount} · {formatPKR(cart.totalPaisa)}
                 </span>
