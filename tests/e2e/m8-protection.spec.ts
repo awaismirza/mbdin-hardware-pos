@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * The combined "is the ledger actually protected" feature.
@@ -11,11 +12,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
 }
 
 /** Makes `isStandalone()` see the app as launched from the home screen. */

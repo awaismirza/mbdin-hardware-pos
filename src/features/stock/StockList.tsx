@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useLanguage, useT } from '../../appStore';
 import { EmptyState } from '../../components/EmptyState';
+import { ProductPhoto } from '../../components/ProductPhoto';
 import { listProducts, type StockFilter } from '../../db/repos/productsRepo';
 import { pickName } from '../../i18n';
 import { formatPKR, formatQty } from '../../lib/money';
@@ -44,6 +45,19 @@ export function StockList() {
     () => (search.trim() ? t('sell.noMatches') : t('stock.empty')),
     [search, t],
   );
+  const stockSummary = useMemo(() => {
+    const items = products ?? [];
+    return {
+      total: items.length,
+      low: items.filter(
+        (product) =>
+          product.stockQty > 0 &&
+          product.lowStockThreshold > 0 &&
+          product.stockQty <= product.lowStockThreshold,
+      ).length,
+      out: items.filter((product) => product.stockQty <= 0).length,
+    };
+  }, [products]);
 
   return (
     <div className="screen">
@@ -86,7 +100,19 @@ export function StockList() {
         ))}
       </div>
 
-      <div className="screen__body">
+      {products && (
+        <div className="stock-summary" aria-label="Stock summary">
+          <span><strong className="num">{stockSummary.total}</strong> {t('stock.title')}</span>
+          <span className={stockSummary.low > 0 ? 'stock-summary__low' : ''}>
+            <strong className="num">{stockSummary.low}</strong> {t('sell.lowStock')}
+          </span>
+          <span className={stockSummary.out > 0 ? 'stock-summary__out' : ''}>
+            <strong className="num">{stockSummary.out}</strong> {t('sell.outOfStock')}
+          </span>
+        </div>
+      )}
+
+      <div className="screen__body stock-grid-wrap">
         {products === null && <div className="empty">{t('common.loading')}</div>}
         {empty && (
           <EmptyState
@@ -105,7 +131,7 @@ export function StockList() {
           />
         )}
 
-        {products?.map((product) => {
+        {products && products.length > 0 && <div className="stock-grid">{products.map((product) => {
           const out = product.stockQty <= 0;
           const low =
             !out && product.lowStockThreshold > 0 && product.stockQty <= product.lowStockThreshold;
@@ -113,11 +139,17 @@ export function StockList() {
             <button
               key={product.id}
               type="button"
-              className={`list__row${low ? ' list__row--flag' : ''}${
-                out ? ' list__row--flag list__row--flag-out' : ''
+              className={`stock-card list__row${low ? ' stock-card--low' : ''}${
+                out ? ' stock-card--out' : ''
               }`}
               onClick={() => navigate(`/stock/product/${product.id}/detail`)}
             >
+              <ProductPhoto
+                productId={product.id}
+                hasPhoto={product.hasPhoto}
+                name={pickName(language, product.nameUr, product.nameEn)}
+                className="stock-card__photo"
+              />
               <span className="list__main">
                 <span className="list__name truncate">
                   {pickName(language, product.nameUr, product.nameEn)}
@@ -134,7 +166,7 @@ export function StockList() {
               </span>
             </button>
           );
-        })}
+        })}</div>}
       </div>
     </div>
   );

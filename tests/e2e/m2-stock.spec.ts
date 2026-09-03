@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M2 acceptance.
@@ -10,11 +11,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
 }
 
 test('a product can be added, received and counted, leaving a movement each time', async ({
@@ -33,9 +30,7 @@ test('a product can be added, received and counted, leaving a movement each time
   await expect(row).toBeVisible();
   await row.click();
 
-  await expect(page.locator('.kv', { hasText: 'Quantity' }).locator('.kv__value')).toContainText(
-    '24',
-  );
+  await expect(page.getByTestId('stock-quantity')).toContainText('24');
   await expect(page.locator('.movement')).toHaveCount(1);
 
   // Receive 10 more at a new cost.
@@ -45,9 +40,7 @@ test('a product can be added, received and counted, leaving a movement each time
   await receiveDialog.getByLabel(/Cost per/).fill('162');
   await receiveDialog.getByRole('button', { name: 'Receive stock' }).click();
 
-  await expect(page.locator('.kv', { hasText: 'Quantity' }).locator('.kv__value')).toContainText(
-    '34',
-  );
+  await expect(page.getByTestId('stock-quantity')).toContainText('34');
   await expect(page.locator('.kv', { hasText: 'Cost' }).locator('.kv__value')).toContainText('162');
   await expect(page.locator('.movement')).toHaveCount(2);
 
@@ -57,9 +50,7 @@ test('a product can be added, received and counted, leaving a movement each time
   await takeDialog.getByLabel('Counted quantity').fill('31.5');
   await takeDialog.getByRole('button', { name: 'Save' }).click();
 
-  await expect(page.locator('.kv', { hasText: 'Quantity' }).locator('.kv__value')).toContainText(
-    '31.5',
-  );
+  await expect(page.getByTestId('stock-quantity')).toContainText('31.5');
   await expect(page.locator('.movement')).toHaveCount(3);
   await expect(page.locator('.movement').first()).toContainText('-2.5');
 });

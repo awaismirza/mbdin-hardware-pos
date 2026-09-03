@@ -319,6 +319,40 @@
   background: var(--settled);
   transform: translateX(18px);
 }
+
+/* ---- Photos ----------------------------------------------------------- */
+.photo {
+  display: grid;
+  gap: var(--s2);
+  justify-items: start;
+}
+
+.photo__frame {
+  inline-size: 100%;
+  max-inline-size: 220px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+  text-align: center;
+}
+
+.photo__frame img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.photo__actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
 html[dir='rtl'] .switch[aria-checked='true'] .switch__box::after {
   transform: translateX(-18px);
 }

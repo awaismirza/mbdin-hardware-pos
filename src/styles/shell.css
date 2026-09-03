@@ -3,7 +3,10 @@
 
 .shell {
   display: grid;
-  block-size: 100%;
+  /* Keep the app frame pinned to the visible viewport. Screen content owns its
+     own scroll area, so the navigation never scrolls away with a long list. */
+  block-size: 100dvh;
+  min-block-size: 100%;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
     'header'
@@ -50,6 +53,9 @@
 .shell__nav {
   grid-area: nav;
   display: flex;
+  position: sticky;
+  inset-block-end: 0;
+  z-index: 40;
   min-block-size: var(--tabbar-h);
   padding-block-end: env(safe-area-inset-bottom);
   background: var(--card);
@@ -87,6 +93,9 @@
   }
   .shell__nav {
     flex-direction: column;
+    inset-block-start: 0;
+    inset-block-end: auto;
+    align-self: stretch;
     min-block-size: 0;
     border-block-start: none;
     border-inline-end: var(--rule);
@@ -175,6 +184,48 @@
   color: var(--ink-soft);
   font-size: var(--size-meta);
   white-space: pre-wrap;
+}
+
+/* ---- First launch ------------------------------------------------------- */
+.setup {
+  display: grid;
+  min-block-size: 100dvh;
+  padding: max(var(--s4), env(safe-area-inset-top)) var(--s4)
+    max(var(--s4), env(safe-area-inset-bottom));
+  background: var(--canvas);
+}
+.setup__card {
+  align-self: center;
+  inline-size: min(100%, 34rem);
+  margin-inline: auto;
+  padding: var(--s5);
+  background: var(--card);
+  border: var(--rule);
+  border-radius: var(--radius);
+}
+.setup__brand {
+  margin-block-end: var(--s5);
+  color: var(--seal);
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+.setup__title {
+  font-size: var(--size-screen);
+  font-weight: var(--weight-bold);
+}
+.setup__intro {
+  margin-block: var(--s2) var(--s5);
+  color: var(--ink-soft);
+}
+.setup__fields {
+  display: grid;
+  gap: var(--s3);
+  margin-block: var(--s3) var(--s5);
+}
+.setup__error {
+  margin-block-start: var(--s2);
+  color: var(--seal);
+  font-size: var(--size-meta);
 }
 
 /* ---- Generic ruled list ------------------------------------------------ */

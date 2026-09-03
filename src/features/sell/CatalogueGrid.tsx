@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 import { useLanguage, useT } from '../../appStore';
 import { EmptyState } from '../../components/EmptyState';
+import { ProductPhoto } from '../../components/ProductPhoto';
 import { listCategories, listProducts } from '../../db/repos/productsRepo';
 import { pickName } from '../../i18n';
 import { formatPKR, formatQty } from '../../lib/money';
@@ -113,6 +114,12 @@ export function CatalogueGrid({
                 className={`tile${out ? ' tile--out' : ''}`}
                 onClick={() => onPick(product)}
               >
+                <ProductPhoto
+                  productId={product.id}
+                  hasPhoto={product.hasPhoto}
+                  name={pickName(language, product.nameUr, product.nameEn)}
+                  className="tile__thumb"
+                />
                 <span className="tile__name">
                   {pickName(language, product.nameUr, product.nameEn)}
                 </span>

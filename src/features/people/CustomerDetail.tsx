@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { useApp, useLanguage, useT, useToast } from '../../appStore';
+import { CustomerAvatar } from '../../components/CustomerAvatar';
 import { Dialog } from '../../components/Dialog';
 import { getCustomer } from '../../db/repos/customersRepo';
 import { adjustBalance, listLedger, takePayment } from '../../db/repos/ledgerRepo';
@@ -79,23 +80,31 @@ export function CustomerDetail() {
       </div>
 
       <div className="screen__body">
-        <div className="balance-panel">
-          <span className="balance-panel__label">
-            {owes > 0 ? t('people.owes') : owes < 0 ? t('people.inCredit') : t('people.settled')}
-          </span>
-          <span
-            className={`balance-panel__value ${
-              owes > 0 ? 'balance-panel__value--owes' : 'balance-panel__value--settled'
-            }`}
-            data-testid="customer-balance"
-          >
-            {formatPKR(Math.abs(owes))}
-          </span>
-          {customer.creditLimitPaisa > 0 && (
+        <div className="customer-hero">
+          <CustomerAvatar
+            customerId={customer.id}
+            hasPhoto={customer.hasPhoto}
+            name={customer.name}
+            className="customer-hero__avatar"
+          />
+          <div className="balance-panel">
             <span className="balance-panel__label">
-              {t('people.creditLimit')} {formatPKR(customer.creditLimitPaisa)}
+              {owes > 0 ? t('people.owes') : owes < 0 ? t('people.inCredit') : t('people.settled')}
             </span>
-          )}
+            <span
+              className={`balance-panel__value ${
+                owes > 0 ? 'balance-panel__value--owes' : 'balance-panel__value--settled'
+              }`}
+              data-testid="customer-balance"
+            >
+              {formatPKR(Math.abs(owes))}
+            </span>
+            {customer.creditLimitPaisa > 0 && (
+              <span className="balance-panel__label">
+                {t('people.creditLimit')} {formatPKR(customer.creditLimitPaisa)}
+              </span>
+            )}
+          </div>
         </div>
 
         <div className="person-actions">

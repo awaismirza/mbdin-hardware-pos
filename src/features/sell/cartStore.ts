@@ -28,7 +28,7 @@ interface CartState {
   hydrated: boolean;
 
   hydrate(): Promise<void>;
-  addProduct(product: Product): void;
+  addProduct(product: Product, qty?: number): void;
   addAdHoc(label: string, pricePaisa: number): void;
   setQty(key: string, qty: number): void;
   bumpQty(key: string, delta: number): void;
@@ -99,7 +99,9 @@ export const useCart = create<CartState>((set, get) => {
       });
     },
 
-    addProduct(product) {
+    addProduct(product, qty = 1) {
+      const quantity = roundQty(qty);
+      if (quantity <= 0) return;
       update((state) => {
         // Tapping the same tile again adds one more of it rather than a second
         // line — a shopkeeper tapping four times means four, not four lines.
@@ -109,7 +111,7 @@ export const useCart = create<CartState>((set, get) => {
         if (existing) {
           return {
             lines: state.lines.map((line) =>
-              line.key === existing.key ? { ...line, qty: roundQty(line.qty + 1) } : line,
+              line.key === existing.key ? { ...line, qty: roundQty(line.qty + quantity) } : line,
             ),
           };
         }
@@ -118,7 +120,7 @@ export const useCart = create<CartState>((set, get) => {
           productId: product.id,
           name: product.nameUr?.trim() || product.nameEn?.trim() || '',
           unit: product.unit,
-          qty: 1,
+          qty: quantity,
           pricePaisa: product.pricePaisa,
           costPaisa: product.costPaisa,
           adHoc: false,

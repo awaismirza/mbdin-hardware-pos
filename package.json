@@ -9,13 +9,13 @@
     "fonts": "node scripts/copy-fonts.mjs",
     "icons": "node scripts/make-icons.mjs",
     "prebuild": "node scripts/copy-fonts.mjs",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b --noEmit && vite build",
     "build:pages": "npm run build && node scripts/pages-fallback.mjs",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "typecheck": "tsc -b --noEmit false --emitDeclarationOnly false --pretty",
+    "typecheck": "tsc -b --noEmit --pretty",
     "lint": "eslint ."
   },
   "dependencies": {

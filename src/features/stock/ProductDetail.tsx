@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { useLanguage, useT, useToast } from '../../appStore';
 import { Dialog } from '../../components/Dialog';
+import { ProductPhoto } from '../../components/ProductPhoto';
 import { getProduct, setProductActive } from '../../db/repos/productsRepo';
 import { listMovements, receiveStock, stockTake } from '../../db/repos/stockRepo';
 import { pickName } from '../../i18n';
@@ -70,11 +71,19 @@ export function ProductDetail() {
       </div>
 
       <div className="screen__body">
-        <div className="kv">
-          <span className="kv__key">{t('common.qty')}</span>
-          <span className="kv__value num">
-            {formatQty(product.stockQty)} {t(`unit.${product.unit}`)}
-          </span>
+        <div className="stock-detail-hero">
+          <ProductPhoto
+            productId={product.id}
+            hasPhoto={product.hasPhoto}
+            name={name}
+            className="stock-detail-hero__photo"
+          />
+          <div>
+            <span className="stock-detail-hero__label">{t('common.qty')}</span>
+            <strong className="stock-detail-hero__qty num" data-testid="stock-quantity">
+              {formatQty(product.stockQty)} {t(`unit.${product.unit}`)}
+            </strong>
+          </div>
         </div>
         <div className="kv">
           <span className="kv__key">{t('common.price')}</span>

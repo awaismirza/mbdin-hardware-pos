@@ -16,6 +16,11 @@ const BALANCE = `
   (SELECT COALESCE(SUM(l.amount_paisa), 0)
    FROM ledger_entries l WHERE l.customer_id = c.id)`;
 
+const SELECT_CUSTOMER = `
+  SELECT c.*, ${BALANCE} AS balance_paisa,
+         EXISTS(SELECT 1 FROM customer_images i WHERE i.customer_id = c.id) AS has_photo
+  FROM customers c`;
+
 export interface CustomerQuery {
   search?: string;
   /** Only people who owe money. Used by the reminder list. */
@@ -36,8 +41,7 @@ export async function listCustomers(query: CustomerQuery = {}): Promise<Customer
   if (owingOnly) where.push(`${BALANCE} > 0`);
 
   const rows = await db.query<CustomerRow>(
-    `SELECT c.*, ${BALANCE} AS balance_paisa
-     FROM customers c
+    `${SELECT_CUSTOMER}
      WHERE ${where.join(' AND ')}
      ORDER BY balance_paisa DESC, c.name COLLATE NOCASE
      LIMIT ?2`,
@@ -48,7 +52,7 @@ export async function listCustomers(query: CustomerQuery = {}): Promise<Customer
 
 export async function getCustomer(id: number): Promise<CustomerWithBalance | null> {
   const row = await db.queryOne<CustomerRow>(
-    `SELECT c.*, ${BALANCE} AS balance_paisa FROM customers c WHERE c.id = ?`,
+    `${SELECT_CUSTOMER} WHERE c.id = ?`,
     [id],
   );
   return row ? withBalance(row) : null;
@@ -129,4 +133,37 @@ function withBalance(row: CustomerRow): CustomerWithBalance {
 function blankToNull(value: string | null | undefined): string | null {
   const trimmed = value?.trim();
   return trimmed ? trimmed : null;
+}
+
+export interface StoredCustomerPhoto {
+  mime: string;
+  width: number;
+  height: number;
+  bytes: Uint8Array;
+}
+
+export async function getCustomerPhoto(customerId: number): Promise<StoredCustomerPhoto | null> {
+  const row = await db.queryOne<StoredCustomerPhoto>(
+    'SELECT mime, width, height, bytes FROM customer_images WHERE customer_id = ?',
+    [customerId],
+  );
+  return row;
+}
+
+export async function setCustomerPhoto(
+  customerId: number,
+  photo: StoredCustomerPhoto,
+): Promise<void> {
+  await db.exec(
+    `INSERT INTO customer_images (customer_id, mime, width, height, bytes, created_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(customer_id) DO UPDATE SET
+       mime = excluded.mime, width = excluded.width, height = excluded.height,
+       bytes = excluded.bytes, created_at = excluded.created_at`,
+    [customerId, photo.mime, photo.width, photo.height, photo.bytes, nowIso()],
+  );
+}
+
+export async function deleteCustomerPhoto(customerId: number): Promise<void> {
+  await db.exec('DELETE FROM customer_images WHERE customer_id = ?', [customerId]);
 }

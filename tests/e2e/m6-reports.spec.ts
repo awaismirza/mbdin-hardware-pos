@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M6 acceptance.
@@ -12,11 +13,13 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
+}
+
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
 }
 
 test("today's figures match the sales that were actually rung up", async ({ page }) => {
@@ -39,8 +42,7 @@ test("today's figures match the sales that were actually rung up", async ({ page
 
   // Sale one: 2 kg for cash. Rs 340 in, Rs 24 of margin.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Sugar/ }).first().click();
-  await page.getByRole('button', { name: /Sugar/ }).first().click();
+  await addProductToCart(page, 'Sugar', 2);
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();
@@ -48,9 +50,7 @@ test("today's figures match the sales that were actually rung up", async ({ page
 
   // Sale two: 3 kg on udhaar. Rs 510 of takings, none of it cash.
   await page.goto('/sell');
-  for (let index = 0; index < 3; index += 1) {
-    await page.getByRole('button', { name: /Sugar/ }).first().click();
-  }
+  await addProductToCart(page, 'Sugar', 3);
   await page.getByTestId('charge').click();
   await page.getByTestId('method-credit').click();
   await page.getByRole('button', { name: 'Customer', exact: true }).click();
@@ -105,7 +105,7 @@ test('a voided sale drops out of the takings', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Ghee/ })).toBeVisible();
 
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Ghee/ }).first().click();
+  await addProductToCart(page, 'Ghee');
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();
@@ -116,7 +116,7 @@ test('a voided sale drops out of the takings', async ({ page }) => {
 
   // Void it from the receipt.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Ghee/ }).first().click();
+  await addProductToCart(page, 'Ghee');
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();
@@ -142,7 +142,7 @@ test('the range CSV export downloads real rows', async ({ page }) => {
   await expect(page.getByRole('button', { name: /Atta/ })).toBeVisible();
 
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Atta/ }).first().click();
+  await addProductToCart(page, 'Atta');
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();

@@ -2,7 +2,14 @@ import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
+
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
+}
 
 /**
  * The whole day, in Urdu, right to left — the end-to-end pass the spec asks
@@ -17,7 +24,8 @@ import { expect, test } from '@playwright/test';
 test('a day in the shop, in Urdu', async ({ page }) => {
   test.setTimeout(180_000);
 
-  // Urdu is the default; assert it rather than switching to it.
+  // Urdu remains an explicit RTL acceptance path; regular tests start in English.
+  await completeSetup(page, { language: 'ur', shopName: 'الرحمٰن جنرل سٹور' });
   await page.goto('/settings');
   await expect(page.locator('html')).toHaveAttribute('lang', 'ur');
   await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
@@ -39,8 +47,7 @@ test('a day in the shop, in Urdu', async ({ page }) => {
 
   // ── Sell two kilos for cash ─────────────────────────────────────────────
   await page.goto('/sell');
-  await page.getByRole('button', { name: /چینی/ }).first().click();
-  await page.getByRole('button', { name: /چینی/ }).first().click();
+  await addProductToCart(page, 'چینی', 2);
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 340');
 
   await page.getByTestId('charge').click();
@@ -52,9 +59,7 @@ test('a day in the shop, in Urdu', async ({ page }) => {
 
   // ── Sell three more on udhaar ───────────────────────────────────────────
   await page.goto('/sell');
-  for (let index = 0; index < 3; index += 1) {
-    await page.getByRole('button', { name: /چینی/ }).first().click();
-  }
+  await addProductToCart(page, 'چینی', 3);
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 510');
 
   await page.getByTestId('charge').click();
@@ -108,6 +113,9 @@ test('a day in the shop, in Urdu', async ({ page }) => {
   await reset.getByTestId('confirm-reset').click();
   await page.waitForURL('**/sell', { timeout: 30_000 });
 
+  // Reset returns the app to first launch. Set a temporary shop up so the
+  // restore controls are available; the incoming backup replaces it.
+  await completeSetup(page, { language: 'ur', shopName: 'عارضی دکان' });
   await page.goto('/settings/storage');
   await expect(page.getByTestId('product-count')).toHaveText('0', { timeout: 30_000 });
 
