@@ -1,0 +1,1 @@
+# mbdin-hardware-pos
