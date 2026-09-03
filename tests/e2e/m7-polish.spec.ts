@@ -139,6 +139,53 @@ test.describe('layout', () => {
   });
 });
 
+/**
+ * A portrait tablet is the shape the till spends most of its life in. The
+ * catalogue must scroll inside its own pane; the page body must not scroll and
+ * carry the tab bar and cart bar off the bottom of the screen with it.
+ */
+test.describe('the till frame on a portrait tablet', () => {
+  test.use({ viewport: { width: 1024, height: 1366 } });
+
+  test('the catalogue scrolls on its own and the tab bar stays on screen', async ({ page }) => {
+    test.setTimeout(120_000);
+    await seed(page);
+    await useEnglish(page);
+    await page.goto('/sell');
+    await page.locator('.catalogue__grid').waitFor();
+    await page.waitForTimeout(800);
+
+    // The grid holds far more than one screen of product tiles...
+    const gridOverflow = await page
+      .locator('.catalogue__grid')
+      .evaluate((el) => el.scrollHeight - el.clientHeight);
+    expect(gridOverflow).toBeGreaterThan(200);
+
+    // ...and it is the grid, not the page, that absorbs a scroll gesture.
+    await page.mouse.move(512, 683);
+    await page.mouse.wheel(0, 20_000);
+    await page.evaluate(() => {
+      document.scrollingElement!.scrollTop = 99_999;
+      document.querySelector('.catalogue__grid')!.scrollTop = 99_999;
+    });
+    await page.waitForTimeout(200);
+
+    const state = await page.evaluate(() => {
+      const nav = document.querySelector('.shell__nav')!.getBoundingClientRect();
+      return {
+        bodyScroll: document.scrollingElement!.scrollTop,
+        gridScrolled: document.querySelector('.catalogue__grid')!.scrollTop,
+        navBottom: Math.round(nav.bottom),
+        viewport: window.innerHeight,
+      };
+    });
+
+    expect(state.bodyScroll).toBe(0);
+    expect(state.gridScrolled).toBeGreaterThan(200);
+    expect(Math.abs(state.navBottom - state.viewport)).toBeLessThanOrEqual(2);
+  });
+});
+
 test.describe('the printed receipt', () => {
   test('prints the slip and nothing else', async ({ page }) => {
     test.setTimeout(120_000);
