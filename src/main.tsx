@@ -5,6 +5,9 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { registerServiceWorker } from './pwa';
 
+// Tailwind + theme tokens first. The legacy stylesheets below are removed
+// area by area as each screen is migrated to the new design system.
+import './styles/app.css';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/shell.css';
