@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M3 acceptance.
@@ -11,11 +12,7 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
 }
 
 async function addProduct(
@@ -33,13 +30,18 @@ async function addProduct(
   await expect(page.getByRole('button', { name: new RegExp(name) })).toBeVisible();
 }
 
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
+}
+
 test('a cash sale writes the sale and shows a receipt', async ({ page }) => {
   await useEnglish(page);
   await addProduct(page, 'Sugar', '170', '50');
 
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Sugar/ }).first().click();
-  await page.getByRole('button', { name: /Sugar/ }).first().click();
+  await addProductToCart(page, 'Sugar', 2);
 
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 340');
 
@@ -65,9 +67,7 @@ test('a cart survives the tab being killed mid-sale', async ({ context }) => {
   await addProduct(page, 'Ghee', '720', '20');
 
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Ghee/ }).first().click();
-  await page.getByRole('button', { name: /Ghee/ }).first().click();
-  await page.getByRole('button', { name: /Ghee/ }).first().click();
+  await addProductToCart(page, 'Ghee', 3);
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 2,160');
 
   // Kill it. No "are you sure", no beforeunload — the power just went.
@@ -87,7 +87,7 @@ test('an udhaar sale charges the customer and voiding it reverses everything', a
   await addProduct(page, 'Atta', '145', '100');
 
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Atta/ }).first().click();
+  await addProductToCart(page, 'Atta');
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 145');
 
   await page.getByTestId('charge').click();

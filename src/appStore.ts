@@ -42,8 +42,8 @@ export const useApp = create<AppState>((set, get) => ({
   error: null,
   info: null,
   settings: { ...DEFAULT_SETTINGS },
-  language: 'ur',
-  t: translator('ur'),
+  language: 'en',
+  t: translator('en'),
   toasts: [],
   persisted: null,
   // Display mode does not change without a fresh launch, so this is read once
@@ -55,7 +55,7 @@ export const useApp = create<AppState>((set, get) => ({
     try {
       const info = forceMode ? await reopenDb({ forceMode }) : await initDb();
       const settings = await getAllSettings();
-      const language = isLanguage(settings['language']) ? settings['language'] : 'ur';
+      const language = isLanguage(settings['language']) ? settings['language'] : 'en';
       applyDocumentLanguage(language);
       set({
         status: 'ready',

@@ -3,8 +3,16 @@ import { useNavigate, useParams } from 'react-router-dom';
 
 import { useT, useToast } from '../../appStore';
 import { Switch } from '../../components/EmptyState';
-import { createCustomer, getCustomer, updateCustomer } from '../../db/repos/customersRepo';
+import {
+  createCustomer,
+  deleteCustomerPhoto,
+  getCustomer,
+  setCustomerPhoto,
+  updateCustomer,
+} from '../../db/repos/customersRepo';
 import { parsePaisa } from '../../lib/money';
+import type { PreparedPhoto } from '../../lib/photo';
+import { CustomerPhotoField } from './CustomerPhotoField';
 
 interface FormState {
   name: string;
@@ -36,6 +44,7 @@ export function CustomerEditor() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photo, setPhoto] = useState<PreparedPhoto | null | undefined>(undefined);
 
   useEffect(() => {
     if (isNew) return;
@@ -73,7 +82,14 @@ export function CustomerEditor() {
         creditLimitPaisa: parsePaisa(form.creditLimit) ?? 0,
         isActive: form.isActive,
       };
-      const id = isNew ? await createCustomer(draft) : (await updateCustomer({ ...draft, id: customerId }), customerId);
+      const id = isNew
+        ? await createCustomer(draft)
+        : (await updateCustomer({ ...draft, id: customerId }), customerId);
+
+      // `undefined` means the portrait was untouched while editing.
+      if (photo) await setCustomerPhoto(id, photo);
+      else if (photo === null) await deleteCustomerPhoto(id);
+
       toast(t('people.saved'));
       navigate(`/people/${String(id)}`);
     } catch (cause) {
@@ -148,6 +164,10 @@ export function CustomerEditor() {
               onChange={(event) => set('notes', event.target.value)}
             />
           </label>
+
+          <div className="form-grid__wide">
+            <CustomerPhotoField customerId={isNew ? null : customerId} onChange={setPhoto} />
+          </div>
 
           <div className="form-grid__wide">
             <Switch

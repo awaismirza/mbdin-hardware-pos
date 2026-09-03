@@ -7,13 +7,73 @@
   gap: 2px;
 }
 
+.customer-toolbar {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.customer-list {
+  padding: var(--s3);
+}
+
+.customer-card {
+  min-block-size: 76px;
+  margin-block-end: var(--s2);
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+
+.customer-card__avatar {
+  inline-size: 48px;
+  block-size: 48px;
+}
+
+.customer-card__meta {
+  display: block;
+  margin-block-start: 2px;
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+}
+
+.customer-avatar {
+  flex: none;
+  border-radius: 50%;
+  object-fit: cover;
+  background: var(--paper);
+}
+
+.customer-avatar--initial {
+  display: grid;
+  place-items: center;
+  background: var(--settled-wash);
+  color: var(--settled);
+  font-weight: var(--weight-bold);
+}
+
+.customer-hero {
+  display: flex;
+  align-items: center;
+  gap: var(--s4);
+  padding: var(--s4);
+  border-block-end: var(--rule);
+}
+
+.customer-hero__avatar {
+  inline-size: 88px;
+  block-size: 88px;
+}
+
 /* The one loud element on a customer page. */
 .balance-panel {
   display: grid;
   gap: var(--s1);
-  padding: var(--s4);
-  border-block-end: var(--rule);
-  text-align: center;
+  flex: 1;
+  padding: var(--s2);
+  text-align: start;
 }
 .balance-panel__label {
   font-size: var(--size-meta);

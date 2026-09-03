@@ -11,9 +11,15 @@ export const en = {
   'app.bootFailed': 'The ledger could not be opened',
   'app.retry': 'Try again',
 
+  'setup.title': 'Set up your shop',
+  'setup.intro': 'Choose a language and add the details that appear on your receipts.',
+  'setup.shopDetails': 'Shop details',
+  'setup.shopNameRequired': 'Add your shop name to continue.',
+  'setup.start': 'Start selling',
+
   'nav.sell': 'Sell',
   'nav.stock': 'Stock',
-  'nav.people': 'People',
+  'nav.people': 'Customers',
   'nav.reports': 'Reports',
   'nav.settings': 'Settings',
 
@@ -106,6 +112,11 @@ export const en = {
   'sell.holdLabel': 'Label this cart',
   'sell.saleSaved': 'Sale saved',
   'sell.cartRestored': 'Your cart was restored.',
+  'sell.productTitle': 'Add to cart',
+  'sell.productAvailable': '{qty} {unit} available',
+  'sell.productOut': 'This product is out of stock',
+  'sell.lineTotal': 'Line total',
+  'sell.addToCart': 'Add to cart',
 
   'checkout.title': 'Take payment',
   'checkout.method.cash': 'Cash',
@@ -201,7 +212,7 @@ export const en = {
   'import.failedRows': '{count} rows were skipped because they had no name or no price.',
   'import.badFile': 'That file could not be read as CSV.',
 
-  'people.title': 'People',
+  'people.title': 'Customers',
   'people.addCustomer': 'Add customer',
   'people.editCustomer': 'Edit customer',
   'people.empty': 'No customers yet. Add one when you give your first udhaar.',
@@ -229,6 +240,10 @@ export const en = {
   'people.adjust': 'Adjust balance',
   'people.adjustHint': 'Positive adds to what they owe, negative writes it off.',
   'people.confirmWhatsapp': 'Send a WhatsApp confirmation?',
+  'people.takePhoto': 'Take a photo',
+  'people.retakePhoto': 'Retake photo',
+  'people.removePhoto': 'Remove photo',
+  'people.photoFailed': 'That photo could not be read. Try again.',
 
   'reports.title': 'Reports',
   'reports.salesCount': 'Sales',

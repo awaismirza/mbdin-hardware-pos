@@ -30,6 +30,7 @@ export const BACKUP_TABLES = [
   'products',
   'product_images',
   'customers',
+  'customer_images',
   'sales',
   'sale_items',
   'ledger_entries',

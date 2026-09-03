@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M4 acceptance.
@@ -12,11 +13,13 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
+}
+
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
 }
 
 test('udhaar given, part paid, and the rest written off', async ({ page }) => {
@@ -41,8 +44,7 @@ test('udhaar given, part paid, and the rest written off', async ({ page }) => {
 
   // Sell two bags on udhaar: Rs 680, over the Rs 500 limit.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /Rice/ }).first().click();
-  await page.getByRole('button', { name: /Rice/ }).first().click();
+  await addProductToCart(page, 'Rice', 2);
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 680');
 
   await page.getByTestId('charge').click();

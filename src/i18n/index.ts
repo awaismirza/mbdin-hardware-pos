@@ -5,7 +5,7 @@ export type { StringKey, Strings };
 
 export type Language = 'ur' | 'en';
 
-export const LANGUAGES: readonly Language[] = ['ur', 'en'];
+export const LANGUAGES: readonly Language[] = ['en', 'ur'];
 
 const BUNDLES: Record<Language, Strings> = { en, ur };
 

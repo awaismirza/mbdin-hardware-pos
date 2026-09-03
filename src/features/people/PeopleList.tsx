@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useT } from '../../appStore';
+import { CustomerAvatar } from '../../components/CustomerAvatar';
 import { EmptyState } from '../../components/EmptyState';
 import { listCustomers } from '../../db/repos/customersRepo';
 import { formatPKR } from '../../lib/money';
@@ -39,7 +40,7 @@ export function PeopleList() {
         </button>
       </div>
 
-      <div className="stock-toolbar">
+      <div className="customer-toolbar">
         <input
           className="input grow"
           type="search"
@@ -50,7 +51,7 @@ export function PeopleList() {
         />
       </div>
 
-      <div className="screen__body">
+      <div className="screen__body customer-list">
         {customers === null && <div className="empty">{t('common.loading')}</div>}
         {customers?.length === 0 && (
           <EmptyState
@@ -73,12 +74,20 @@ export function PeopleList() {
           <button
             key={customer.id}
             type="button"
-            className="list__row"
+            className="customer-card list__row"
             onClick={() => navigate(`/people/${String(customer.id)}`)}
           >
+            <CustomerAvatar
+              customerId={customer.id}
+              hasPhoto={customer.hasPhoto}
+              name={customer.name}
+              className="customer-card__avatar"
+            />
             <span className="list__main">
               <span className="list__name truncate">{customer.name}</span>
-              {customer.phone && <span className="list__meta num">{customer.phone}</span>}
+              <span className="customer-card__meta">
+                {customer.phone ? <span className="num">{customer.phone}</span> : t('common.walkIn')}
+              </span>
             </span>
             <span className="person-row__balance">
               {customer.balancePaisa > 0 ? (

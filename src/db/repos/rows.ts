@@ -94,6 +94,7 @@ export interface CustomerRow {
   created_at: string;
   updated_at: string;
   balance_paisa?: number;
+  has_photo?: number;
 }
 
 export function toCustomer(row: CustomerRow): Customer {
@@ -105,6 +106,7 @@ export function toCustomer(row: CustomerRow): Customer {
     notes: row.notes,
     creditLimitPaisa: row.credit_limit_paisa,
     isActive: row.is_active === 1,
+    hasPhoto: (row.has_photo ?? 0) > 0,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

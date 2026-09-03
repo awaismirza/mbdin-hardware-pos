@@ -9,7 +9,7 @@ the shop's internet is down for a week, nothing changes.
 
 - **Sell** — scan or tap items into a cart, take cash or udhaar, print or send a receipt.
 - **Stock** — add products, receive stock, count stock, see what is running low.
-- **People** — a phone book and a running credit ledger per customer.
+- **Customers** — a phone book, optional customer photos, and a running credit ledger per customer.
 - **Archive** — export the whole database as one file; restore from one.
 - **Report** — today's takings, this month's, what is selling, who owes money.
 
@@ -34,6 +34,17 @@ host.
 
 `npm run test:e2e` uses Playwright's own Chromium. If your environment ships one
 already, point at it: `PLAYWRIGHT_CHROMIUM_PATH=/path/to/chromium npm run test:e2e`.
+
+### First launch
+
+A new ledger opens a short setup screen before the till. English is selected by
+default; the shopkeeper can choose Urdu instead and save the shop name, phone,
+and address. The shop name is required because it identifies the shop on
+receipts. Existing ledgers with a saved shop name are never sent through setup.
+
+After **Reset all data**, the app is a new ledger and setup appears again. Enter
+temporary shop details before opening Settings to restore a backup; restoring
+replaces those temporary details with the backup's original settings.
 
 ---
 
@@ -221,9 +232,10 @@ has very likely also used on something that matters.
 
 ## Tests
 
-    96 unit and integration tests   paisa arithmetic, CSV, dates, and the
+    107 unit and integration tests  paisa arithmetic, CSV, dates, and the
                                     repositories against a real in-memory SQLite
-    27 browser tests                both storage paths, offline cold boot, the
+    32 browser tests                first-launch setup, both storage paths,
+                                    offline cold boot, the
                                     sale transaction, a tab kill mid-cart, the
                                     udhaar ledger, backup/restore round trips,
                                     report reconciliation, RTL, and the PIN
@@ -232,6 +244,10 @@ has very likely also used on something that matters.
 entirely through the Urdu interface, right to left: add a product, sell for
 cash, sell on credit, take a payment, export, reset, restore, and check every
 total came back.
+
+Most browser scenarios begin with the English first-launch setup through
+`tests/e2e/setup.ts`, so failures are easy to read. Urdu remains an explicit
+right-to-left acceptance path rather than an implicit default.
 
 ---
 

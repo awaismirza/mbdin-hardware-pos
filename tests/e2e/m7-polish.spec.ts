@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M7: the things that make it an app on a counter rather than a page in a
@@ -7,17 +8,20 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
 }
 
 async function seed(page: Page): Promise<void> {
+  await completeSetup(page);
   await page.goto('/settings/storage');
   await page.getByTestId('seed-catalogue').click();
   await expect(page.getByTestId('toast')).toContainText('400', { timeout: 60_000 });
+}
+
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
 }
 
 /** Measures the document, not an element: the body must never scroll sideways. */
@@ -31,11 +35,12 @@ async function horizontalOverflow(page: Page): Promise<number> {
 test.describe('layout', () => {
   test('no screen scrolls the page sideways, in either language', async ({ page }) => {
     test.setTimeout(120_000);
+    await completeSetup(page, { language: 'ur' });
     await seed(page);
 
     const routes = ['/sell', '/stock', '/people', '/reports', '/settings', '/settings/storage'];
 
-    // Urdu (RTL) first, since that is the default and the harder direction.
+    // Urdu (RTL) first: it is the harder direction and is explicitly chosen.
     for (const route of routes) {
       await page.goto(route);
       await page.waitForTimeout(400);
@@ -48,7 +53,12 @@ test.describe('layout', () => {
     await page.waitForTimeout(800);
     const tiles = page.locator('.tile:not(.tile--quick)');
     await tiles.nth(0).click();
-    await tiles.nth(1).click();
+    await page.getByTestId('add-product-to-cart').click();
+    await page.goto('/sell');
+    await page.waitForTimeout(400);
+    const refreshedTiles = page.locator('.tile:not(.tile--quick)');
+    await refreshedTiles.nth(1).click();
+    await page.getByTestId('add-product-to-cart').click();
     await page.waitForTimeout(400);
     expect(await horizontalOverflow(page), '/sell with a loaded cart in Urdu').toBeLessThanOrEqual(
       1,
@@ -63,6 +73,7 @@ test.describe('layout', () => {
   });
 
   test('flips direction with the language and keeps numerals Latin', async ({ page }) => {
+    await completeSetup(page, { language: 'ur' });
     await page.goto('/sell');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.locator('html')).toHaveAttribute('lang', 'ur');
@@ -78,7 +89,7 @@ test.describe('layout', () => {
   test('numbers and dates are not reordered by the bidi algorithm in Urdu', async ({ page }) => {
     test.setTimeout(120_000);
 
-    // Urdu is the default, so this runs in RTL without switching anything.
+    await completeSetup(page, { language: 'ur' });
     await page.goto('/people/customer/new');
     await page.getByLabel('نام').first().fill('محمد اکرم');
     await page.getByRole('button', { name: 'محفوظ کریں' }).click();
@@ -141,7 +152,7 @@ test.describe('the printed receipt', () => {
     await expect(page.getByRole('button', { name: /Tea/ })).toBeVisible();
 
     await page.goto('/sell');
-    await page.getByRole('button', { name: /Tea/ }).first().click();
+    await addProductToCart(page, 'Tea');
     await page.getByTestId('charge').click();
     await page.getByTestId('method-cash').click();
     await page.getByTestId('confirm-sale').click();
@@ -260,7 +271,7 @@ test.describe('installability', () => {
     await page.reload();
 
     // Sell something offline.
-    await page.getByRole('button', { name: /Salt/ }).first().click();
+    await addProductToCart(page, 'Salt');
     await page.getByTestId('charge').click();
     await page.getByTestId('method-cash').click();
     await page.getByTestId('confirm-sale').click();

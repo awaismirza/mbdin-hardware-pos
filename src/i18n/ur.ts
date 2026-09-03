@@ -18,6 +18,12 @@ export const ur: Strings = {
   'app.bootFailed': 'کھاتہ نہیں کھل سکا',
   'app.retry': 'دوبارہ کوشش کریں',
 
+  'setup.title': 'اپنی دکان بنائیں',
+  'setup.intro': 'زبان چنیں اور رسید پر آنے والی دکان کی تفصیل لکھیں۔',
+  'setup.shopDetails': 'دکان کی تفصیل',
+  'setup.shopNameRequired': 'آگے بڑھنے کے لیے دکان کا نام لکھیں۔',
+  'setup.start': 'بیچنا شروع کریں',
+
   'nav.sell': 'بیچیں',
   'nav.stock': 'مال',
   'nav.people': 'گاہک',
@@ -113,6 +119,11 @@ export const ur: Strings = {
   'sell.holdLabel': 'اس پرچی کو نام دیں',
   'sell.saleSaved': 'بکری درج ہو گئی',
   'sell.cartRestored': 'آپ کی پرچی واپس آ گئی۔',
+  'sell.productTitle': 'پرچی میں شامل کریں',
+  'sell.productAvailable': '{qty} {unit} موجود',
+  'sell.productOut': 'یہ سامان ختم ہو گیا ہے',
+  'sell.lineTotal': 'اس لائن کا کل',
+  'sell.addToCart': 'پرچی میں شامل کریں',
 
   'checkout.title': 'رقم وصول کریں',
   'checkout.method.cash': 'نقد',
@@ -236,6 +247,10 @@ export const ur: Strings = {
   'people.adjust': 'بقایا درست کریں',
   'people.adjustHint': 'مثبت رقم اُدھار بڑھاتی ہے، منفی رقم معاف کرتی ہے۔',
   'people.confirmWhatsapp': 'واٹس ایپ پر تصدیق بھیجیں؟',
+  'people.takePhoto': 'تصویر لیں',
+  'people.retakePhoto': 'تصویر دوبارہ لیں',
+  'people.removePhoto': 'تصویر ہٹا دیں',
+  'people.photoFailed': 'یہ تصویر پڑھی نہیں جا سکی۔ دوبارہ کوشش کریں۔',
 
   'reports.title': 'حساب',
   'reports.salesCount': 'بکریاں',

@@ -10,13 +10,16 @@ import { PeopleRoutes } from './features/people/PeopleRoutes';
 import { ReportsScreen } from './features/reports/ReportsScreen';
 import { ReceiptView } from './features/sell/ReceiptView';
 import { SellScreen } from './features/sell/SellScreen';
+import { ProductSaleScreen } from './features/sell/ProductSaleScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
+import { SetupScreen } from './features/settings/SetupScreen';
 import { StockRoutes } from './features/stock/StockRoutes';
 
 export function App() {
   const status = useApp((state) => state.status);
   const error = useApp((state) => state.error);
   const boot = useApp((state) => state.boot);
+  const shopName = useApp((state) => state.settings['shop_name']?.trim());
   const t = useT();
 
   useEffect(() => {
@@ -42,6 +45,8 @@ export function App() {
       </div>
     );
   }
+
+  if (!shopName) return <SetupScreen />;
 
   return <Shell />;
 }
@@ -78,6 +83,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Navigate to="/sell" replace />} />
           <Route path="/sell" element={<SellScreen />} />
+          <Route path="/sell/product/:id" element={<ProductSaleScreen />} />
           <Route path="/sell/receipt/:id" element={<ReceiptView />} />
           <Route path="/stock/*" element={<StockRoutes />} />
           <Route path="/people/*" element={<PeopleRoutes />} />

@@ -192,7 +192,7 @@ export function SellScreen() {
         <div className="sell__catalogue">
           <CatalogueGrid
             search={search}
-            onPick={addProduct}
+            onPick={(product) => navigate(`/sell/product/${String(product.id)}`)}
             onQuickSell={() => setOverlay('quick')}
             unknownBarcode={unknownBarcode}
             onAddWithBarcode={(barcode) => navigate(`/stock/product/new?barcode=${barcode}`)}

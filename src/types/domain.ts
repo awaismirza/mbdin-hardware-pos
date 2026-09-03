@@ -100,6 +100,7 @@ export interface Customer {
   notes: string | null;
   creditLimitPaisa: number;
   isActive: boolean;
+  hasPhoto: boolean;
   createdAt: string;
   updatedAt: string;
 }

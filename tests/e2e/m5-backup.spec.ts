@@ -3,6 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { expect, test, type Page } from '@playwright/test';
+import { completeSetup } from './setup';
 
 /**
  * M5 acceptance.
@@ -16,11 +17,13 @@ import { expect, test, type Page } from '@playwright/test';
  */
 
 async function useEnglish(page: Page): Promise<void> {
-  await page.goto('/settings');
-  const english = page.getByRole('button', { name: 'English', exact: true });
-  await english.waitFor({ state: 'visible' });
-  await english.click();
-  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+  await completeSetup(page);
+}
+
+async function addProductToCart(page: Page, name: string, quantity = 1): Promise<void> {
+  await page.getByRole('button', { name: new RegExp(name) }).first().click();
+  await page.getByTestId('product-quantity').fill(String(quantity));
+  await page.getByTestId('add-product-to-cart').click();
 }
 
 /** Sets a shop name, which the reset confirmation requires. */
@@ -49,8 +52,7 @@ async function seedALedger(page: Page): Promise<void> {
 
   // One cash sale.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /چینی|Sugar/ }).first().click();
-  await page.getByRole('button', { name: /چینی|Sugar/ }).first().click();
+  await addProductToCart(page, 'چینی|Sugar', 2);
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();
@@ -58,7 +60,7 @@ async function seedALedger(page: Page): Promise<void> {
 
   // One udhaar sale, so the ledger has something in it.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /چینی|Sugar/ }).first().click();
+  await addProductToCart(page, 'چینی|Sugar');
   await page.getByTestId('charge').click();
   await page.getByTestId('method-credit').click();
   await page.getByRole('button', { name: 'Customer', exact: true }).click();
@@ -154,7 +156,7 @@ test('export, wipe, restore — and every number comes back', async ({ page }, t
 
   // A sale after the restore must not collide with a restored invoice number.
   await page.goto('/sell');
-  await page.getByRole('button', { name: /چینی|Sugar/ }).first().click();
+  await addProductToCart(page, 'چینی|Sugar');
   await page.getByTestId('charge').click();
   await page.getByTestId('method-cash').click();
   await page.getByTestId('confirm-sale').click();
