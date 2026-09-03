@@ -18,10 +18,14 @@
   min-inline-size: 0;
 }
 
-/* The catalogue owns its own scroll area in every layout. Without this the
-   portrait tablet had no bounded height here, so the grid grew to its full
-   length and pushed the tab bar and cart bar off the frame. */
+/* The catalogue owns its own scroll area in every layout. This wrapper must be
+   a flex column, not a plain block: its child .catalogue sizes itself with
+   `flex: 1`, which only resolves against a flex parent. Without that the grid
+   grew to its full length on a portrait tablet and pushed the tab bar and cart
+   bar off the frame. */
 .sell__catalogue {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-block-size: 0;
   min-inline-size: 0;
