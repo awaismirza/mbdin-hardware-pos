@@ -112,7 +112,7 @@ test('the people list leads with whoever owes the most', async ({ page }) => {
   }
 
   await page.goto('/people');
-  const rows = page.locator('.list__row');
+  const rows = page.locator('[data-testid="customer-card"]');
   await expect(rows).toHaveCount(3);
   await expect(rows.nth(0)).toContainText('Big debt');
   await expect(rows.nth(1)).toContainText('Middle debt');

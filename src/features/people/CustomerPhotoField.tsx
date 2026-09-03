@@ -1,15 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useT, useToast } from '../../appStore';
-import { getCustomerPhoto } from '../../db/repos/customersRepo';
-import { photoObjectUrl, preparePhoto, type PreparedPhoto } from '../../lib/photo';
+import { useT, useToast } from '@/appStore';
+import { Button } from '@/components/ui/button';
+import { getCustomerPhoto } from '@/db/repos/customersRepo';
+import { photoObjectUrl, preparePhoto, type PreparedPhoto } from '@/lib/photo';
 
 interface CustomerPhotoFieldProps {
   customerId: number | null;
   onChange: (photo: PreparedPhoto | null) => void;
 }
 
-/** Capture a customer portrait with the phone camera or choose a desktop file. */
+/** Capture a customer portrait with the front camera or choose a file. */
 export function CustomerPhotoField({ customerId, onChange }: CustomerPhotoFieldProps) {
   const t = useT();
   const toast = useToast();
@@ -62,27 +63,35 @@ export function CustomerPhotoField({ customerId, onChange }: CustomerPhotoFieldP
   }
 
   return (
-    <div className="photo">
-      <span className="field__label">{t('common.photo')}</span>
-      <div className="photo__frame">
-        {url ? <img src={url} alt="" /> : <span>{t('common.nothingHere')}</span>}
+    <div className="grid justify-items-start gap-2">
+      <span className="text-sm font-medium">{t('common.photo')}</span>
+      <div className="grid size-32 place-items-center overflow-hidden rounded-full border bg-muted text-xs text-muted-foreground">
+        {url ? (
+          <img src={url} alt="" className="size-full object-cover" />
+        ) : (
+          <span>{t('common.nothingHere')}</span>
+        )}
       </div>
       <input
         ref={input}
         type="file"
         accept="image/*"
         capture="user"
-        className="visually-hidden"
+        className="sr-only"
         onChange={(event) => void pick(event.target.files?.[0])}
       />
-      <div className="photo__actions">
-        <button type="button" className="btn" disabled={busy} onClick={() => input.current?.click()}>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
           {url ? t('people.retakePhoto') : t('people.takePhoto')}
-        </button>
+        </Button>
         {url && (
-          <button type="button" className="btn btn--danger" onClick={remove}>
+          <Button
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={remove}
+          >
             {t('people.removePhoto')}
-          </button>
+          </Button>
         )}
       </div>
     </div>

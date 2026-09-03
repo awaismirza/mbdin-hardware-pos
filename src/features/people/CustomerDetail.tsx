@@ -1,15 +1,26 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { MessageSquare, Phone } from 'lucide-react';
 
-import { useApp, useLanguage, useT, useToast } from '../../appStore';
-import { CustomerAvatar } from '../../components/CustomerAvatar';
-import { Dialog } from '../../components/Dialog';
-import { getCustomer } from '../../db/repos/customersRepo';
-import { adjustBalance, listLedger, takePayment } from '../../db/repos/ledgerRepo';
-import { formatDateTime } from '../../lib/dates';
-import { formatPKR, parsePaisa } from '../../lib/money';
-import { paymentText, reminderText, waLink } from '../../lib/whatsapp';
-import { TENDER_METHODS, type CustomerWithBalance, type LedgerEntryWithRunning, type TenderMethod } from '../../types/domain';
+import { useApp, useLanguage, useT, useToast } from '@/appStore';
+import { CustomerAvatar } from '@/components/CustomerAvatar';
+import { Dialog } from '@/components/Dialog';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getCustomer } from '@/db/repos/customersRepo';
+import { adjustBalance, listLedger, takePayment } from '@/db/repos/ledgerRepo';
+import { formatDateTime } from '@/lib/dates';
+import { formatPKR, parsePaisa } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import { paymentText, reminderText, waLink } from '@/lib/whatsapp';
+import {
+  TENDER_METHODS,
+  type CustomerWithBalance,
+  type LedgerEntryWithRunning,
+  type TenderMethod,
+} from '@/types/domain';
 
 type Overlay = 'none' | 'payment' | 'adjust';
 
@@ -37,9 +48,9 @@ export function CustomerDetail() {
 
   if (!customer) {
     return (
-      <div className="screen">
-        <div className="screen__body empty">{t('common.loading')}</div>
-      </div>
+      <Screen title="" onBack={() => navigate('/people')}>
+        <p className="p-8 text-center text-muted-foreground">{t('common.loading')}</p>
+      </Screen>
     );
   }
 
@@ -64,91 +75,87 @@ export function CustomerDetail() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/people')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title truncate">{customer.name}</h1>
-        <button
-          type="button"
-          className="btn"
+    <Screen
+      title={customer.name}
+      onBack={() => navigate('/people')}
+      actions={
+        <Button
+          variant="outline"
+          size="sm"
           onClick={() => navigate(`/people/customer/${String(customer.id)}`)}
         >
           {t('action.edit')}
-        </button>
-      </div>
-
-      <div className="screen__body">
-        <div className="customer-hero">
+        </Button>
+      }
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-4 rounded-xl border bg-card p-4">
           <CustomerAvatar
             customerId={customer.id}
             hasPhoto={customer.hasPhoto}
             name={customer.name}
-            className="customer-hero__avatar"
+            className="size-16 flex-none"
           />
-          <div className="balance-panel">
-            <span className="balance-panel__label">
+          <div className="grid gap-0.5">
+            <span className="text-sm text-muted-foreground">
               {owes > 0 ? t('people.owes') : owes < 0 ? t('people.inCredit') : t('people.settled')}
             </span>
             <span
-              className={`balance-panel__value ${
-                owes > 0 ? 'balance-panel__value--owes' : 'balance-panel__value--settled'
-              }`}
+              className={cn(
+                'money text-3xl font-bold',
+                owes > 0 ? 'text-destructive' : 'text-success',
+              )}
               data-testid="customer-balance"
             >
               {formatPKR(Math.abs(owes))}
             </span>
             {customer.creditLimitPaisa > 0 && (
-              <span className="balance-panel__label">
+              <span className="text-sm text-muted-foreground">
                 {t('people.creditLimit')} {formatPKR(customer.creditLimitPaisa)}
               </span>
             )}
           </div>
         </div>
 
-        <div className="person-actions">
-          <button
-            type="button"
-            className="btn btn--primary"
-            onClick={() => setOverlay('payment')}
-            data-testid="take-payment"
-          >
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={() => setOverlay('payment')} data-testid="take-payment">
             {t('people.takePayment')}
-          </button>
-          <button type="button" className="btn" onClick={sendReminder} disabled={owes <= 0}>
+          </Button>
+          <Button variant="outline" onClick={sendReminder} disabled={owes <= 0}>
             {t('people.sendReminder')}
-          </button>
+          </Button>
           {customer.phone && (
             <>
-              <a className="btn" href={`tel:${customer.phone}`}>
-                {t('people.call')}
-              </a>
-              <a className="btn" href={`sms:${customer.phone}`}>
-                {t('people.sms')}
-              </a>
+              <Button variant="outline" asChild>
+                <a href={`tel:${customer.phone}`}>
+                  <Phone className="size-4" /> {t('people.call')}
+                </a>
+              </Button>
+              <Button variant="outline" asChild>
+                <a href={`sms:${customer.phone}`}>
+                  <MessageSquare className="size-4" /> {t('people.sms')}
+                </a>
+              </Button>
             </>
           )}
-          <button type="button" className="btn" onClick={() => setOverlay('adjust')}>
+          <Button variant="outline" onClick={() => setOverlay('adjust')}>
             {t('people.adjust')}
-          </button>
+          </Button>
         </div>
 
-        <div className="section-head">{t('people.ledger')}</div>
+        <h2 className="mt-6 mb-2 text-base font-semibold">{t('people.ledger')}</h2>
 
         {entries.length === 0 ? (
-          <p className="screen__pad meta">{t('people.ledgerEmpty')}</p>
+          <p className="text-sm text-muted-foreground">{t('people.ledgerEmpty')}</p>
         ) : (
-          <>
-            <div className="ledger-head">
-              <span>{t('common.date')}</span>
-              <span className="ledger-head__amount">{t('common.total')}</span>
-              <span className="ledger-head__running">{t('people.running')}</span>
-            </div>
+          <div className="divide-y rounded-xl border">
             {entries.map((entry) => (
-              <div key={entry.id} className="ledger-row">
-                <span className="ledger-row__what">
-                  <span className="ledger-row__kind">
+              <div
+                key={entry.id}
+                className="ledger-row grid grid-cols-[1fr_auto_auto] items-baseline gap-3 px-4 py-3"
+              >
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium">
                     {t(`people.entry.${entry.kind}` as never)}
                     {entry.invoiceNo && (
                       <>
@@ -157,28 +164,26 @@ export function CustomerDetail() {
                       </>
                     )}
                   </span>
-                  <br />
-                  <span className="ledger-row__when">
+                  <span className="ledger-row__when block text-xs text-muted-foreground">
                     <span className="num">{formatDateTime(entry.createdAt)}</span>
                     {entry.method ? ` · ${t(`checkout.method.${entry.method}` as never)}` : ''}
                     {entry.note ? ` · ${entry.note}` : ''}
                   </span>
                 </span>
                 <span
-                  className={`ledger-row__amount ${
-                    entry.amountPaisa > 0
-                      ? 'ledger-row__amount--charge'
-                      : 'ledger-row__amount--payment'
-                  }`}
+                  className={cn(
+                    'ledger-row__amount num w-20 text-end font-semibold tabular-nums',
+                    entry.amountPaisa > 0 ? 'text-destructive' : 'text-success',
+                  )}
                 >
                   {formatPKR(entry.amountPaisa, { signed: true, symbol: false })}
                 </span>
-                <span className="ledger-row__running">
+                <span className="ledger-row__running num w-20 text-end text-muted-foreground tabular-nums">
                   {formatPKR(entry.runningPaisa, { symbol: false })}
                 </span>
               </div>
             ))}
-          </>
+          </div>
         )}
       </div>
 
@@ -213,7 +218,7 @@ export function CustomerDetail() {
           }}
         />
       )}
-    </div>
+    </Screen>
   );
 }
 
@@ -259,61 +264,56 @@ function PaymentDialog({
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
+          </Button>
+          <Button
             disabled={!valid || busy}
             onClick={() => void submit()}
             data-testid="confirm-payment"
           >
             {t('action.save')}
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="stack">
-        <label className="field">
-          <span className="field__label">{t('people.paymentAmount')}</span>
-          <input
-            className="input num"
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <Label htmlFor="pay-amount">{t('people.paymentAmount')}</Label>
+          <Input
+            id="pay-amount"
+            className="num"
             inputMode="decimal"
+            autoFocus
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            data-autofocus
           />
-          <span className="field__hint">
+          <span className="text-sm text-muted-foreground">
             {t('people.owes')} {formatPKR(customer.balancePaisa)}
           </span>
-        </label>
+        </div>
 
-        <div>
-          <span className="field__label">{t('people.paymentMethod')}</span>
-          <div className="methods">
+        <div className="grid gap-2">
+          <Label>{t('people.paymentMethod')}</Label>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(7rem,1fr))] gap-2">
             {TENDER_METHODS.map((entry) => (
-              <button
+              <Button
                 key={entry}
-                type="button"
-                className="btn"
+                variant="outline"
                 aria-pressed={method === entry}
                 onClick={() => setMethod(entry)}
+                className={cn(method === entry && 'border-foreground bg-foreground text-background')}
               >
                 {t(`checkout.method.${entry}` as never)}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
-        <label className="field">
-          <span className="field__label">{t('common.notes')}</span>
-          <input
-            className="input"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </label>
+        <div className="grid gap-2">
+          <Label htmlFor="pay-note">{t('common.notes')}</Label>
+          <Input id="pay-note" value={note} onChange={(event) => setNote(event.target.value)} />
+        </div>
       </div>
     </Dialog>
   );
@@ -353,40 +353,32 @@ function AdjustDialog({
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!valid || busy}
-            onClick={() => void submit()}
-          >
+          </Button>
+          <Button disabled={!valid || busy} onClick={() => void submit()}>
             {t('action.save')}
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="stack">
-        <label className="field">
-          <span className="field__label">{t('common.total')}</span>
-          <input
-            className="input num"
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <Label htmlFor="adj-amount">{t('common.total')}</Label>
+          <Input
+            id="adj-amount"
+            className="num"
             inputMode="decimal"
+            autoFocus
             value={amount}
             onChange={(event) => setAmount(event.target.value)}
-            data-autofocus
           />
-          <span className="field__hint">{t('people.adjustHint')}</span>
-        </label>
-        <label className="field">
-          <span className="field__label">{t('common.notes')}</span>
-          <input
-            className="input"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </label>
+          <span className="text-sm text-muted-foreground">{t('people.adjustHint')}</span>
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="adj-note">{t('common.notes')}</Label>
+          <Input id="adj-note" value={note} onChange={(event) => setNote(event.target.value)} />
+        </div>
       </div>
     </Dialog>
   );
