@@ -1,0 +1,33 @@
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Generated into public/ by scripts/copy-fonts.mjs at build time. The licence
+# and the source packages are committed; the binaries are not.
+public/fonts/*.woff2
+
+# Test output
+test-results/
+playwright-report/
+blob-report/
+coverage/
+.playwright/
+
+# Editors and OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+*.swp
+
+# Logs
+npm-debug.log*
+yarn-error.log*
+*.log
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Scratch
+probe.mjs

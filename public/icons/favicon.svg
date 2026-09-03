@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Dukaan">
+  <rect width="64" height="64" fill="#A32C24" />
+  <rect x="15" y="2" width="47" height="60" fill="#EDEFE8" />
+  <rect x="15" y="2" width="1.5" height="60" fill="#17211C" />
+  <rect x="22" y="15" width="33" height="3" fill="#17211C" />
+  <rect x="22" y="26" width="33" height="2" fill="#D3D8CB" />
+  <rect x="22" y="35" width="33" height="2" fill="#D3D8CB" />
+  <rect x="22" y="44" width="33" height="2" fill="#D3D8CB" />
+</svg>

@@ -1,0 +1,45 @@
+{
+  "name": "Dukaan",
+  "short_name": "Dukaan",
+  "description": "Offline point of sale and udhaar ledger for a single shop.",
+  "id": "/",
+  "start_url": "/sell",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#EDEFE8",
+  "theme_color": "#EDEFE8",
+  "lang": "ur",
+  "dir": "rtl",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Sell",
+      "url": "/sell"
+    },
+    {
+      "name": "People",
+      "url": "/people"
+    }
+  ]
+}

@@ -1,0 +1,308 @@
+/* Shared UI. Cards exist only where something genuinely floats: dialogs,
+   sheets, the cart. Hairline border, 4px radius, no drop shadow. */
+
+/* ---- Dialog ----------------------------------------------------------- */
+.dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  padding: var(--s4);
+  background: rgb(23 33 28 / 38%);
+  animation: fade var(--motion) var(--ease);
+}
+
+.dialog {
+  inline-size: min(460px, 100%);
+  max-block-size: min(86vh, 720px);
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+}
+
+.dialog__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-block-end: var(--rule);
+}
+
+.dialog__title {
+  flex: 1;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+
+.dialog__body {
+  padding: var(--s4);
+  overflow-y: auto;
+}
+
+.dialog__foot {
+  display: flex;
+  gap: var(--s2);
+  padding: var(--s4);
+  border-block-start: var(--rule);
+}
+.dialog__foot > * {
+  flex: 1;
+}
+
+/* ---- Bottom sheet ------------------------------------------------------ */
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: flex-end;
+  background: rgb(23 33 28 / 38%);
+  animation: fade var(--motion) var(--ease);
+}
+
+.sheet {
+  inline-size: 100%;
+  max-block-size: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-block-start: 1px solid var(--paper-rule);
+  border-start-start-radius: var(--radius);
+  border-start-end-radius: var(--radius);
+  padding-block-end: env(safe-area-inset-bottom);
+  animation: slide-up var(--motion) var(--ease);
+}
+
+.sheet__grip {
+  inline-size: 40px;
+  block-size: 4px;
+  margin: var(--s2) auto 0;
+  border-radius: 2px;
+  background: var(--paper-rule);
+}
+
+.sheet__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.sheet__title {
+  flex: 1;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+
+.sheet__body {
+  padding: var(--s4);
+  overflow-y: auto;
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(12px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dialog-backdrop,
+  .sheet-backdrop,
+  .sheet {
+    animation: none;
+  }
+}
+
+/* ---- Empty state ------------------------------------------------------- */
+.empty {
+  display: grid;
+  gap: var(--s3);
+  justify-items: center;
+  padding: var(--s6) var(--s4);
+  text-align: center;
+  color: var(--ink-soft);
+}
+.empty__text {
+  max-inline-size: 34ch;
+}
+
+/* ---- Toasts ------------------------------------------------------------ */
+.toasts {
+  position: fixed;
+  inset-block-end: calc(var(--tabbar-h) + var(--s4));
+  inset-inline: 0;
+  z-index: 80;
+  display: grid;
+  gap: var(--s2);
+  justify-items: center;
+  pointer-events: none;
+  padding-inline: var(--s4);
+}
+
+.toast {
+  pointer-events: auto;
+  max-inline-size: 420px;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--paper);
+  font-size: var(--size-meta);
+  animation: fade var(--motion) var(--ease);
+}
+.toast--warn {
+  background: var(--brass);
+  color: #fff;
+}
+.toast--bad {
+  background: var(--seal);
+  color: #fff;
+}
+
+/* ---- Number pad -------------------------------------------------------- */
+.numpad {
+  display: grid;
+  gap: var(--s2);
+}
+
+.numpad__display {
+  min-block-size: var(--touch-lg);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-inline: var(--s3);
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  font-size: 28px;
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+
+.numpad__hint {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+  text-align: center;
+}
+
+.numpad__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--s2);
+}
+
+.numpad__key {
+  min-block-size: var(--touch-lg);
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  font-size: 22px;
+  font-weight: var(--weight-money);
+  font-variant-numeric: tabular-nums;
+}
+.numpad__key:active {
+  background: var(--ink-wash);
+}
+
+.numpad__quick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s2);
+}
+.numpad__quick .btn {
+  flex: 1 1 30%;
+  min-inline-size: 88px;
+}
+
+/* ---- Spinner ----------------------------------------------------------- */
+.spinner {
+  inline-size: 20px;
+  block-size: 20px;
+  border: 2px solid var(--paper-rule);
+  border-block-start-color: var(--seal);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2s;
+  }
+}
+
+/* ---- Segmented control ------------------------------------------------- */
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.segmented__item {
+  min-height: var(--touch);
+  padding-inline: var(--s4);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+}
+.segmented__item + .segmented__item {
+  border-inline-start: var(--rule);
+}
+.segmented__item[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--paper);
+  font-weight: var(--weight-money);
+}
+
+/* ---- Switch ------------------------------------------------------------ */
+.switch {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  min-height: var(--touch);
+}
+.switch__box {
+  inline-size: 46px;
+  block-size: 28px;
+  flex: none;
+  border: 1px solid var(--paper-rule);
+  border-radius: 14px;
+  background: var(--paper);
+  position: relative;
+  transition: background var(--motion) var(--ease);
+}
+.switch__box::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  inline-size: 20px;
+  block-size: 20px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  transition: transform var(--motion) var(--ease);
+}
+.switch[aria-checked='true'] .switch__box {
+  background: var(--settled-wash);
+  border-color: var(--settled);
+}
+.switch[aria-checked='true'] .switch__box::after {
+  background: var(--settled);
+  transform: translateX(18px);
+}
+html[dir='rtl'] .switch[aria-checked='true'] .switch__box::after {
+  transform: translateX(-18px);
+}
