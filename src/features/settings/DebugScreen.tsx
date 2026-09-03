@@ -23,6 +23,7 @@ export function DebugScreen() {
   const navigate = useNavigate();
   const info = useApp((state) => state.info);
   const persisted = useApp((state) => state.persisted);
+  const installed = useApp((state) => state.installed);
   const boot = useApp((state) => state.boot);
   const toast = useToast();
 
@@ -159,8 +160,14 @@ export function DebugScreen() {
           </div>
         )}
         <div className="kv">
+          <span className="kv__key">{t('settings.onHomeScreen')}</span>
+          <span className="kv__value" data-testid="on-home-screen">
+            {installed ? t('settings.persistentYes') : t('settings.persistentNo')}
+          </span>
+        </div>
+        <div className="kv">
           <span className="kv__key">{t('debug.persisted')}</span>
-          <span className="kv__value">
+          <span className="kv__value" data-testid="persisted-status">
             {persisted === null ? '—' : persisted ? t('settings.persistentYes') : t('settings.persistentNo')}
           </span>
         </div>

@@ -273,6 +273,7 @@ export const ur: Strings = {
   'settings.storageIdb': 'IndexedDB (متبادل)',
   'settings.spaceUsed': 'استعمال شدہ جگہ',
   'settings.dbSize': 'کھاتے کا حجم',
+  'settings.onHomeScreen': 'ہوم اسکرین پر',
   'settings.persistent': 'مٹنے سے محفوظ',
   'settings.persistentYes': 'جی ہاں',
   'settings.persistentNo': 'نہیں',
