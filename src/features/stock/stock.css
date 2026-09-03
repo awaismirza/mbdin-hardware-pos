@@ -1,0 +1,177 @@
+/* Stock. A ruled list, and a form that is one column on a phone and two on a
+   tablet — never more, because a shopkeeper fills it with one thumb. */
+
+.stock-toolbar {
+  display: flex;
+  gap: var(--s2);
+  align-items: center;
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.stock-row__thumb {
+  inline-size: 40px;
+  block-size: 40px;
+  flex: none;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  object-fit: cover;
+}
+
+.stock-row__thumb--empty {
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+}
+
+.stock-row__figures {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+.form-grid {
+  display: grid;
+  gap: var(--s4);
+  padding: var(--s4);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .form-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+  .form-grid__wide {
+    grid-column: 1 / -1;
+  }
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--s2);
+  padding: var(--s4);
+  border-block-start: var(--rule);
+}
+.form-actions > * {
+  flex: 1;
+}
+
+.field__error {
+  display: block;
+  margin-block-start: var(--s1);
+  font-size: var(--size-meta);
+  color: var(--seal);
+}
+
+.field__hint {
+  display: block;
+  margin-block-start: var(--s1);
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+
+/* ---- Photo ------------------------------------------------------------- */
+.photo {
+  display: grid;
+  gap: var(--s2);
+  justify-items: start;
+}
+
+.photo__frame {
+  inline-size: 100%;
+  max-inline-size: 220px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--paper);
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+  text-align: center;
+}
+
+.photo__frame img {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+
+.photo__actions {
+  display: flex;
+  gap: var(--s2);
+  flex-wrap: wrap;
+}
+
+/* ---- Movement history --------------------------------------------------- */
+.movement {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+.movement__kind {
+  inline-size: 8ch;
+  flex: none;
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.movement__delta {
+  inline-size: 8ch;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+}
+.movement__delta--in {
+  color: var(--settled);
+}
+.movement__delta--out {
+  color: var(--seal);
+}
+.movement__when {
+  flex: 1;
+  text-align: end;
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+
+/* ---- CSV import --------------------------------------------------------- */
+.import-map {
+  display: grid;
+  gap: var(--s3);
+  padding: var(--s4);
+}
+
+.import-map__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s3);
+  align-items: center;
+}
+
+.preview-table {
+  inline-size: 100%;
+  overflow-x: auto;
+  border-block: var(--rule);
+}
+.preview-table table {
+  border-collapse: collapse;
+  font-size: var(--size-meta);
+  min-inline-size: 100%;
+}
+.preview-table th,
+.preview-table td {
+  padding: var(--s2) var(--s3);
+  border-inline-end: var(--rule);
+  border-block-end: var(--rule);
+  text-align: start;
+  white-space: nowrap;
+}
+.preview-table th {
+  font-weight: var(--weight-bold);
+  background: var(--card);
+}

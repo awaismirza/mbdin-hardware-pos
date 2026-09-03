@@ -1,0 +1,133 @@
+/* Reports. Plain figures, no chart library. Bars are CSS flex and a background
+   colour, which is all a shopkeeper needs to see which day was busy. */
+
+.report-hero {
+  display: grid;
+  gap: var(--s1);
+  padding: var(--s5) var(--s4) var(--s4);
+  text-align: center;
+  border-block-end: var(--rule);
+}
+.report-hero__label {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.report-hero__value {
+  font-size: var(--size-total);
+  font-weight: var(--weight-bold);
+  color: var(--seal);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.report-hero__sub {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Ruled figure rows, money right-aligned so the column reads down. */
+.figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+.figure__label {
+  flex: 1;
+}
+.figure__hint {
+  display: block;
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.figure__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+  white-space: nowrap;
+}
+.figure__value--good {
+  color: var(--settled);
+}
+.figure__value--bad {
+  color: var(--seal);
+}
+
+/* ---- The day strip ------------------------------------------------------ */
+.daybars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  block-size: 96px;
+  padding: var(--s4) var(--s4) var(--s2);
+}
+.daybar {
+  flex: 1;
+  min-inline-size: 4px;
+  background: var(--seal);
+  border-radius: 2px 2px 0 0;
+  min-block-size: 2px;
+  position: relative;
+}
+.daybar--empty {
+  background: var(--paper-rule);
+}
+.daybars__labels {
+  display: flex;
+  justify-content: space-between;
+  padding: 0 var(--s4) var(--s3);
+  font-size: var(--size-min);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  border-block-end: var(--rule);
+}
+
+/* ---- Top-product rows, with a proportional bar behind the name ---------- */
+.rank {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+  position: relative;
+  isolation: isolate;
+}
+.rank__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: var(--seal-wash);
+  z-index: -1;
+}
+.rank__name {
+  min-inline-size: 0;
+}
+.rank__meta {
+  display: block;
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.rank__value {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+}
+
+.range-row {
+  padding-inline: var(--s4);
+  border-block-end: var(--rule);
+}
+
+.custom-range {
+  display: flex;
+  gap: var(--s3);
+  align-items: flex-end;
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+  flex-wrap: wrap;
+}
+.custom-range .field {
+  flex: 1;
+  min-inline-size: 140px;
+}

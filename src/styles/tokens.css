@@ -1,0 +1,73 @@
+/*
+ * Design tokens. Nothing in this app hard-codes a colour or a font size.
+ *
+ * The reference is the bahi khata — the cloth-bound ledger under the counter of
+ * every shop in Punjab. Ruled lines instead of floating cards, ink on paper
+ * instead of grey on white, one red used only where money changes hands.
+ *
+ * Dark mode is deliberately out of scope: the tablet sits under shop lighting
+ * all day and never sees a dark room. See README.
+ */
+
+:root {
+  /* ---- Colour ------------------------------------------------------- */
+  --paper: #edefe8; /* ledger page, faintly green — app background       */
+  --paper-rule: #d3d8cb; /* ruled lines and all dividers                 */
+  --card: #f7f8f3; /* raised surfaces: cart, sheets, dialogs             */
+  --ink: #17211c; /* all primary text                                    */
+  --ink-soft: #55605a; /* secondary text; the lightest permitted on paper */
+  --seal: #a32c24; /* ledger red: totals, primary actions, destructive   */
+  --seal-deep: #7c1f19; /* pressed state of --seal                       */
+  --brass: #8a6d2f; /* warnings, low stock, backup-overdue bar           */
+  --settled: #2f6b4f; /* paid, in stock, success                         */
+
+  /* Tints, derived from the above. Used for chip and banner grounds only,
+     never for text. */
+  --seal-wash: #f6e7e5;
+  --brass-wash: #f4ecdb;
+  --settled-wash: #e2eee8;
+  --ink-wash: #e3e6dd;
+
+  /* ---- Type --------------------------------------------------------- */
+  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  --font-arabic:
+    'IBM Plex Sans Arabic', 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Segoe UI', tahoma, sans-serif;
+
+  --size-total: 40px; /* total / balance — one per screen, no more       */
+  --size-screen: 24px; /* screen heading                                 */
+  --size-section: 18px; /* section heading                               */
+  --size-body: 16px; /* body / list row                                  */
+  --size-meta: 14px; /* secondary / meta                                 */
+  --size-min: 13px; /* never below this                                  */
+
+  --weight-regular: 400;
+  --weight-money: 500;
+  --weight-bold: 600;
+
+  /* ---- Space -------------------------------------------------------- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+
+  /* ---- Structure ---------------------------------------------------- */
+  --radius: 4px;
+  --rule: 1px solid var(--paper-rule);
+  --touch: 48px; /* minimum touch target                                 */
+  --touch-lg: 56px; /* number pad and payment buttons                    */
+
+  --header-h: 60px;
+  --tabbar-h: 60px;
+  --rail-w: 92px;
+
+  --motion: 120ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --motion: 0ms;
+  }
+}

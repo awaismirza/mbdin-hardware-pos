@@ -1,0 +1,95 @@
+/*
+ * 58 mm thermal receipt.
+ *
+ * A 58 mm roll has about 48 mm of printable width. Everything that is not the
+ * slip is removed from the page, colour is dropped entirely (a thermal head has
+ * one colour and dithering a background turns a receipt into a grey smear), and
+ * amounts are tabular so the column lines up under a customer's finger.
+ */
+
+@page {
+  size: 58mm auto;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body {
+    inline-size: 58mm;
+    background: #fff;
+    color: #000;
+  }
+
+  /* Everything except the slip is chrome, and chrome does not print. */
+  .shell__header,
+  .shell__nav,
+  .toasts,
+  .amber-bar,
+  .receipt__actions,
+  .screen__head,
+  .dialog-backdrop,
+  .sheet-backdrop,
+  .scanner,
+  .no-print {
+    display: none !important;
+  }
+
+  .shell,
+  .shell__main,
+  .screen,
+  .screen__body,
+  .receipt {
+    display: block;
+    block-size: auto;
+    overflow: visible;
+    max-inline-size: none;
+    padding: 0;
+    margin: 0;
+    background: #fff;
+  }
+
+  .slip {
+    inline-size: 54mm;
+    max-inline-size: 54mm;
+    margin: 0 auto;
+    padding: 2mm 0 6mm;
+    border: 0;
+    border-radius: 0;
+    background: #fff;
+    color: #000;
+    font-size: 11pt;
+    line-height: 1.35;
+  }
+
+  /* Thermal paper cannot render a hairline reliably; a dashed rule survives. */
+  .slip__rule {
+    border-block-start: 1px dashed #000;
+  }
+
+  .slip__shop {
+    font-size: 13pt;
+    font-weight: 700;
+  }
+
+  .slip__meta {
+    font-size: 9pt;
+  }
+
+  .slip__total {
+    font-size: 13pt;
+    font-weight: 700;
+  }
+
+  .slip__line,
+  .slip__row {
+    break-inside: avoid;
+  }
+
+  /* No shadows, no tints, no images: one colour, one head, one pass. */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+    background-image: none !important;
+    color: #000 !important;
+  }
+}
