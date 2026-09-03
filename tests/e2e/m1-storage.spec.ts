@@ -48,9 +48,9 @@ test.describe('storage', () => {
     await expect(mode(page)).toHaveText('OPFS');
 
     await page.getByTestId('write-row').click();
-    await expect(page.locator('.list__row')).toHaveCount(1);
+    await expect(page.locator('[data-testid="debug-row"]')).toHaveCount(1);
     await page.getByTestId('write-row').click();
-    await expect(page.locator('.list__row')).toHaveCount(2);
+    await expect(page.locator('[data-testid="debug-row"]')).toHaveCount(2);
 
     // Kill the tab.
     await page.close();
@@ -58,10 +58,10 @@ test.describe('storage', () => {
     const reopened = await context.newPage();
     await openStorageCheck(reopened);
     await expect(mode(reopened)).toHaveText('OPFS');
-    await expect(reopened.locator('.list__row')).toHaveCount(2);
+    await expect(reopened.locator('[data-testid="debug-row"]')).toHaveCount(2);
 
     await reopened.getByTestId('clear-rows').click();
-    await expect(reopened.locator('.list__row')).toHaveCount(0);
+    await expect(reopened.locator('[data-testid="debug-row"]')).toHaveCount(0);
     await reopened.close();
   });
 
@@ -75,7 +75,7 @@ test.describe('storage', () => {
     await readyFallbackLedger(page);
 
     await page.getByTestId('write-row').click();
-    await expect(page.locator('.list__row')).toHaveCount(1);
+    await expect(page.locator('[data-testid="debug-row"]')).toHaveCount(1);
 
     await page.close();
 
@@ -84,14 +84,14 @@ test.describe('storage', () => {
     const reopened = await context.newPage();
     await openStorageCheck(reopened);
     await expect(mode(reopened)).toHaveText('OPFS');
-    await expect(reopened.locator('.list__row')).toHaveCount(0);
+    await expect(reopened.locator('[data-testid="debug-row"]')).toHaveCount(0);
 
     await reopened.getByTestId('force-idb').click();
     await readyFallbackLedger(reopened);
-    await expect(reopened.locator('.list__row')).toHaveCount(1);
+    await expect(reopened.locator('[data-testid="debug-row"]')).toHaveCount(1);
 
     await reopened.getByTestId('clear-rows').click();
-    await expect(reopened.locator('.list__row')).toHaveCount(0);
+    await expect(reopened.locator('[data-testid="debug-row"]')).toHaveCount(0);
     await reopened.close();
   });
 

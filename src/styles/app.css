@@ -11,6 +11,9 @@
 @import './base.css' layer(legacy);
 @import './shell.css' layer(legacy);
 @import '../components/components.css' layer(legacy);
+@import '../features/stock/stock.css' layer(legacy);
+@import '../features/people/people.css' layer(legacy);
+@import '../features/reports/reports.css' layer(legacy);
 
 /* Dark mode is a class on <html>, set by the theme store. */
 @custom-variant dark (&:is(.dark *));

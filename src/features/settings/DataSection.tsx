@@ -1,20 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useApp, useT, useToast } from '../../appStore';
-import { Dialog } from '../../components/Dialog';
-import { listArchives, writeArchive, type ArchiveEntry } from '../../backup/archive';
-import { exportCsvFiles, exportJson, exportSqlite, type ExportFormat } from '../../backup/exporters';
+import { useApp, useT, useToast } from '@/appStore';
+import { Dialog } from '@/components/Dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { listArchives, writeArchive, type ArchiveEntry } from '@/backup/archive';
+import { exportCsvFiles, exportJson, exportSqlite, type ExportFormat } from '@/backup/exporters';
 import {
   NewerBackupError,
   UnreadableBackupError,
   readCandidate,
   restore,
   type Candidate,
-} from '../../backup/importer';
-import { canShareFiles, download, shareFile } from '../../backup/share';
-import { db } from '../../db/client';
-import { toCsv } from '../../lib/csv';
-import { formatDateTime } from '../../lib/dates';
+} from '@/backup/importer';
+import { canShareFiles, download, shareFile } from '@/backup/share';
+import { db } from '@/db/client';
+import { toCsv } from '@/lib/csv';
+import { formatDateTime } from '@/lib/dates';
+import { cn } from '@/lib/cn';
 import { formatBytes } from './DebugScreen';
 
 const FORMATS: readonly { key: ExportFormat; label: `backup.format${string}` }[] = [
@@ -22,6 +26,34 @@ const FORMATS: readonly { key: ExportFormat; label: `backup.format${string}` }[]
   { key: 'json', label: 'backup.formatJson' },
   { key: 'csv', label: 'backup.formatCsv' },
 ] as const;
+
+function Section({ title, children }: { title: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <section className="border-b p-4">
+      <h2 className="mb-3 flex items-center gap-3 text-base font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}
+
+function KV({
+  label,
+  children,
+  testid,
+}: {
+  label: string;
+  children: React.ReactNode;
+  testid?: string;
+}) {
+  return (
+    <div className="flex items-baseline gap-3 py-2 text-sm">
+      <span className="flex-1 text-muted-foreground">{label}</span>
+      <span className="text-end" data-testid={testid}>
+        {children}
+      </span>
+    </div>
+  );
+}
 
 export function DataSection() {
   const t = useT();
@@ -50,13 +82,8 @@ export function DataSection() {
   async function buildFile() {
     if (format === 'sqlite') return exportSqlite();
     if (format === 'json') return exportJson();
-    // Several CSVs go out as one file with the sheets appended, each under its
-    // own heading — the share sheet takes one file, and five separate shares
-    // would be five separate WhatsApp messages.
     const files = await exportCsvFiles();
-    const combined = files
-      .map((file) => `${toCsv([[file.name]])}${file.text}`)
-      .join('\r\n');
+    const combined = files.map((file) => `${toCsv([[file.name]])}${file.text}`).join('\r\n');
     return {
       name: files[0]!.name.replace('-products-', '-all-'),
       type: 'text/csv',
@@ -119,9 +146,6 @@ export function DataSection() {
       await restore(candidate);
       setCandidate(null);
       toast(t('backup.restored'));
-      // Reload rather than patch the screens back into agreement: every cached
-      // list, the settings and the cart all refer to a database that no longer
-      // exists.
       window.location.assign(`${import.meta.env.BASE_URL}sell`);
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'bad');
@@ -130,157 +154,157 @@ export function DataSection() {
   }
 
   const lastBackup = settings['last_backup_at'] ?? '';
+  const primaryDownload = !canShareFiles();
 
   return (
     <>
-      <div className="section-head">{t('settings.data')}</div>
+      <Section title={t('settings.data')}>
+        <div className="divide-y">
+          <KV label={t('settings.storageMode')}>
+            {info?.mode === 'opfs' ? t('settings.storageOpfs') : t('settings.storageIdb')}
+          </KV>
+          <KV label={t('settings.dbSize')}>
+            <span className="num">{dbBytes === null ? '—' : formatBytes(dbBytes)}</span>
+          </KV>
+          <KV label={t('settings.spaceUsed')}>
+            <span className="num">
+              {estimate?.usage === undefined ? '—' : formatBytes(estimate.usage)}
+              {estimate?.quota !== undefined ? ` / ${formatBytes(estimate.quota)}` : ''}
+            </span>
+          </KV>
+          <KV label={t('settings.onHomeScreen')} testid="on-home-screen">
+            {installed ? t('settings.persistentYes') : t('settings.persistentNo')}
+          </KV>
+          <KV label={t('settings.persistent')} testid="persisted-status">
+            {persisted === null
+              ? '—'
+              : persisted
+                ? t('settings.persistentYes')
+                : t('settings.persistentNo')}
+          </KV>
+          <KV label={t('settings.lastBackup')} testid="last-backup">
+            <span className="num">
+              {lastBackup ? formatDateTime(lastBackup) : t('settings.never')}
+            </span>
+          </KV>
+        </div>
+      </Section>
 
-      <div className="kv">
-        <span className="kv__key">{t('settings.storageMode')}</span>
-        <span className="kv__value">
-          {info?.mode === 'opfs' ? t('settings.storageOpfs') : t('settings.storageIdb')}
-        </span>
-      </div>
-      <div className="kv">
-        <span className="kv__key">{t('settings.dbSize')}</span>
-        <span className="kv__value num">{dbBytes === null ? '—' : formatBytes(dbBytes)}</span>
-      </div>
-      <div className="kv">
-        <span className="kv__key">{t('settings.spaceUsed')}</span>
-        <span className="kv__value num">
-          {estimate?.usage === undefined ? '—' : formatBytes(estimate.usage)}
-          {estimate?.quota !== undefined ? ` / ${formatBytes(estimate.quota)}` : ''}
-        </span>
-      </div>
-      <div className="kv">
-        <span className="kv__key">{t('settings.onHomeScreen')}</span>
-        <span className="kv__value" data-testid="on-home-screen">
-          {installed ? t('settings.persistentYes') : t('settings.persistentNo')}
-        </span>
-      </div>
-      <div className="kv">
-        <span className="kv__key">{t('settings.persistent')}</span>
-        <span className="kv__value" data-testid="persisted-status">
-          {persisted === null
-            ? '—'
-            : persisted
-              ? t('settings.persistentYes')
-              : t('settings.persistentNo')}
-        </span>
-      </div>
-      <div className="kv">
-        <span className="kv__key">{t('settings.lastBackup')}</span>
-        <span className="kv__value num" data-testid="last-backup">
-          {lastBackup ? formatDateTime(lastBackup) : t('settings.never')}
-        </span>
-      </div>
+      <Section title={t('backup.title')}>
+        <div className="grid gap-3">
+          <div className="grid gap-2">
+            <Label>{t('backup.format')}</Label>
+            <div className="grid grid-cols-3 gap-2">
+              {FORMATS.map((entry) => (
+                <Button
+                  key={entry.key}
+                  variant="outline"
+                  aria-pressed={format === entry.key}
+                  onClick={() => setFormat(entry.key)}
+                  data-testid={`format-${entry.key}`}
+                  className={cn(
+                    format === entry.key && 'border-foreground bg-foreground text-background',
+                  )}
+                >
+                  {t(entry.label as never)}
+                </Button>
+              ))}
+            </div>
+          </div>
 
-      <div className="section-head">{t('backup.title')}</div>
+          {canShareFiles() && (
+            <Button
+              size="lg"
+              className="w-full"
+              disabled={busy}
+              onClick={() => void send('share')}
+              data-testid="backup-share"
+            >
+              {t('backup.share')}
+            </Button>
+          )}
 
-      <div className="screen__pad stack">
-        <div>
-          <span className="field__label">{t('backup.format')}</span>
-          <div className="methods">
-            {FORMATS.map((entry) => (
-              <button
-                key={entry.key}
-                type="button"
-                className="btn"
-                aria-pressed={format === entry.key}
-                onClick={() => setFormat(entry.key)}
-                data-testid={`format-${entry.key}`}
-              >
-                {t(entry.label as never)}
-              </button>
+          <Button
+            variant={primaryDownload ? 'default' : 'outline'}
+            size={primaryDownload ? 'lg' : 'default'}
+            className="w-full"
+            disabled={busy}
+            onClick={() => void send('download')}
+            data-testid="backup-download"
+          >
+            {t('backup.download')}
+          </Button>
+
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={busy}
+            onClick={() => void copyToArchive()}
+            data-testid="backup-archive"
+          >
+            {t('backup.archive')}
+          </Button>
+          <p className="text-sm text-muted-foreground">{t('backup.archiveHint')}</p>
+        </div>
+      </Section>
+
+      <Section
+        title={
+          <>
+            <span>{t('backup.archives')}</span>
+            <span className="num ms-auto text-sm text-muted-foreground">{archives.length}</span>
+          </>
+        }
+      >
+        {archives.length === 0 ? (
+          <p className="text-sm text-muted-foreground">{t('backup.archivesEmpty')}</p>
+        ) : (
+          <div className="divide-y">
+            {archives.map((entry) => (
+              <div key={entry.name} className="flex items-baseline gap-3 py-2 text-sm">
+                <span className="num flex-1 truncate">{entry.name}</span>
+                <span className="num">{formatBytes(entry.size)}</span>
+              </div>
             ))}
           </div>
-        </div>
-
-        {canShareFiles() && (
-          <button
-            type="button"
-            className="btn btn--primary btn--lg btn--block"
-            disabled={busy}
-            onClick={() => void send('share')}
-            data-testid="backup-share"
-          >
-            {t('backup.share')}
-          </button>
         )}
+      </Section>
 
-        <button
-          type="button"
-          className={`btn btn--block${canShareFiles() ? '' : ' btn--primary btn--lg'}`}
-          disabled={busy}
-          onClick={() => void send('download')}
-          data-testid="backup-download"
-        >
-          {t('backup.download')}
-        </button>
+      <Section title={t('backup.restore')}>
+        <div className="grid gap-3">
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".sqlite3,.json,application/json,application/vnd.sqlite3"
+            className="sr-only"
+            onChange={(event) => void pickRestoreFile(event.target.files?.[0])}
+            data-testid="restore-input"
+          />
+          <Button
+            variant="outline"
+            className="w-full"
+            disabled={busy}
+            onClick={() => fileInput.current?.click()}
+          >
+            {t('backup.restoreChoose')}
+          </Button>
+          <p className="text-sm text-muted-foreground">{t('backup.restoreSafety')}</p>
+        </div>
+      </Section>
 
-        <button
-          type="button"
-          className="btn btn--block"
-          disabled={busy}
-          onClick={() => void copyToArchive()}
-          data-testid="backup-archive"
-        >
-          {t('backup.archive')}
-        </button>
-        <p className="field__hint">{t('backup.archiveHint')}</p>
-      </div>
-
-      <div className="section-head">
-        <span>{t('backup.archives')}</span>
-        <span className="section-head__spacer" />
-        <span className="meta num">{archives.length}</span>
-      </div>
-      {archives.length === 0 ? (
-        <p className="screen__pad meta">{t('backup.archivesEmpty')}</p>
-      ) : (
-        archives.map((entry) => (
-          <div key={entry.name} className="kv">
-            <span className="kv__key num">{entry.name}</span>
-            <span className="kv__value num">{formatBytes(entry.size)}</span>
-          </div>
-        ))
-      )}
-
-      <div className="section-head">{t('backup.restore')}</div>
-      <div className="screen__pad stack">
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".sqlite3,.json,application/json,application/vnd.sqlite3"
-          className="visually-hidden"
-          onChange={(event) => void pickRestoreFile(event.target.files?.[0])}
-          data-testid="restore-input"
-        />
-        <button
-          type="button"
-          className="btn btn--block"
-          disabled={busy}
-          onClick={() => fileInput.current?.click()}
-        >
-          {t('backup.restoreChoose')}
-        </button>
-        <p className="field__hint">{t('backup.restoreSafety')}</p>
-      </div>
-
-      <div className="section-head" style={{ color: 'var(--seal)' }}>
-        {t('reset.title')}
-      </div>
-      <div className="screen__pad stack">
-        <p className="field__hint">{t('reset.warning')}</p>
-        <button
-          type="button"
-          className="btn btn--danger btn--block"
-          onClick={() => setResetting(true)}
-          data-testid="reset-open"
-        >
-          {t('reset.title')}
-        </button>
-      </div>
+      <Section title={<span className="text-destructive">{t('reset.title')}</span>}>
+        <div className="grid gap-3">
+          <p className="text-sm text-muted-foreground">{t('reset.warning')}</p>
+          <Button
+            variant="ghost"
+            className="w-full border border-destructive text-destructive hover:bg-destructive/10 hover:text-destructive"
+            onClick={() => setResetting(true)}
+            data-testid="reset-open"
+          >
+            {t('reset.title')}
+          </Button>
+        </div>
+      </Section>
 
       {candidate && (
         <Dialog
@@ -289,18 +313,16 @@ export function DataSection() {
           hideClose
           footer={
             <>
-              <button type="button" className="btn" onClick={() => setCandidate(null)}>
+              <Button variant="outline" onClick={() => setCandidate(null)}>
                 {t('action.cancel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
+              </Button>
+              <Button
                 disabled={busy}
                 onClick={() => void doRestore()}
                 data-testid="confirm-restore"
               >
                 {busy ? t('backup.restoring') : t('action.confirm')}
-              </button>
+              </Button>
             </>
           }
         >
@@ -311,9 +333,7 @@ export function DataSection() {
               customers: candidate.summary.customers,
             })}
           </p>
-          <p className="field__hint" style={{ marginBlockStart: 'var(--s3)' }}>
-            {t('backup.restoreSafety')}
-          </p>
+          <p className="mt-3 text-sm text-muted-foreground">{t('backup.restoreSafety')}</p>
         </Dialog>
       )}
 
@@ -322,10 +342,6 @@ export function DataSection() {
   );
 }
 
-/**
- * Reset requires typing the shop name. Not a "type DELETE" ritual: typing the
- * shop's own name means the person doing it knows which shop they are erasing.
- */
 function ResetDialog({ onClose }: { onClose: () => void }) {
   const t = useT();
   const toast = useToast();
@@ -353,35 +369,34 @@ function ResetDialog({ onClose }: { onClose: () => void }) {
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--danger"
+          </Button>
+          <Button
+            variant="destructive"
             disabled={!matches || busy}
             onClick={() => void wipe()}
             data-testid="confirm-reset"
           >
             {t('reset.confirm')}
-          </button>
+          </Button>
         </>
       }
     >
-      <p style={{ marginBlockEnd: 'var(--s3)' }}>{t('reset.warning')}</p>
+      <p className="mb-3">{t('reset.warning')}</p>
       {shopName === '' ? (
-        <p className="field__error">{t('reset.noShopName')}</p>
+        <p className="text-sm text-destructive">{t('reset.noShopName')}</p>
       ) : (
-        <label className="field">
-          <span className="field__label">{t('reset.typeName')}</span>
-          <input
-            className="input"
+        <div className="grid gap-2">
+          <Label htmlFor="reset-name">{t('reset.typeName')}</Label>
+          <Input
+            id="reset-name"
+            autoFocus
             value={typed}
             onChange={(event) => setTyped(event.target.value)}
             placeholder={shopName}
-            data-autofocus
           />
-        </label>
+        </div>
       )}
     </Dialog>
   );

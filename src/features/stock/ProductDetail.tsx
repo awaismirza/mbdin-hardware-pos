@@ -1,15 +1,20 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useLanguage, useT, useToast } from '../../appStore';
-import { Dialog } from '../../components/Dialog';
-import { ProductPhoto } from '../../components/ProductPhoto';
-import { getProduct, setProductActive } from '../../db/repos/productsRepo';
-import { listMovements, receiveStock, stockTake } from '../../db/repos/stockRepo';
-import { pickName } from '../../i18n';
-import { formatDateTime } from '../../lib/dates';
-import { formatPKR, formatQty, marginPercent, parsePaisa, roundQty } from '../../lib/money';
-import type { Product, StockMovement } from '../../types/domain';
+import { useLanguage, useT, useToast } from '@/appStore';
+import { Dialog } from '@/components/Dialog';
+import { ProductPhoto } from '@/components/ProductPhoto';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getProduct, setProductActive } from '@/db/repos/productsRepo';
+import { listMovements, receiveStock, stockTake } from '@/db/repos/stockRepo';
+import { pickName } from '@/i18n';
+import { formatDateTime } from '@/lib/dates';
+import { formatPKR, formatQty, marginPercent, parsePaisa, roundQty } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import type { Product, StockMovement } from '@/types/domain';
 
 type Mode = 'none' | 'receive' | 'take';
 
@@ -39,9 +44,9 @@ export function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="screen">
-        <div className="screen__body empty">{t('common.loading')}</div>
-      </div>
+      <Screen title="" onBack={() => navigate('/stock')}>
+        <p className="p-8 text-center text-muted-foreground">{t('common.loading')}</p>
+      </Screen>
     );
   }
 
@@ -55,85 +60,89 @@ export function ProductDetail() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/stock')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title truncate">{name}</h1>
-        <button
-          type="button"
-          className="btn"
-          onClick={() => navigate(`/stock/product/${product.id}`)}
-        >
+    <Screen
+      title={name}
+      onBack={() => navigate('/stock')}
+      actions={
+        <Button variant="outline" size="sm" onClick={() => navigate(`/stock/product/${product.id}`)}>
           {t('action.edit')}
-        </button>
-      </div>
-
-      <div className="screen__body">
-        <div className="stock-detail-hero">
+        </Button>
+      }
+    >
+      <div className="p-4">
+        <div className="flex items-center gap-4">
           <ProductPhoto
             productId={product.id}
             hasPhoto={product.hasPhoto}
             name={name}
-            className="stock-detail-hero__photo"
+            className="size-28 flex-none rounded-xl border bg-muted object-cover text-xl font-semibold text-muted-foreground [&:is(span)]:grid [&:is(span)]:place-items-center"
           />
           <div>
-            <span className="stock-detail-hero__label">{t('common.qty')}</span>
-            <strong className="stock-detail-hero__qty num" data-testid="stock-quantity">
+            <span className="block text-sm text-muted-foreground">{t('common.qty')}</span>
+            <strong className="num block text-lg" data-testid="stock-quantity">
               {formatQty(product.stockQty)} {t(`unit.${product.unit}`)}
             </strong>
           </div>
         </div>
-        <div className="kv">
-          <span className="kv__key">{t('common.price')}</span>
-          <span className="kv__value money">{formatPKR(product.pricePaisa)}</span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('common.cost')}</span>
-          <span className="kv__value money">{formatPKR(product.costPaisa)}</span>
-        </div>
-        {margin !== null && (
-          <div className="kv">
-            <span className="kv__key">{t('stock.margin')}</span>
-            <span className="kv__value num">{margin}%</span>
-          </div>
-        )}
-        {product.barcode && (
-          <div className="kv">
-            <span className="kv__key">{t('common.barcode')}</span>
-            <span className="kv__value num">{product.barcode}</span>
-          </div>
-        )}
 
-        <div className="screen__pad row" style={{ flexWrap: 'wrap' }}>
-          <button type="button" className="btn btn--primary" onClick={() => setMode('receive')}>
-            {t('stock.receive')}
-          </button>
-          <button type="button" className="btn" onClick={() => setMode('take')}>
+        <dl className="mt-4 divide-y rounded-xl border">
+          <Row label={t('common.price')} testid="kv-price">
+            <span className="money">{formatPKR(product.pricePaisa)}</span>
+          </Row>
+          <Row label={t('common.cost')} testid="kv-cost">
+            <span className="money">{formatPKR(product.costPaisa)}</span>
+          </Row>
+          {margin !== null && (
+            <Row label={t('stock.margin')}>
+              <span className="num">{margin}%</span>
+            </Row>
+          )}
+          {product.barcode && (
+            <Row label={t('common.barcode')}>
+              <span className="num">{product.barcode}</span>
+            </Row>
+          )}
+        </dl>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button onClick={() => setMode('receive')}>{t('stock.receive')}</Button>
+          <Button variant="outline" onClick={() => setMode('take')}>
             {t('stock.take')}
-          </button>
-          <button type="button" className="btn" onClick={() => void toggleActive()}>
+          </Button>
+          <Button variant="outline" onClick={() => void toggleActive()}>
             {product.isActive ? t('stock.deactivate') : t('stock.reactivate')}
-          </button>
+          </Button>
         </div>
 
-        <div className="section-head">{t('stock.movements')}</div>
-        {movements.length === 0 && <p className="screen__pad meta">{t('stock.noMovements')}</p>}
-        {movements.map((movement) => (
-          <div key={movement.id} className="movement">
-            <span className="movement__kind">{t(`stock.movement.${movement.kind}` as never)}</span>
-            <span
-              className={`movement__delta ${
-                movement.qtyDelta >= 0 ? 'movement__delta--in' : 'movement__delta--out'
-              }`}
+        <h2 className="mt-6 mb-2 text-base font-semibold">{t('stock.movements')}</h2>
+        {movements.length === 0 && (
+          <p className="text-sm text-muted-foreground">{t('stock.noMovements')}</p>
+        )}
+        <div className="divide-y rounded-xl border">
+          {movements.map((movement) => (
+            <div
+              key={movement.id}
+              data-testid="movement"
+              className="flex items-baseline gap-3 px-4 py-3 text-sm"
             >
-              {movement.qtyDelta > 0 ? '+' : ''}
-              {formatQty(movement.qtyDelta)}
-            </span>
-            <span className="movement__when">{formatDateTime(movement.createdAt)}</span>
-          </div>
-        ))}
+              <span className="w-20 flex-none text-muted-foreground">
+                {t(`stock.movement.${movement.kind}` as never)}
+              </span>
+              <span
+                className={cn(
+                  'num w-16 text-end font-semibold tabular-nums',
+                  movement.qtyDelta >= 0 ? 'text-success' : 'text-destructive',
+                )}
+              >
+                {movement.qtyDelta > 0 ? '+' : ''}
+                {formatQty(movement.qtyDelta)}
+              </span>
+              <span className="num flex-1 text-end text-muted-foreground">
+                {formatDateTime(movement.createdAt)}
+              </span>
+            </div>
+          ))}
+        </div>
       </div>
 
       {mode === 'receive' && (
@@ -160,6 +169,25 @@ export function ProductDetail() {
           }}
         />
       )}
+    </Screen>
+  );
+}
+
+function Row({
+  label,
+  testid,
+  children,
+}: {
+  label: string;
+  testid?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-baseline gap-3 px-4 py-3">
+      <dt className="flex-1 text-sm text-muted-foreground">{label}</dt>
+      <dd className="text-end" data-testid={testid}>
+        {children}
+      </dd>
     </div>
   );
 }
@@ -196,55 +224,47 @@ function ReceiveDialog({ product, onClose, onDone }: DialogProps) {
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!valid || busy}
-            onClick={() => void submit()}
-          >
+          </Button>
+          <Button disabled={!valid || busy} onClick={() => void submit()}>
             {t('stock.receive')}
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="stack">
-        <label className="field">
-          <span className="field__label">{t('stock.receiveQty')}</span>
-          <input
-            className="input num"
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <Label htmlFor="receive-qty">{t('stock.receiveQty')}</Label>
+          <Input
+            id="receive-qty"
+            className="num"
             inputMode="decimal"
+            autoFocus
             value={qty}
             onChange={(event) => setQty(event.target.value)}
-            data-autofocus
           />
-        </label>
-        <label className="field">
-          <span className="field__label">
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="receive-cost">
             {t('stock.receiveCost', { unit: t(`unit.${product.unit}` as never) })}
-          </span>
-          <input
-            className="input num"
+          </Label>
+          <Input
+            id="receive-cost"
+            className="num"
             inputMode="decimal"
             value={cost}
             onChange={(event) => setCost(event.target.value)}
             placeholder={String(product.costPaisa / 100)}
           />
-          <span className="field__hint">{t('stock.receiveCostHint')}</span>
-        </label>
+          <span className="text-sm text-muted-foreground">{t('stock.receiveCostHint')}</span>
+        </div>
       </div>
     </Dialog>
   );
 }
 
-function StockTakeDialog({
-  product,
-  reason,
-  onClose,
-  onDone,
-}: DialogProps & { reason: string }) {
+function StockTakeDialog({ product, reason, onClose, onDone }: DialogProps & { reason: string }) {
   const t = useT();
   const [counted, setCounted] = useState('');
   const [busy, setBusy] = useState(false);
@@ -270,36 +290,32 @@ function StockTakeDialog({
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
-            disabled={!valid || busy}
-            onClick={() => void submit()}
-          >
+          </Button>
+          <Button disabled={!valid || busy} onClick={() => void submit()}>
             {t('action.save')}
-          </button>
+          </Button>
         </>
       }
     >
-      <div className="stack">
-        <label className="field">
-          <span className="field__label">{t('stock.takeCounted')}</span>
-          <input
-            className="input num"
+      <div className="grid gap-3">
+        <div className="grid gap-2">
+          <Label htmlFor="take-counted">{t('stock.takeCounted')}</Label>
+          <Input
+            id="take-counted"
+            className="num"
             inputMode="decimal"
+            autoFocus
             value={counted}
             onChange={(event) => setCounted(event.target.value)}
-            data-autofocus
           />
-          <span className="field__hint">
+          <span className="text-sm text-muted-foreground">
             {t('stock.takeCurrent', { qty: formatQty(product.stockQty) })}
           </span>
-        </label>
+        </div>
         {valid && delta !== 0 && (
-          <p className="meta num">
+          <p className="num text-sm text-muted-foreground">
             {delta > 0 ? '+' : ''}
             {formatQty(delta)} {t(`unit.${product.unit}` as never)}
           </p>

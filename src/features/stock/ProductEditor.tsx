@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
-import { useApp, useLanguage, useT, useToast } from '../../appStore';
-import { Switch } from '../../components/EmptyState';
+import { useApp, useLanguage, useT, useToast } from '@/appStore';
+import { Switch } from '@/components/EmptyState';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   DuplicateFieldError,
   createProduct,
@@ -11,11 +14,12 @@ import {
   listCategories,
   setProductPhoto,
   updateProduct,
-} from '../../db/repos/productsRepo';
-import { pickName } from '../../i18n';
-import { formatPKR, marginPercent, parsePaisa, roundQty } from '../../lib/money';
-import type { PreparedPhoto } from '../../lib/photo';
-import { UNITS, type Category, type Unit } from '../../types/domain';
+} from '@/db/repos/productsRepo';
+import { pickName } from '@/i18n';
+import { formatPKR, marginPercent, parsePaisa, roundQty } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import type { PreparedPhoto } from '@/lib/photo';
+import { UNITS, type Category, type Unit } from '@/types/domain';
 import { BarcodeScanner } from '../sell/BarcodeScanner';
 import { PhotoField } from './PhotoField';
 
@@ -47,6 +51,9 @@ const EMPTY: FormState = {
   isActive: true,
 };
 
+const SELECT_CLASS =
+  'h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/40';
+
 export function ProductEditor() {
   const t = useT();
   const language = useLanguage();
@@ -72,8 +79,6 @@ export function ProductEditor() {
 
   useEffect(() => {
     if (isNew) {
-      // Arriving from "Add a new product with this barcode" after a scan that
-      // matched nothing: carry the code across so it is not retyped.
       setForm({
         ...EMPTY,
         lowStock: settings['low_stock_default'] ?? '',
@@ -136,7 +141,6 @@ export function ProductEditor() {
         ? await createProduct({ ...draft, openingQty: roundQty(Number(form.openingStock) || 0) })
         : (await updateProduct({ ...draft, id: productId }), productId);
 
-      // `undefined` means the photo was never touched, so leave it alone.
       if (photo) await setProductPhoto(id, photo);
       else if (photo === null) await deleteProductPhoto(id);
 
@@ -157,29 +161,24 @@ export function ProductEditor() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/stock')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title">{isNew ? t('stock.addProduct') : t('stock.editProduct')}</h1>
-      </div>
-
-      <div className="screen__body">
-        <div className="form-grid">
+    <Screen
+      title={isNew ? t('stock.addProduct') : t('stock.editProduct')}
+      onBack={() => navigate('/stock')}
+      scroll={false}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
           <Field label={t('stock.nameUr')} error={errors.nameUr}>
-            <input
-              className="input"
+            <Input
               value={form.nameUr}
               onChange={(event) => set('nameUr', event.target.value)}
               dir="rtl"
-              data-autofocus
+              autoFocus
             />
           </Field>
 
           <Field label={t('stock.nameEn')} error={errors.nameEn}>
-            <input
-              className="input"
+            <Input
               value={form.nameEn}
               onChange={(event) => set('nameEn', event.target.value)}
               dir="ltr"
@@ -188,7 +187,7 @@ export function ProductEditor() {
 
           <Field label={t('common.category')}>
             <select
-              className="select"
+              className={SELECT_CLASS}
               value={form.categoryId}
               onChange={(event) => set('categoryId', event.target.value)}
             >
@@ -203,7 +202,7 @@ export function ProductEditor() {
 
           <Field label={t('common.unit')}>
             <select
-              className="select"
+              className={SELECT_CLASS}
               value={form.unit}
               onChange={(event) => set('unit', event.target.value as Unit)}
             >
@@ -216,8 +215,8 @@ export function ProductEditor() {
           </Field>
 
           <Field label={t('common.cost')}>
-            <input
-              className="input num"
+            <Input
+              className="num"
               inputMode="decimal"
               value={form.cost}
               onChange={(event) => set('cost', event.target.value)}
@@ -234,8 +233,8 @@ export function ProductEditor() {
                 : `${t('stock.margin')} ${margin}% · ${formatPKR((pricePaisa ?? 0) - costPaisa)}`
             }
           >
-            <input
-              className="input num"
+            <Input
+              className="num"
               inputMode="decimal"
               value={form.price}
               onChange={(event) => set('price', event.target.value)}
@@ -245,8 +244,8 @@ export function ProductEditor() {
 
           {isNew && (
             <Field label={t('stock.openingStock')}>
-              <input
-                className="input num"
+              <Input
+                className="num"
                 inputMode="decimal"
                 value={form.openingStock}
                 onChange={(event) => set('openingStock', event.target.value)}
@@ -256,8 +255,8 @@ export function ProductEditor() {
           )}
 
           <Field label={t('stock.lowThreshold')}>
-            <input
-              className="input num"
+            <Input
+              className="num"
               inputMode="decimal"
               value={form.lowStock}
               onChange={(event) => set('lowStock', event.target.value)}
@@ -266,8 +265,8 @@ export function ProductEditor() {
           </Field>
 
           <Field label={t('common.sku')} error={errors.sku}>
-            <input
-              className="input num"
+            <Input
+              className="num"
               value={form.sku}
               onChange={(event) => set('sku', event.target.value)}
               dir="ltr"
@@ -275,25 +274,25 @@ export function ProductEditor() {
           </Field>
 
           <Field label={t('common.barcode')} error={errors.barcode}>
-            <div className="row">
-              <input
-                className="input num grow"
+            <div className="flex gap-2">
+              <Input
+                className="num flex-1"
                 value={form.barcode}
                 onChange={(event) => set('barcode', event.target.value)}
                 dir="ltr"
                 inputMode="numeric"
               />
-              <button type="button" className="btn" onClick={() => setScanning(true)}>
+              <Button variant="outline" onClick={() => setScanning(true)}>
                 {t('action.scan')}
-              </button>
+              </Button>
             </div>
           </Field>
 
-          <div className="form-grid__wide">
+          <div className="sm:col-span-2">
             <PhotoField productId={isNew ? null : productId} onChange={setPhoto} />
           </div>
 
-          <div className="form-grid__wide">
+          <div className="sm:col-span-2">
             <Switch
               checked={form.isActive}
               onChange={(checked) => set('isActive', checked)}
@@ -303,18 +302,13 @@ export function ProductEditor() {
         </div>
       </div>
 
-      <div className="form-actions">
-        <button type="button" className="btn" onClick={() => navigate('/stock')}>
+      <div className="flex shrink-0 gap-2 border-t bg-card p-4">
+        <Button variant="outline" className="flex-1" onClick={() => navigate('/stock')}>
           {t('action.cancel')}
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => void save()}
-          disabled={saving}
-        >
+        </Button>
+        <Button className="flex-1" onClick={() => void save()} disabled={saving}>
           {saving ? t('common.saving') : t('action.save')}
-        </button>
+        </Button>
       </div>
 
       {scanning && (
@@ -326,7 +320,7 @@ export function ProductEditor() {
           }}
         />
       )}
-    </div>
+    </Screen>
   );
 }
 
@@ -339,11 +333,11 @@ interface FieldProps {
 
 function Field({ label, error, hint, children }: FieldProps) {
   return (
-    <label className="field">
-      <span className="field__label">{label}</span>
+    <label className={cn('grid gap-2', error && '[&_input]:border-destructive')}>
+      <span className="text-sm font-medium">{label}</span>
       {children}
-      {error && <span className="field__error">{error}</span>}
-      {!error && hint && <span className="field__hint">{hint}</span>}
+      {error && <span className="text-sm text-destructive">{error}</span>}
+      {!error && hint && <span className="text-sm text-muted-foreground">{hint}</span>}
     </label>
   );
 }

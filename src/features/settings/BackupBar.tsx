@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
-import { useApp, useT } from '../../appStore';
-import { runDailyArchive } from '../../backup/archive';
-import { hoursSince } from '../../lib/dates';
-import { shouldWarnAboutPersistence } from '../../lib/protection';
+import { useApp, useT } from '@/appStore';
+import { Button } from '@/components/ui/button';
+import { runDailyArchive } from '@/backup/archive';
+import { hoursSince } from '@/lib/dates';
+import { shouldWarnAboutPersistence } from '@/lib/protection';
 
 /**
  * Two quiet, non-blocking notices that live above every screen.
@@ -57,31 +58,48 @@ export function BackupBar() {
   return (
     <>
       {showPersistWarning && (
-        <div className="amber-bar" role="status" data-testid="persist-warning">
-          <span className="amber-bar__text">{t('backup.notPersisted')}</span>
-          <button type="button" className="btn" onClick={() => navigate('/settings')}>
+        <div
+          className="amber-bar flex shrink-0 items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning"
+          role="status"
+          data-testid="persist-warning"
+        >
+          <span className="flex-1">{t('backup.notPersisted')}</span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-warning/50 text-warning"
+            onClick={() => navigate('/settings')}
+          >
             {t('settings.install')}
-          </button>
-          <button
-            type="button"
-            className="btn"
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-warning"
             onClick={() => void saveSetting('persist_banner_dismissed', '1')}
           >
             {t('backup.dismiss')}
-          </button>
+          </Button>
         </div>
       )}
 
       {overdue && onSellScreen && (
-        <div className="amber-bar" role="status" data-testid="backup-overdue">
-          <span className="amber-bar__text">
-            {days && days >= 1
-              ? t('backup.overdue', { days })
-              : t('backup.overdueToday')}
+        <div
+          className="amber-bar flex shrink-0 items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning"
+          role="status"
+          data-testid="backup-overdue"
+        >
+          <span className="flex-1">
+            {days && days >= 1 ? t('backup.overdue', { days }) : t('backup.overdueToday')}
           </span>
-          <button type="button" className="btn" onClick={() => navigate('/settings')}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-warning/50 text-warning"
+            onClick={() => navigate('/settings')}
+          >
             {t('backup.backupNow')}
-          </button>
+          </Button>
         </div>
       )}
     </>

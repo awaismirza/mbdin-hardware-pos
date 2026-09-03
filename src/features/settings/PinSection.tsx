@@ -1,16 +1,13 @@
 import { useState } from 'react';
 
-import { useApp, useT, useToast } from '../../appStore';
-import { Dialog } from '../../components/Dialog';
-import { hashPin, isValidPin } from '../../lib/pin';
+import { useApp, useT, useToast } from '@/appStore';
+import { Dialog } from '@/components/Dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { hashPin, isValidPin } from '@/lib/pin';
 import { relockPin } from './PinGate';
 
-/**
- * Setting and clearing the PIN.
- *
- * The hint under it is deliberate and stays: a shopkeeper who thinks this is
- * real security might keep the tablet somewhere he otherwise would not.
- */
 export function PinSection() {
   const t = useT();
   const toast = useToast();
@@ -37,25 +34,22 @@ export function PinSection() {
   }
 
   return (
-    <>
-      <div className="section-head">{t('settings.pin')}</div>
-      <div className="screen__pad stack">
-        <p className="field__hint">{t('settings.pinHint')}</p>
-        <div className="row" style={{ flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn"
-            onClick={() => setEditing(true)}
-            data-testid="set-pin"
+    <section className="border-b p-4">
+      <h2 className="mb-3 text-base font-semibold">{t('settings.pin')}</h2>
+      <p className="mb-3 text-sm text-muted-foreground">{t('settings.pinHint')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" onClick={() => setEditing(true)} data-testid="set-pin">
+          {t('settings.pinSet')}
+        </Button>
+        {hasPin && (
+          <Button
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={() => void clear()}
           >
-            {t('settings.pinSet')}
-          </button>
-          {hasPin && (
-            <button type="button" className="btn btn--danger" onClick={() => void clear()}>
-              {t('settings.pinClear')}
-            </button>
-          )}
-        </div>
+            {t('settings.pinClear')}
+          </Button>
+        )}
       </div>
 
       {editing && (
@@ -64,34 +58,33 @@ export function PinSection() {
           onClose={() => setEditing(false)}
           footer={
             <>
-              <button type="button" className="btn" onClick={() => setEditing(false)}>
+              <Button variant="outline" onClick={() => setEditing(false)}>
                 {t('action.cancel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
+              </Button>
+              <Button
                 disabled={!isValidPin(pin)}
                 onClick={() => void save()}
                 data-testid="confirm-pin"
               >
                 {t('action.save')}
-              </button>
+              </Button>
             </>
           }
         >
-          <label className="field">
-            <span className="field__label">{t('settings.pinSet')}</span>
-            <input
-              className="input num"
+          <div className="grid gap-2">
+            <Label htmlFor="pin-input">{t('settings.pinSet')}</Label>
+            <Input
+              id="pin-input"
+              className="num"
               inputMode="numeric"
               maxLength={4}
+              autoFocus
               value={pin}
               onChange={(event) => setPin(event.target.value.replace(/\D/g, '').slice(0, 4))}
-              data-autofocus
             />
-          </label>
+          </div>
         </Dialog>
       )}
-    </>
+    </section>
   );
 }

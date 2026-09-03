@@ -1,12 +1,14 @@
 import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useT, useToast } from '../../appStore';
-import { db } from '../../db/client';
-import { createProduct, findOrCreateCategory, updateProduct } from '../../db/repos/productsRepo';
-import { guessMapping, readTable, PRODUCT_FIELDS, type ProductField } from '../../lib/csv';
-import { parsePaisa, roundQty } from '../../lib/money';
-import { toUnit } from '../../db/repos/rows';
+import { useT, useToast } from '@/appStore';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { db } from '@/db/client';
+import { createProduct, findOrCreateCategory, updateProduct } from '@/db/repos/productsRepo';
+import { guessMapping, readTable, PRODUCT_FIELDS, type ProductField } from '@/lib/csv';
+import { parsePaisa, roundQty } from '@/lib/money';
+import { toUnit } from '@/db/repos/rows';
 
 interface Loaded {
   headers: string[];
@@ -14,14 +16,9 @@ interface Loaded {
   mapping: Record<ProductField, number>;
 }
 
-/**
- * How a shop with four hundred lines gets started without typing them.
- *
- * Column mapping is guessed from the headings and then shown for confirmation,
- * because someone else's spreadsheet will not use our names. A row with no name
- * or no price is skipped rather than imported half-formed, and the count of
- * skipped rows is reported honestly at the end.
- */
+const SELECT_CLASS =
+  'h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/40';
+
 export function CsvImport() {
   const t = useT();
   const toast = useToast();
@@ -108,8 +105,6 @@ export function CsvImport() {
           isActive: true,
         };
 
-        // Match on barcode then SKU, so re-importing a supplier's updated price
-        // list edits the shop's products instead of duplicating them.
         const existing = await findExisting(barcode, sku);
         if (existing) {
           await updateProduct({ ...draft, id: existing });
@@ -131,43 +126,32 @@ export function CsvImport() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/stock')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title">{t('import.title')}</h1>
-      </div>
-
-      <div className="screen__body">
-        <div className="screen__pad">
-          <input
-            ref={input}
-            type="file"
-            accept=".csv,text/csv,text/plain"
-            className="visually-hidden"
-            onChange={(event) => void onFile(event.target.files?.[0])}
-          />
-          <button
-            type="button"
-            className="btn btn--primary btn--block"
-            onClick={() => input.current?.click()}
-          >
-            {t('import.choose')}
-          </button>
-        </div>
+    <Screen title={t('import.title')} onBack={() => navigate('/stock')}>
+      <div className="grid gap-4 p-4">
+        <input
+          ref={input}
+          type="file"
+          accept=".csv,text/csv,text/plain"
+          className="sr-only"
+          onChange={(event) => void onFile(event.target.files?.[0])}
+        />
+        <Button className="w-full" onClick={() => input.current?.click()}>
+          {t('import.choose')}
+        </Button>
 
         {loaded && (
           <>
-            <p className="screen__pad meta">{t('import.rowsFound', { count: loaded.rows.length })}</p>
+            <p className="text-sm text-muted-foreground">
+              {t('import.rowsFound', { count: loaded.rows.length })}
+            </p>
 
-            <div className="section-head">{t('import.mapColumns')}</div>
-            <div className="import-map">
+            <h2 className="text-base font-semibold">{t('import.mapColumns')}</h2>
+            <div className="grid gap-3">
               {PRODUCT_FIELDS.map((field) => (
-                <div key={field} className="import-map__row">
-                  <span>{fieldLabel(field, t)}</span>
+                <div key={field} className="grid grid-cols-2 items-center gap-3">
+                  <span className="text-sm">{fieldLabel(field, t)}</span>
                   <select
-                    className="select"
+                    className={SELECT_CLASS}
                     value={loaded.mapping[field]}
                     onChange={(event) => setColumn(field, Number(event.target.value))}
                   >
@@ -182,21 +166,28 @@ export function CsvImport() {
               ))}
             </div>
 
-            <div className="section-head">{t('import.preview')}</div>
-            <div className="preview-table">
-              <table>
+            <h2 className="text-base font-semibold">{t('import.preview')}</h2>
+            <div className="overflow-x-auto rounded-xl border">
+              <table className="min-w-full text-sm">
                 <thead>
-                  <tr>
+                  <tr className="border-b bg-muted/50">
                     {loaded.headers.map((header, index) => (
-                      <th key={`${header}-${index}`}>{header}</th>
+                      <th
+                        key={`${header}-${index}`}
+                        className="whitespace-nowrap px-3 py-2 text-start font-semibold"
+                      >
+                        {header}
+                      </th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {loaded.rows.slice(0, 5).map((row, rowIndex) => (
-                    <tr key={rowIndex}>
+                    <tr key={rowIndex} className="border-b last:border-0">
                       {loaded.headers.map((_, columnIndex) => (
-                        <td key={columnIndex}>{row[columnIndex] ?? ''}</td>
+                        <td key={columnIndex} className="whitespace-nowrap px-3 py-2">
+                          {row[columnIndex] ?? ''}
+                        </td>
                       ))}
                     </tr>
                   ))}
@@ -204,20 +195,13 @@ export function CsvImport() {
               </table>
             </div>
 
-            <div className="screen__pad">
-              <button
-                type="button"
-                className="btn btn--primary btn--block"
-                disabled={busy}
-                onClick={() => void run()}
-              >
-                {busy ? t('common.saving') : t('import.run', { count: loaded.rows.length })}
-              </button>
-            </div>
+            <Button className="w-full" disabled={busy} onClick={() => void run()}>
+              {busy ? t('common.saving') : t('import.run', { count: loaded.rows.length })}
+            </Button>
           </>
         )}
       </div>
-    </div>
+    </Screen>
   );
 }
 

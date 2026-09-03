@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
-import { useT, useToast } from '../../appStore';
-import { Switch } from '../../components/EmptyState';
+import { useT, useToast } from '@/appStore';
+import { Switch } from '@/components/EmptyState';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   createCustomer,
   deleteCustomerPhoto,
   getCustomer,
   setCustomerPhoto,
   updateCustomer,
-} from '../../db/repos/customersRepo';
-import { parsePaisa } from '../../lib/money';
-import type { PreparedPhoto } from '../../lib/photo';
+} from '@/db/repos/customersRepo';
+import { parsePaisa } from '@/lib/money';
+import type { PreparedPhoto } from '@/lib/photo';
 import { CustomerPhotoField } from './CustomerPhotoField';
 
 interface FormState {
@@ -86,7 +89,6 @@ export function CustomerEditor() {
         ? await createCustomer(draft)
         : (await updateCustomer({ ...draft, id: customerId }), customerId);
 
-      // `undefined` means the portrait was untouched while editing.
       if (photo) await setCustomerPhoto(id, photo);
       else if (photo === null) await deleteCustomerPhoto(id);
 
@@ -100,33 +102,27 @@ export function CustomerEditor() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/people')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title">
-          {isNew ? t('people.addCustomer') : t('people.editCustomer')}
-        </h1>
-      </div>
-
-      <div className="screen__body">
-        <div className="form-grid">
-          <label className="field">
-            <span className="field__label">{t('common.name')}</span>
-            <input
-              className="input"
+    <Screen
+      title={isNew ? t('people.addCustomer') : t('people.editCustomer')}
+      onBack={() => navigate('/people')}
+      scroll={false}
+    >
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
+        <div className="grid gap-4 p-4 sm:grid-cols-2">
+          <label className="grid gap-2">
+            <span className="text-sm font-medium">{t('common.name')}</span>
+            <Input
               value={form.name}
               onChange={(event) => set('name', event.target.value)}
-              data-autofocus
+              autoFocus
             />
-            {error && <span className="field__error">{error}</span>}
+            {error && <span className="text-sm text-destructive">{error}</span>}
           </label>
 
-          <label className="field">
-            <span className="field__label">{t('common.phone')}</span>
-            <input
-              className="input num"
+          <label className="grid gap-2">
+            <span className="text-sm font-medium">{t('common.phone')}</span>
+            <Input
+              className="num"
               inputMode="tel"
               dir="ltr"
               value={form.phone}
@@ -135,41 +131,40 @@ export function CustomerEditor() {
             />
           </label>
 
-          <label className="field form-grid__wide">
-            <span className="field__label">{t('common.address')}</span>
-            <input
-              className="input"
+          <label className="grid gap-2 sm:col-span-2">
+            <span className="text-sm font-medium">{t('common.address')}</span>
+            <Input
               value={form.address}
               onChange={(event) => set('address', event.target.value)}
             />
           </label>
 
-          <label className="field">
-            <span className="field__label">{t('people.creditLimit')}</span>
-            <input
-              className="input num"
+          <label className="grid gap-2">
+            <span className="text-sm font-medium">{t('people.creditLimit')}</span>
+            <Input
+              className="num"
               inputMode="decimal"
               value={form.creditLimit}
               onChange={(event) => set('creditLimit', event.target.value)}
               placeholder="0"
             />
-            <span className="field__hint">{t('people.creditLimitHint')}</span>
+            <span className="text-sm text-muted-foreground">{t('people.creditLimitHint')}</span>
           </label>
 
-          <label className="field form-grid__wide">
-            <span className="field__label">{t('common.notes')}</span>
+          <label className="grid gap-2 sm:col-span-2">
+            <span className="text-sm font-medium">{t('common.notes')}</span>
             <textarea
-              className="textarea"
+              className="min-h-20 w-full rounded-md border border-input bg-card px-3 py-2 text-sm shadow-xs outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/40"
               value={form.notes}
               onChange={(event) => set('notes', event.target.value)}
             />
           </label>
 
-          <div className="form-grid__wide">
+          <div className="sm:col-span-2">
             <CustomerPhotoField customerId={isNew ? null : customerId} onChange={setPhoto} />
           </div>
 
-          <div className="form-grid__wide">
+          <div className="sm:col-span-2">
             <Switch
               checked={form.isActive}
               onChange={(checked) => set('isActive', checked)}
@@ -179,19 +174,14 @@ export function CustomerEditor() {
         </div>
       </div>
 
-      <div className="form-actions">
-        <button type="button" className="btn" onClick={() => navigate('/people')}>
+      <div className="flex shrink-0 gap-2 border-t bg-card p-4">
+        <Button variant="outline" className="flex-1" onClick={() => navigate('/people')}>
           {t('action.cancel')}
-        </button>
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => void save()}
-          disabled={busy}
-        >
+        </Button>
+        <Button className="flex-1" onClick={() => void save()} disabled={busy}>
           {busy ? t('common.saving') : t('action.save')}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Screen>
   );
 }

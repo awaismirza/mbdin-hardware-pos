@@ -31,7 +31,7 @@ test('a product can be added, received and counted, leaving a movement each time
   await row.click();
 
   await expect(page.getByTestId('stock-quantity')).toContainText('24');
-  await expect(page.locator('.movement')).toHaveCount(1);
+  await expect(page.locator('[data-testid="movement"]')).toHaveCount(1);
 
   // Receive 10 more at a new cost.
   await page.getByRole('button', { name: 'Receive stock' }).click();
@@ -41,8 +41,8 @@ test('a product can be added, received and counted, leaving a movement each time
   await receiveDialog.getByRole('button', { name: 'Receive stock' }).click();
 
   await expect(page.getByTestId('stock-quantity')).toContainText('34');
-  await expect(page.locator('.kv', { hasText: 'Cost' }).locator('.kv__value')).toContainText('162');
-  await expect(page.locator('.movement')).toHaveCount(2);
+  await expect(page.getByTestId('kv-cost')).toContainText('162');
+  await expect(page.locator('[data-testid="movement"]')).toHaveCount(2);
 
   // Count 31.5 on the shelf: the book is corrected by an adjustment.
   await page.getByRole('button', { name: 'Stock take' }).click();
@@ -51,8 +51,8 @@ test('a product can be added, received and counted, leaving a movement each time
   await takeDialog.getByRole('button', { name: 'Save' }).click();
 
   await expect(page.getByTestId('stock-quantity')).toContainText('31.5');
-  await expect(page.locator('.movement')).toHaveCount(3);
-  await expect(page.locator('.movement').first()).toContainText('-2.5');
+  await expect(page.locator('[data-testid="movement"]')).toHaveCount(3);
+  await expect(page.locator('[data-testid="movement"]').first()).toContainText('-2.5');
 });
 
 test('400 products search in under 100ms on the real storage path', async ({ page }) => {
@@ -79,8 +79,8 @@ test('400 products search in under 100ms on the real storage path', async ({ pag
   const search = page.getByRole('searchbox');
   await search.waitFor();
   await search.fill('Dalda');
-  await expect(page.locator('.list__row').first()).toContainText('Dalda');
-  const filtered = await page.locator('.list__row').count();
+  await expect(page.locator('[data-testid="stock-card"]').first()).toContainText('Dalda');
+  const filtered = await page.locator('[data-testid="stock-card"]').count();
   expect(filtered).toBeGreaterThan(0);
   expect(filtered).toBeLessThan(400);
 });
