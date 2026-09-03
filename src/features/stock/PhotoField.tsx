@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { useT, useToast } from '../../appStore';
-import { photoObjectUrl, preparePhoto, type PreparedPhoto } from '../../lib/photo';
-import { getProductPhoto } from '../../db/repos/productsRepo';
+import { useT, useToast } from '@/appStore';
+import { Button } from '@/components/ui/button';
+import { photoObjectUrl, preparePhoto, type PreparedPhoto } from '@/lib/photo';
+import { getProductPhoto } from '@/db/repos/productsRepo';
 
 interface PhotoFieldProps {
   /** Existing product whose photo should be loaded, or null when creating. */
@@ -11,14 +12,8 @@ interface PhotoFieldProps {
   onChange: (photo: PreparedPhoto | null) => void;
 }
 
-/**
- * Take or replace a product photo.
- *
- * The input is `capture="environment"`, which asks the device for its rear
- * camera. On Android and iOS that opens the real camera app. On a desktop
- * browser the attribute is ignored and it falls back to a file picker, which is
- * the right behaviour there.
- */
+/** Take or replace a product photo. `capture="environment"` opens the rear
+ *  camera on a phone and falls back to a file picker on desktop. */
 export function PhotoField({ productId, onChange }: PhotoFieldProps) {
   const t = useT();
   const toast = useToast();
@@ -26,8 +21,6 @@ export function PhotoField({ productId, onChange }: PhotoFieldProps) {
   const [url, setUrl] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
-  // Load the stored photo when editing. The object URL is revoked on unmount
-  // and on replacement, or the tablet leaks a few megabytes a session.
   useEffect(() => {
     let revoked = false;
     let current: string | null = null;
@@ -61,7 +54,6 @@ export function PhotoField({ productId, onChange }: PhotoFieldProps) {
       toast(t('stock.photoFailed'), 'bad');
     } finally {
       setBusy(false);
-      // Clear the input so picking the same file twice still fires a change.
       if (input.current) input.current.value = '';
     }
   }
@@ -75,10 +67,14 @@ export function PhotoField({ productId, onChange }: PhotoFieldProps) {
   }
 
   return (
-    <div className="photo">
-      <span className="field__label">{t('common.photo')}</span>
-      <div className="photo__frame">
-        {url ? <img src={url} alt="" /> : <span>{t('common.nothingHere')}</span>}
+    <div className="grid justify-items-start gap-2">
+      <span className="text-sm font-medium">{t('common.photo')}</span>
+      <div className="grid aspect-square w-full max-w-56 place-items-center overflow-hidden rounded-xl border bg-muted text-sm text-muted-foreground">
+        {url ? (
+          <img src={url} alt="" className="size-full object-cover" />
+        ) : (
+          <span>{t('common.nothingHere')}</span>
+        )}
       </div>
 
       <input
@@ -86,23 +82,22 @@ export function PhotoField({ productId, onChange }: PhotoFieldProps) {
         type="file"
         accept="image/*"
         capture="environment"
-        className="visually-hidden"
+        className="sr-only"
         onChange={(event) => void onPick(event.target.files?.[0])}
       />
 
-      <div className="photo__actions">
-        <button
-          type="button"
-          className="btn"
-          disabled={busy}
-          onClick={() => input.current?.click()}
-        >
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" disabled={busy} onClick={() => input.current?.click()}>
           {url ? t('stock.retakePhoto') : t('stock.takePhoto')}
-        </button>
+        </Button>
         {url && (
-          <button type="button" className="btn btn--danger" onClick={remove}>
+          <Button
+            variant="ghost"
+            className="text-destructive hover:text-destructive"
+            onClick={remove}
+          >
             {t('stock.removePhoto')}
-          </button>
+          </Button>
         )}
       </div>
     </div>

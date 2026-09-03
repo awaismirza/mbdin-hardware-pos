@@ -4,7 +4,6 @@ import { CustomerDetail } from './CustomerDetail';
 import { CustomerEditor } from './CustomerEditor';
 import { PeopleList } from './PeopleList';
 
-import './people.css';
 
 export function PeopleRoutes() {
   return (

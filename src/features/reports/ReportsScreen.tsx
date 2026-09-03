@@ -21,7 +21,6 @@ import { pickName } from '../../i18n';
 import { fileStamp, resolveRange, karachiDay, type RangeKey } from '../../lib/dates';
 import { formatPKR, formatQty } from '../../lib/money';
 
-import './reports.css';
 
 const RANGES: readonly { key: RangeKey; label: string }[] = [
   { key: 'today', label: 'common.today' },

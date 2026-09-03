@@ -5,7 +5,6 @@ import { ProductDetail } from './ProductDetail';
 import { ProductEditor } from './ProductEditor';
 import { StockList } from './StockList';
 
-import './stock.css';
 
 export function StockRoutes() {
   return (

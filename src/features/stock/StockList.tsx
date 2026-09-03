@@ -1,13 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Plus } from 'lucide-react';
 
-import { useLanguage, useT } from '../../appStore';
-import { EmptyState } from '../../components/EmptyState';
-import { ProductPhoto } from '../../components/ProductPhoto';
-import { listProducts, type StockFilter } from '../../db/repos/productsRepo';
-import { pickName } from '../../i18n';
-import { formatPKR, formatQty } from '../../lib/money';
-import type { Product } from '../../types/domain';
+import { useLanguage, useT } from '@/appStore';
+import { EmptyState } from '@/components/EmptyState';
+import { ProductPhoto } from '@/components/ProductPhoto';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { listProducts, type StockFilter } from '@/db/repos/productsRepo';
+import { pickName } from '@/i18n';
+import { formatPKR, formatQty } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import type { Product } from '@/types/domain';
 
 const FILTERS: readonly { key: StockFilter; label: `stock.filter.${string}` }[] = [
   { key: 'all', label: 'stock.filter.all' },
@@ -27,8 +32,6 @@ export function StockList() {
 
   useEffect(() => {
     let cancelled = false;
-    // 120 ms: long enough to skip a keystroke burst, short enough that the list
-    // still feels like it is tracking the typing.
     const timer = setTimeout(() => {
       void listProducts({ search, filter }).then((found) => {
         if (!cancelled) setProducts(found);
@@ -45,55 +48,54 @@ export function StockList() {
     () => (search.trim() ? t('sell.noMatches') : t('stock.empty')),
     [search, t],
   );
-  const stockSummary = useMemo(() => {
+  const summary = useMemo(() => {
     const items = products ?? [];
     return {
       total: items.length,
       low: items.filter(
-        (product) =>
-          product.stockQty > 0 &&
-          product.lowStockThreshold > 0 &&
-          product.stockQty <= product.lowStockThreshold,
+        (p) => p.stockQty > 0 && p.lowStockThreshold > 0 && p.stockQty <= p.lowStockThreshold,
       ).length,
-      out: items.filter((product) => product.stockQty <= 0).length,
+      out: items.filter((p) => p.stockQty <= 0).length,
     };
   }, [products]);
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <h1 className="screen__title">{t('stock.title')}</h1>
-        <button
-          type="button"
-          className="btn btn--primary"
-          onClick={() => navigate('/stock/product/new')}
-        >
-          {t('stock.addProduct')}
-        </button>
-      </div>
-
-      <div className="stock-toolbar">
-        <input
-          className="input grow"
+    <Screen
+      title={t('stock.title')}
+      scroll={false}
+      actions={
+        <Button size="sm" onClick={() => navigate('/stock/product/new')}>
+          <Plus className="size-4" /> {t('stock.addProduct')}
+        </Button>
+      }
+    >
+      <div className="flex shrink-0 items-center gap-2 border-b bg-card p-3">
+        <Input
+          className="flex-1"
           type="search"
           value={search}
           onChange={(event) => setSearch(event.target.value)}
           placeholder={t('sell.searchPlaceholder')}
           aria-label={t('action.search')}
         />
-        <button type="button" className="btn" onClick={() => navigate('/stock/import')}>
+        <Button variant="outline" onClick={() => navigate('/stock/import')}>
           CSV
-        </button>
+        </Button>
       </div>
 
-      <div className="chip-row" style={{ paddingInline: 'var(--s4)' }}>
+      <div className="flex shrink-0 gap-2 overflow-x-auto border-b px-4 py-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {FILTERS.map((entry) => (
           <button
             key={entry.key}
             type="button"
-            className="chip"
             aria-pressed={filter === entry.key}
             onClick={() => setFilter(entry.key)}
+            className={cn(
+              'h-9 flex-none rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors',
+              filter === entry.key
+                ? 'border-foreground bg-foreground text-background'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
           >
             {t(entry.label as never)}
           </button>
@@ -101,73 +103,94 @@ export function StockList() {
       </div>
 
       {products && (
-        <div className="stock-summary" aria-label="Stock summary">
-          <span><strong className="num">{stockSummary.total}</strong> {t('stock.title')}</span>
-          <span className={stockSummary.low > 0 ? 'stock-summary__low' : ''}>
-            <strong className="num">{stockSummary.low}</strong> {t('sell.lowStock')}
+        <div
+          className="flex shrink-0 gap-4 border-b px-4 py-2 text-sm text-muted-foreground"
+          aria-label="Stock summary"
+        >
+          <span>
+            <strong className="num text-foreground">{summary.total}</strong> {t('stock.title')}
           </span>
-          <span className={stockSummary.out > 0 ? 'stock-summary__out' : ''}>
-            <strong className="num">{stockSummary.out}</strong> {t('sell.outOfStock')}
+          <span>
+            <strong className={cn('num', summary.low > 0 && 'text-warning')}>{summary.low}</strong>{' '}
+            {t('sell.lowStock')}
+          </span>
+          <span>
+            <strong className={cn('num', summary.out > 0 && 'text-destructive')}>{summary.out}</strong>{' '}
+            {t('sell.outOfStock')}
           </span>
         </div>
       )}
 
-      <div className="screen__body stock-grid-wrap">
-        {products === null && <div className="empty">{t('common.loading')}</div>}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3">
+        {products === null && (
+          <p className="p-8 text-center text-muted-foreground">{t('common.loading')}</p>
+        )}
         {empty && (
           <EmptyState
             text={emptyText}
             action={
               search.trim() ? undefined : (
-                <button
-                  type="button"
-                  className="btn btn--primary"
-                  onClick={() => navigate('/stock/product/new')}
-                >
+                <Button onClick={() => navigate('/stock/product/new')}>
                   {t('stock.addProduct')}
-                </button>
+                </Button>
               )
             }
           />
         )}
 
-        {products && products.length > 0 && <div className="stock-grid">{products.map((product) => {
-          const out = product.stockQty <= 0;
-          const low =
-            !out && product.lowStockThreshold > 0 && product.stockQty <= product.lowStockThreshold;
-          return (
-            <button
-              key={product.id}
-              type="button"
-              className={`stock-card list__row${low ? ' stock-card--low' : ''}${
-                out ? ' stock-card--out' : ''
-              }`}
-              onClick={() => navigate(`/stock/product/${product.id}/detail`)}
-            >
-              <ProductPhoto
-                productId={product.id}
-                hasPhoto={product.hasPhoto}
-                name={pickName(language, product.nameUr, product.nameEn)}
-                className="stock-card__photo"
-              />
-              <span className="list__main">
-                <span className="list__name truncate">
-                  {pickName(language, product.nameUr, product.nameEn)}
-                </span>
-                <span className="list__meta num">
-                  {formatQty(product.stockQty)} {t(`unit.${product.unit}`)}
-                  {!product.isActive ? ` · ${t('stock.filter.inactive')}` : ''}
-                </span>
-              </span>
-              <span className="stock-row__figures">
-                <span className="money">{formatPKR(product.pricePaisa)}</span>
-                {out && <span className="tag tag--out">{t('sell.outOfStock')}</span>}
-                {low && <span className="tag tag--low">{t('sell.lowStock')}</span>}
-              </span>
-            </button>
-          );
-        })}</div>}
+        {products && products.length > 0 && (
+          <div className="grid grid-cols-[repeat(auto-fill,minmax(15rem,1fr))] gap-3">
+            {products.map((product) => {
+              const out = product.stockQty <= 0;
+              const low =
+                !out &&
+                product.lowStockThreshold > 0 &&
+                product.stockQty <= product.lowStockThreshold;
+              const name = pickName(language, product.nameUr, product.nameEn);
+              return (
+                <button
+                  key={product.id}
+                  type="button"
+                  data-testid="stock-card"
+                  onClick={() => navigate(`/stock/product/${product.id}/detail`)}
+                  className={cn(
+                    'flex items-center gap-3 rounded-xl border bg-card p-3 text-start transition-all hover:border-primary/40 hover:shadow-sm',
+                    low && 'border-s-2 border-s-warning',
+                    out && 'border-s-2 border-s-destructive opacity-70',
+                  )}
+                >
+                  <ProductPhoto
+                    productId={product.id}
+                    hasPhoto={product.hasPhoto}
+                    name={name}
+                    className="size-16 flex-none rounded-lg border bg-muted object-cover text-sm font-semibold text-muted-foreground [&:is(span)]:grid [&:is(span)]:place-items-center"
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{name}</span>
+                    <span className="num block text-sm text-muted-foreground">
+                      {formatQty(product.stockQty)} {t(`unit.${product.unit}`)}
+                      {!product.isActive ? ` · ${t('stock.filter.inactive')}` : ''}
+                    </span>
+                  </span>
+                  <span className="grid justify-items-end gap-1">
+                    <span className="money">{formatPKR(product.pricePaisa)}</span>
+                    {out && (
+                      <span className="rounded-md bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
+                        {t('sell.outOfStock')}
+                      </span>
+                    )}
+                    {low && (
+                      <span className="rounded-md bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+                        {t('sell.lowStock')}
+                      </span>
+                    )}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
-    </div>
+    </Screen>
   );
 }
