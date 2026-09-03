@@ -1,5 +1,16 @@
+/* Layer order: the legacy stylesheets sit in `legacy`, between Tailwind's
+   `components` and `utilities`. Their global resets (`* { padding: 0 }`,
+   `button { border: 0 }`) therefore lose to every Tailwind utility, while
+   their own component classes still style the not-yet-migrated screens. */
+@layer theme, base, components, legacy, utilities;
+
 @import 'tailwindcss';
 @import 'tw-animate-css';
+
+@import './tokens.css' layer(legacy);
+@import './base.css' layer(legacy);
+@import './shell.css' layer(legacy);
+@import '../components/components.css' layer(legacy);
 
 /* Dark mode is a class on <html>, set by the theme store. */
 @custom-variant dark (&:is(.dark *));

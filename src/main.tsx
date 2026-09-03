@@ -5,13 +5,11 @@ import { BrowserRouter } from 'react-router-dom';
 import { App } from './App';
 import { registerServiceWorker } from './pwa';
 
-// Tailwind + theme tokens first. The legacy stylesheets below are removed
-// area by area as each screen is migrated to the new design system.
+// app.css is the single style entry: it pulls in Tailwind and, into a cascade
+// layer below `utilities`, the legacy stylesheets still used by unmigrated
+// screens. print.css stays separate — its @media print rules use !important
+// and want no layering.
 import './styles/app.css';
-import './styles/tokens.css';
-import './styles/base.css';
-import './styles/shell.css';
-import './components/components.css';
 import './styles/print.css';
 
 const container = document.getElementById('root');
