@@ -86,8 +86,10 @@ export function SellScreen() {
 
   /**
    * A USB barcode scanner behaves as a keyboard: it types the code into the
-   * focused field and presses Enter. That is why the search field is autofocused
-   * and why Enter here means "if this is exactly one product's barcode, add it".
+   * focused field and presses Enter. The field is not autofocused — on a tablet
+   * that just raises the on-screen keyboard every time Sell opens — so a scanner
+   * user taps the field once; after each hit we refocus it for the next scan.
+   * Enter here means "if this is exactly one product's barcode, add it".
    */
   const onSearchSubmit = useCallback(async () => {
     const term = search.trim();
@@ -152,7 +154,6 @@ export function SellScreen() {
           className="input num grow"
           type="search"
           value={search}
-          autoFocus
           onChange={(event) => {
             setSearch(event.target.value);
             setUnknownBarcode(null);
