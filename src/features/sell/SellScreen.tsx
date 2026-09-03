@@ -19,6 +19,7 @@ import {
 import { formatDateTime } from '@/lib/dates';
 import { formatPKR } from '@/lib/money';
 import type { HeldCart, PaymentMethod } from '@/types/domain';
+import { AddToCartSheet } from './AddToCartSheet';
 import { BarcodeScanner } from './BarcodeScanner';
 import { CartPane } from './CartPane';
 import { CatalogueGrid } from './CatalogueGrid';
@@ -55,6 +56,7 @@ export function SellScreen() {
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [pickedId, setPickedId] = useState<number | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -189,7 +191,7 @@ export function SellScreen() {
       <div className="flex min-h-0 min-w-0 flex-1 lg:landscape:flex-row">
         <CatalogueGrid
           search={search}
-          onPick={(product) => navigate(`/sell/product/${String(product.id)}`)}
+          onPick={(product) => setPickedId(product.id)}
           onQuickSell={() => setOverlay('quick')}
           unknownBarcode={unknownBarcode}
           onAddWithBarcode={(barcode) => navigate(`/stock/product/new?barcode=${barcode}`)}
@@ -234,6 +236,10 @@ export function SellScreen() {
             />
           </div>
         </Sheet>
+      )}
+
+      {pickedId != null && (
+        <AddToCartSheet productId={pickedId} onClose={() => setPickedId(null)} />
       )}
 
       {overlay === 'scan' && (
