@@ -1,8 +1,10 @@
-import { useEffect, type ReactNode } from 'react';
-import { NavLink, Navigate, Route, Routes, useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { useApp, useT } from './appStore';
-import { Toasts } from './components/EmptyState';
+import { AppProviders } from './components/app/AppProviders';
+import { AppShell } from './components/app/AppShell';
+import { Button } from './components/ui/button';
 import { BackupBar } from './features/settings/BackupBar';
 import { DebugScreen } from './features/settings/DebugScreen';
 import { PinGate } from './features/settings/PinGate';
@@ -16,6 +18,14 @@ import { SetupScreen } from './features/settings/SetupScreen';
 import { StockRoutes } from './features/stock/StockRoutes';
 
 export function App() {
+  return (
+    <AppProviders>
+      <Boot />
+    </AppProviders>
+  );
+}
+
+function Boot() {
   const status = useApp((state) => state.status);
   const error = useApp((state) => state.error);
   const boot = useApp((state) => state.boot);
@@ -28,114 +38,68 @@ export function App() {
 
   if (status === 'idle' || status === 'booting') {
     return (
-      <div className="boot">
-        <div className="boot__title">{t('app.booting')}</div>
+      <div className="grid h-dvh place-content-center bg-background text-center text-foreground">
+        <p className="text-lg font-semibold">{t('app.booting')}</p>
       </div>
     );
   }
 
   if (status === 'failed') {
     return (
-      <div className="boot">
-        <div className="boot__title">{t('app.bootFailed')}</div>
-        <p className="boot__detail">{error}</p>
-        <button type="button" className="btn btn--primary" onClick={() => void boot()}>
-          {t('app.retry')}
-        </button>
+      <div className="grid h-dvh place-content-center justify-items-center gap-4 bg-background p-8 text-center text-foreground">
+        <p className="text-lg font-semibold">{t('app.bootFailed')}</p>
+        <p className="max-w-[46ch] whitespace-pre-wrap text-sm text-muted-foreground">{error}</p>
+        <Button onClick={() => void boot()}>{t('app.retry')}</Button>
       </div>
     );
   }
 
   if (!shopName) return <SetupScreen />;
 
-  return <Shell />;
-}
-
-function Shell() {
-  const t = useT();
-  const navigate = useNavigate();
-
   return (
-    <div className="shell">
-      <header className="shell__header">
-        <button
-          type="button"
-          className="shell__brand btn btn--quiet"
-          onClick={() => navigate('/sell')}
-        >
-          {t('app.name')}
-        </button>
-        <div className="shell__slot" id="header-slot" />
-        <button
-          type="button"
-          className="btn btn--quiet"
-          onClick={() => navigate('/settings')}
-          aria-label={t('nav.settings')}
-        >
-          <span aria-hidden="true" style={{ fontSize: 20 }}>
-            ⚙
-          </span>
-        </button>
-      </header>
-
-      <main className="shell__main">
-        <BackupBar />
-        <Routes>
-          <Route path="/" element={<Navigate to="/sell" replace />} />
-          <Route path="/sell" element={<SellScreen />} />
-          <Route path="/sell/product/:id" element={<ProductSaleScreen />} />
-          <Route path="/sell/receipt/:id" element={<ReceiptView />} />
-          <Route path="/stock/*" element={<StockRoutes />} />
-          <Route path="/people/*" element={<PeopleRoutes />} />
-          {/* Reports and Settings sit behind the optional PIN. Sell, Stock and
-              People never do: the till must never be locked mid-queue. */}
-          <Route
-            path="/reports"
-            element={
-              <PinGate>
-                <ReportsScreen />
-              </PinGate>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <PinGate>
-                <SettingsScreen />
-              </PinGate>
-            }
-          />
-          <Route
-            path="/settings/storage"
-            element={
-              <PinGate>
-                <DebugScreen />
-              </PinGate>
-            }
-          />
-          <Route path="*" element={<Navigate to="/sell" replace />} />
-        </Routes>
-      </main>
-
-      <nav className="shell__nav" aria-label={t('app.name')}>
-        <Tab to="/sell" glyph="₨" label={t('nav.sell')} />
-        <Tab to="/stock" glyph="▦" label={t('nav.stock')} />
-        <Tab to="/people" glyph="◍" label={t('nav.people')} />
-        <Tab to="/reports" glyph="▤" label={t('nav.reports')} />
-      </nav>
-
-      <Toasts />
-    </div>
+    <AppShell>
+      <BackupBar />
+      <AppRoutes />
+    </AppShell>
   );
 }
 
-function Tab({ to, glyph, label }: { to: string; glyph: ReactNode; label: string }) {
+function AppRoutes() {
   return (
-    <NavLink to={to} className="navlink">
-      <span className="navlink__glyph" aria-hidden="true">
-        {glyph}
-      </span>
-      <span>{label}</span>
-    </NavLink>
+    <Routes>
+      <Route path="/" element={<Navigate to="/sell" replace />} />
+      <Route path="/sell" element={<SellScreen />} />
+      <Route path="/sell/product/:id" element={<ProductSaleScreen />} />
+      <Route path="/sell/receipt/:id" element={<ReceiptView />} />
+      <Route path="/stock/*" element={<StockRoutes />} />
+      <Route path="/people/*" element={<PeopleRoutes />} />
+      {/* Reports and Settings sit behind the optional PIN. Sell, Stock and
+          People never do: the till must never be locked mid-queue. */}
+      <Route
+        path="/reports"
+        element={
+          <PinGate>
+            <ReportsScreen />
+          </PinGate>
+        }
+      />
+      <Route
+        path="/settings"
+        element={
+          <PinGate>
+            <SettingsScreen />
+          </PinGate>
+        }
+      />
+      <Route
+        path="/settings/storage"
+        element={
+          <PinGate>
+            <DebugScreen />
+          </PinGate>
+        }
+      />
+      <Route path="*" element={<Navigate to="/sell" replace />} />
+    </Routes>
   );
 }

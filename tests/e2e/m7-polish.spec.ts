@@ -126,9 +126,16 @@ test.describe('layout', () => {
       for (const el of Array.from(document.querySelectorAll('button, a[href], select'))) {
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) continue;
-        // The toast dismiss and the header gear are secondary affordances that
-        // sit inside larger hit areas; everything a sale depends on is checked.
-        if (el.closest('.toast') || el.classList.contains('chip')) continue;
+        // Toasts are transient overlays with their own dismiss affordance;
+        // category chips sit inside a larger scroll strip. Everything a sale
+        // depends on is checked.
+        if (
+          el.closest('[data-sonner-toast]') ||
+          el.closest('.toast') ||
+          el.hasAttribute('data-close-button') ||
+          el.classList.contains('chip')
+        )
+          continue;
         if (rect.height < 38) {
           offenders.push(`${el.className || el.tagName} ${String(Math.round(rect.height))}px`);
         }
@@ -171,7 +178,9 @@ test.describe('the till frame on a portrait tablet', () => {
     await page.waitForTimeout(200);
 
     const state = await page.evaluate(() => {
-      const nav = document.querySelector('.shell__nav')!.getBoundingClientRect();
+      const nav = document
+        .querySelector('[data-testid="tab-bar"]')!
+        .getBoundingClientRect();
       return {
         bodyScroll: document.scrollingElement!.scrollTop,
         gridScrolled: document.querySelector('.catalogue__grid')!.scrollTop,
@@ -208,8 +217,8 @@ test.describe('the printed receipt', () => {
     await page.emulateMedia({ media: 'print' });
 
     // App chrome is not paper. Nothing but the slip goes through the printer.
-    await expect(page.locator('.shell__header')).toBeHidden();
-    await expect(page.locator('.shell__nav')).toBeHidden();
+    await expect(page.getByTestId('app-header')).toBeHidden();
+    await expect(page.getByTestId('tab-bar')).toBeHidden();
     await expect(page.locator('.receipt__actions')).toBeHidden();
     await expect(page.locator('.slip')).toBeVisible();
 
