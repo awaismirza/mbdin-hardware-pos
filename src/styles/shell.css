@@ -4,9 +4,13 @@
 .shell {
   display: grid;
   /* Keep the app frame pinned to the visible viewport. Screen content owns its
-     own scroll area, so the navigation never scrolls away with a long list. */
+     own scroll area, so the navigation never scrolls away with a long list.
+     `overflow: hidden` is the backstop: if any screen's inner scroll chain is
+     broken, its content is clipped here rather than scrolling the whole frame
+     — and the header and tab bar — off screen. */
   block-size: 100dvh;
   min-block-size: 100%;
+  overflow: hidden;
   grid-template-rows: auto 1fr auto;
   grid-template-areas:
     'header'

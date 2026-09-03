@@ -18,13 +18,21 @@
   min-inline-size: 0;
 }
 
+/* The catalogue owns its own scroll area in every layout. Without this the
+   portrait tablet had no bounded height here, so the grid grew to its full
+   length and pushed the tab bar and cart bar off the frame. */
+.sell__catalogue {
+  flex: 1;
+  min-block-size: 0;
+  min-inline-size: 0;
+}
+
 @media (min-width: 820px) and (orientation: landscape) {
   .sell__panes {
     flex-direction: row;
   }
   .sell__catalogue {
     flex: 6;
-    min-inline-size: 0;
   }
   .sell__cart {
     flex: 4;
