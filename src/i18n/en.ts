@@ -332,6 +332,11 @@ export const en = {
   'debug.testRow': 'Round-trip test row',
   'debug.writeRow': 'Write a test row',
   'debug.rowsWritten': '{count} rows written and read back.',
+  'debug.products': 'Products',
+  'debug.searchSpeed': 'Slowest search',
+  'debug.runBenchmark': 'Time the search',
+  'debug.seed': 'Fill with sample products',
+  'debug.seeded': '{count} sample products added.',
   'debug.switchTitle': 'Check the other storage path',
   'debug.switchHint':
     'Each storage path keeps its own separate ledger, so switching looks like an empty shop. This is only here to prove both paths work on this device — switch back when you are done.',

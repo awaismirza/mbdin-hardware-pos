@@ -104,7 +104,20 @@ export async function reopenDb(options: InitOptions = {}): Promise<InitResult> {
   return initDb(options);
 }
 
-export const db = {
+/** What a repository is allowed to do. The only data surface in the app. */
+export interface DbGateway {
+  query<T>(sql: string, params?: SqlParam[]): Promise<T[]>;
+  queryOne<T>(sql: string, params?: SqlParam[]): Promise<T | null>;
+  exec(sql: string, params?: SqlParam[]): Promise<WriteResult>;
+  transaction(steps: TxStep[]): Promise<WriteResult[]>;
+  exportBytes(): Promise<Uint8Array>;
+  importBytes(bytes: Uint8Array): Promise<void>;
+  vacuum(): Promise<void>;
+  byteSize(): Promise<number>;
+  resetEverything(): Promise<void>;
+}
+
+const workerGateway: DbGateway = {
   query<T>(sql: string, params?: SqlParam[]): Promise<T[]> {
     return connect().query(sql, params) as Promise<T[]>;
   },
@@ -135,3 +148,30 @@ export const db = {
     return connect().resetEverything();
   },
 };
+
+let gateway: DbGateway = workerGateway;
+
+/**
+ * The handle every repository imports.
+ *
+ * It delegates rather than being the worker gateway directly, so integration
+ * tests can point the real repository code at an in-memory database in Node.
+ * That matters: the SQL is the part worth testing, and a mocked repository
+ * would prove nothing about a foreign key or a rolled-back sale.
+ */
+export const db: DbGateway = {
+  query: (sql, params) => gateway.query(sql, params),
+  queryOne: (sql, params) => gateway.queryOne(sql, params),
+  exec: (sql, params) => gateway.exec(sql, params),
+  transaction: (steps) => gateway.transaction(steps),
+  exportBytes: () => gateway.exportBytes(),
+  importBytes: (bytes) => gateway.importBytes(bytes),
+  vacuum: () => gateway.vacuum(),
+  byteSize: () => gateway.byteSize(),
+  resetEverything: () => gateway.resetEverything(),
+};
+
+/** Tests only. Pass null to restore the worker-backed gateway. */
+export function setDbGateway(next: DbGateway | null): void {
+  gateway = next ?? workerGateway;
+}

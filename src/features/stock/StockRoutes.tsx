@@ -1,17 +1,19 @@
-import { useT } from '../../appStore';
-import { EmptyState } from '../../components/EmptyState';
+import { Route, Routes } from 'react-router-dom';
 
-/** Placeholder until M2. */
+import { CsvImport } from './CsvImport';
+import { ProductDetail } from './ProductDetail';
+import { ProductEditor } from './ProductEditor';
+import { StockList } from './StockList';
+
+import './stock.css';
+
 export function StockRoutes() {
-  const t = useT();
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <h1 className="screen__title">{t('stock.title')}</h1>
-      </div>
-      <div className="screen__body">
-        <EmptyState text={t('stock.empty')} />
-      </div>
-    </div>
+    <Routes>
+      <Route index element={<StockList />} />
+      <Route path="import" element={<CsvImport />} />
+      <Route path="product/:id" element={<ProductEditor />} />
+      <Route path="product/:id/detail" element={<ProductDetail />} />
+    </Routes>
   );
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useApp, useT } from '../../appStore';
+import { useApp, useT, useToast } from '../../appStore';
 import { db } from '../../db/client';
 import { formatDateTime, nowIso } from '../../lib/dates';
 
@@ -24,11 +24,14 @@ export function DebugScreen() {
   const info = useApp((state) => state.info);
   const persisted = useApp((state) => state.persisted);
   const boot = useApp((state) => state.boot);
+  const toast = useToast();
 
   const [rows, setRows] = useState<DebugRow[]>([]);
   const [estimate, setEstimate] = useState<StorageEstimate | null>(null);
   const [dbBytes, setDbBytes] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
+  const [searchMs, setSearchMs] = useState<number | null>(null);
+  const [productCount, setProductCount] = useState<number | null>(null);
 
   const refresh = useCallback(async () => {
     const found = await db.query<DebugRow>(
@@ -36,6 +39,8 @@ export function DebugScreen() {
     );
     setRows(found);
     setDbBytes(await db.byteSize());
+    const counted = await db.queryOne<{ n: number }>('SELECT COUNT(*) AS n FROM products');
+    setProductCount(counted?.n ?? 0);
     if (navigator.storage?.estimate) {
       setEstimate(await navigator.storage.estimate());
     }
@@ -65,6 +70,49 @@ export function DebugScreen() {
     try {
       await db.exec(`DELETE FROM meta WHERE key LIKE 'debug_row_%'`);
       await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Fills the shop with a realistic sample catalogue. This is how the "400
+   * products search in under 100 ms" figure gets checked on the actual tablet
+   * rather than only in a Node test.
+   */
+  async function seed() {
+    setBusy(true);
+    try {
+      const { seedSampleCatalogue } = await import('../../db/seed');
+      const made = await seedSampleCatalogue({ count: 400 });
+      toast(t('debug.seeded', { count: made }));
+      await refresh();
+    } catch (error) {
+      toast(error instanceof Error ? error.message : String(error), 'bad');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Times the catalogue search the Sell screen depends on, on this device.
+   *
+   * The budget is 100 ms at 2,000 products. A cheap tablet is a different
+   * machine from a laptop, so this measures where it matters rather than
+   * trusting a number from a development box.
+   */
+  async function benchmark() {
+    setBusy(true);
+    try {
+      const { listProducts } = await import('../../db/repos/productsRepo');
+      const terms = ['چین', 'sug', 'gh', 'daal', 'SKU01', ''];
+      let worst = 0;
+      for (const term of terms) {
+        const started = performance.now();
+        await listProducts({ search: term });
+        worst = Math.max(worst, performance.now() - started);
+      }
+      setSearchMs(Math.round(worst));
     } finally {
       setBusy(false);
     }
@@ -121,6 +169,18 @@ export function DebugScreen() {
           <span className="kv__value num">{dbBytes === null ? '—' : formatBytes(dbBytes)}</span>
         </div>
         <div className="kv">
+          <span className="kv__key">{t('debug.products')}</span>
+          <span className="kv__value num" data-testid="product-count">
+            {productCount ?? '—'}
+          </span>
+        </div>
+        <div className="kv">
+          <span className="kv__key">{t('debug.searchSpeed')}</span>
+          <span className="kv__value num" data-testid="search-ms">
+            {searchMs === null ? '—' : `${searchMs} ms`}
+          </span>
+        </div>
+        <div className="kv">
           <span className="kv__key">{t('debug.usage')}</span>
           <span className="kv__value num">
             {estimate?.usage === undefined ? '—' : formatBytes(estimate.usage)}
@@ -156,6 +216,24 @@ export function DebugScreen() {
             disabled={busy}
           >
             {t('action.clear')}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            data-testid="benchmark-search"
+            onClick={() => void benchmark()}
+            disabled={busy}
+          >
+            {t('debug.runBenchmark')}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            data-testid="seed-catalogue"
+            onClick={() => void seed()}
+            disabled={busy}
+          >
+            {t('debug.seed')}
           </button>
         </div>
 

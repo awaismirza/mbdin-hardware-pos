@@ -21,6 +21,11 @@ export function Spinner() {
   return <span className="spinner" role="status" aria-hidden="true" />;
 }
 
+/**
+ * Transient messages. Each is a status region rather than a button: a toast
+ * saying "Sale saved" must be announced as a message, not offered as a control
+ * — and a toast that is a button also shadows the real buttons underneath it.
+ */
 export function Toasts() {
   const toasts = useApp((state) => state.toasts);
   const dismiss = useApp((state) => state.dismissToast);
@@ -28,14 +33,22 @@ export function Toasts() {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((toast) => (
-        <button
+        <div
           key={toast.id}
-          type="button"
           className={`toast toast--${toast.tone}`}
-          onClick={() => dismiss(toast.id)}
+          role={toast.tone === 'plain' ? 'status' : 'alert'}
+          data-testid="toast"
         >
-          {toast.message}
-        </button>
+          <span className="toast__text">{toast.message}</span>
+          <button
+            type="button"
+            className="toast__dismiss"
+            onClick={() => dismiss(toast.id)}
+            aria-label="dismiss"
+          >
+            ×
+          </button>
+        </div>
       ))}
     </div>
   );

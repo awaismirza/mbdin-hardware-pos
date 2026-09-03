@@ -1,0 +1,468 @@
+/* Sell — the screen the shop lives on.
+   Landscape splits 60/40 into catalogue and cart. Portrait stacks them, with
+   the cart as a bottom sheet that expands. */
+
+.sell {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
+
+.sell__panes {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-block-size: 0;
+}
+
+@media (min-width: 820px) and (orientation: landscape) {
+  .sell__panes {
+    flex-direction: row;
+  }
+  .sell__catalogue {
+    flex: 6;
+    min-inline-size: 0;
+  }
+  .sell__cart {
+    flex: 4;
+    min-inline-size: 320px;
+    max-inline-size: 460px;
+    border-inline-start: var(--rule);
+    background: var(--card);
+  }
+}
+
+/* ---- Catalogue ---------------------------------------------------------- */
+.catalogue {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  flex: 1;
+}
+
+.catalogue__search {
+  display: flex;
+  gap: var(--s2);
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.catalogue__chips {
+  padding-inline: var(--s4);
+  border-block-end: var(--rule);
+}
+
+.catalogue__grid {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--s3);
+  padding: var(--s4);
+  align-content: start;
+}
+
+.tile {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-block-size: 104px;
+  padding: var(--s3);
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  background: var(--card);
+  text-align: start;
+}
+.tile:active {
+  background: var(--ink-wash);
+}
+
+/* Out of stock is dimmed but still tappable: the shop may well have it, and
+   the app must not argue with the person holding the item. */
+.tile--out {
+  opacity: 0.55;
+}
+
+.tile__thumb {
+  inline-size: 100%;
+  block-size: 64px;
+  object-fit: cover;
+  border-radius: 2px;
+  margin-block-end: var(--s1);
+  background: var(--paper);
+}
+
+.tile__name {
+  font-size: var(--size-body);
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile__price {
+  font-weight: var(--weight-money);
+  font-variant-numeric: tabular-nums;
+}
+
+.tile__stock {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+.tile__stock--low {
+  color: var(--brass);
+}
+.tile__stock--out {
+  color: var(--seal);
+}
+
+.tile--quick {
+  border-style: dashed;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  color: var(--seal);
+  font-weight: var(--weight-money);
+}
+
+/* ---- Cart --------------------------------------------------------------- */
+.cart {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+  flex: 1;
+  background: var(--card);
+}
+
+.cart__customer {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+  min-block-size: var(--touch);
+  padding: var(--s2) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.cart__lines {
+  flex: 1;
+  min-block-size: 0;
+  overflow-y: auto;
+}
+
+.cart-line {
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+  display: grid;
+  gap: var(--s2);
+}
+
+.cart-line__top {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+
+.cart-line__name {
+  flex: 1;
+  min-inline-size: 0;
+}
+
+.cart-line__unit {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.cart-line__bottom {
+  display: flex;
+  align-items: center;
+  gap: var(--s2);
+}
+
+.stepper {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.stepper__btn {
+  inline-size: var(--touch);
+  block-size: var(--touch);
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+  background: var(--paper);
+}
+.stepper__btn:active {
+  background: var(--ink-wash);
+}
+.stepper__value {
+  min-inline-size: 64px;
+  block-size: var(--touch);
+  display: grid;
+  place-items: center;
+  padding-inline: var(--s2);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+  background: var(--card);
+  border-inline: var(--rule);
+}
+
+.cart-line__total {
+  flex: 1;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+}
+
+.cart-line__remove {
+  inline-size: var(--touch);
+  block-size: var(--touch);
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+}
+
+.cart__foot {
+  border-block-start: var(--rule);
+  padding: var(--s3) var(--s4) var(--s4);
+  display: grid;
+  gap: var(--s2);
+}
+
+.cart__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+}
+.cart__row-label {
+  flex: 1;
+  color: var(--ink-soft);
+  font-size: var(--size-meta);
+}
+.cart__row-value {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+}
+
+.cart__total {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding-block-start: var(--s2);
+  border-block-start: 2px solid var(--ink);
+}
+.cart__total-label {
+  flex: 1;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+
+.cart__actions {
+  display: flex;
+  gap: var(--s2);
+  padding-block-start: var(--s2);
+}
+.cart__actions > * {
+  flex: 1;
+}
+.cart__actions .btn--primary {
+  flex: 2;
+}
+
+/* Portrait: the cart is a bottom sheet with a permanently visible summary bar. */
+.cart-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  border-block-start: var(--rule);
+  background: var(--card);
+}
+.cart-bar__count {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.cart-bar__total {
+  flex: 1;
+  text-align: end;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+  color: var(--seal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Checkout ----------------------------------------------------------- */
+.methods {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s2);
+}
+.methods .btn {
+  min-height: var(--touch-lg);
+}
+.methods .btn[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.checkout__due {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s3);
+  padding-block: var(--s3);
+}
+.checkout__due-label {
+  flex: 1;
+  color: var(--ink-soft);
+}
+
+/* ---- Scanner overlay ---------------------------------------------------- */
+.scanner {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  background: #0b0f0d;
+  color: #fff;
+}
+.scanner__head {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  padding: var(--s3) var(--s4);
+  padding-block-start: calc(var(--s3) + env(safe-area-inset-top));
+}
+.scanner__title {
+  flex: 1;
+  font-size: var(--size-section);
+  font-weight: var(--weight-bold);
+}
+.scanner__close {
+  color: #fff;
+}
+.scanner__stage {
+  flex: 1;
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+.scanner__video {
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: cover;
+}
+.scanner__frame {
+  position: absolute;
+  inline-size: min(74vw, 380px);
+  block-size: min(38vw, 200px);
+  border: 2px solid var(--seal);
+  border-radius: var(--radius);
+}
+.scanner__error {
+  max-inline-size: 34ch;
+  padding: var(--s4);
+  text-align: center;
+}
+.scanner__hint {
+  padding: var(--s4);
+  padding-block-end: calc(var(--s4) + env(safe-area-inset-bottom));
+  text-align: center;
+  font-size: var(--size-meta);
+  color: #cfd6d1;
+  min-block-size: 3em;
+}
+
+/* ---- Receipt ------------------------------------------------------------ */
+.receipt {
+  max-inline-size: 420px;
+  margin-inline: auto;
+  padding: var(--s4);
+}
+
+.slip {
+  inline-size: 100%;
+  padding: var(--s4);
+  background: #fff;
+  border: 1px solid var(--paper-rule);
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #000;
+}
+html[lang='ur'] .slip {
+  font-family: var(--font-arabic);
+}
+
+.slip__shop {
+  text-align: center;
+  font-weight: var(--weight-bold);
+  font-size: 16px;
+}
+.slip__meta {
+  text-align: center;
+  font-size: 12px;
+}
+.slip__rule {
+  border: 0;
+  border-block-start: 1px dashed #000;
+  margin-block: var(--s2);
+}
+.slip__line {
+  display: flex;
+  gap: var(--s2);
+  align-items: baseline;
+}
+.slip__line-name {
+  flex: 1;
+  min-inline-size: 0;
+}
+.slip__line-qty,
+.slip__line-amount {
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+.slip__line-qty {
+  inline-size: 7ch;
+}
+.slip__line-amount {
+  inline-size: 9ch;
+}
+.slip__total {
+  font-weight: var(--weight-bold);
+  font-size: 15px;
+}
+.slip__footer {
+  text-align: center;
+  margin-block-start: var(--s2);
+}
+
+.receipt__actions {
+  display: grid;
+  gap: var(--s2);
+  margin-block-start: var(--s4);
+}
+
+/* ---- Held carts --------------------------------------------------------- */
+.held-badge {
+  display: inline-grid;
+  place-items: center;
+  min-inline-size: 22px;
+  block-size: 22px;
+  padding-inline: 6px;
+  border-radius: 11px;
+  background: var(--seal);
+  color: #fff;
+  font-size: var(--size-min);
+  font-variant-numeric: tabular-nums;
+}

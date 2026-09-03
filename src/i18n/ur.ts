@@ -338,6 +338,11 @@ export const ur: Strings = {
   'debug.testRow': 'جانچ کی سطر',
   'debug.writeRow': 'جانچ کی سطر لکھیں',
   'debug.rowsWritten': '{count} سطریں لکھی اور پڑھی گئیں۔',
+  'debug.products': 'سامان',
+  'debug.searchSpeed': 'سب سے سست تلاش',
+  'debug.runBenchmark': 'تلاش کا وقت ناپیں',
+  'debug.seed': 'نمونہ سامان ڈالیں',
+  'debug.seeded': '{count} نمونہ سامان شامل ہو گیا۔',
   'debug.switchTitle': 'دوسرا ذخیرہ جانچیں',
   'debug.switchHint':
     'ہر ذخیرے کا اپنا الگ کھاتہ ہوتا ہے، اس لیے بدلنے پر دکان خالی لگے گی۔ یہ صرف یہ دیکھنے کے لیے ہے کہ دونوں طریقے اس ڈیوائس پر چلتے ہیں — جانچ کے بعد واپس بدل لیں۔',
