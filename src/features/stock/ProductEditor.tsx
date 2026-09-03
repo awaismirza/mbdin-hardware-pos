@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 
 import { useApp, useLanguage, useT, useToast } from '../../appStore';
 import { Switch } from '../../components/EmptyState';
@@ -53,6 +53,7 @@ export function ProductEditor() {
   const toast = useToast();
   const navigate = useNavigate();
   const params = useParams();
+  const [searchParams] = useSearchParams();
   const settings = useApp((state) => state.settings);
 
   const productId = params['id'] === 'new' ? null : Number(params['id']);
@@ -71,7 +72,13 @@ export function ProductEditor() {
 
   useEffect(() => {
     if (isNew) {
-      setForm({ ...EMPTY, lowStock: settings['low_stock_default'] ?? '' });
+      // Arriving from "Add a new product with this barcode" after a scan that
+      // matched nothing: carry the code across so it is not retyped.
+      setForm({
+        ...EMPTY,
+        lowStock: settings['low_stock_default'] ?? '',
+        barcode: searchParams.get('barcode') ?? '',
+      });
       return;
     }
     void getProduct(productId).then((product) => {
@@ -90,7 +97,7 @@ export function ProductEditor() {
         isActive: product.isActive,
       });
     });
-  }, [productId, isNew, settings]);
+  }, [productId, isNew, settings, searchParams]);
 
   function set<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));

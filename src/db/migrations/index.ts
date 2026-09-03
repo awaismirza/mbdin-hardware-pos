@@ -1,5 +1,6 @@
 import { migration001 } from './001_init';
 import { migration002 } from './002_product_images';
+import { migration003 } from './003_active_cart';
 import type { Migration } from './types';
 
 export type { Migration };
@@ -8,7 +9,7 @@ export type { Migration };
  * Every migration ever written, in order. Never edit a shipped migration —
  * a shopkeeper's file on disk was built by the old one. Add a new number.
  */
-export const MIGRATIONS: readonly Migration[] = [migration001, migration002];
+export const MIGRATIONS: readonly Migration[] = [migration001, migration002, migration003];
 
 export const LATEST_SCHEMA_VERSION = MIGRATIONS[MIGRATIONS.length - 1]!.version;
 

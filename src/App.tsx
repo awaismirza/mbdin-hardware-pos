@@ -7,6 +7,7 @@ import { BackupBar } from './features/settings/BackupBar';
 import { DebugScreen } from './features/settings/DebugScreen';
 import { PeopleRoutes } from './features/people/PeopleRoutes';
 import { ReportsScreen } from './features/reports/ReportsScreen';
+import { ReceiptView } from './features/sell/ReceiptView';
 import { SellScreen } from './features/sell/SellScreen';
 import { SettingsScreen } from './features/settings/SettingsScreen';
 import { StockRoutes } from './features/stock/StockRoutes';
@@ -76,6 +77,7 @@ function Shell() {
         <Routes>
           <Route path="/" element={<Navigate to="/sell" replace />} />
           <Route path="/sell" element={<SellScreen />} />
+          <Route path="/sell/receipt/:id" element={<ReceiptView />} />
           <Route path="/stock/*" element={<StockRoutes />} />
           <Route path="/people/*" element={<PeopleRoutes />} />
           <Route path="/reports" element={<ReportsScreen />} />
