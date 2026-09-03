@@ -91,7 +91,7 @@ export function StockList() {
             aria-pressed={filter === entry.key}
             onClick={() => setFilter(entry.key)}
             className={cn(
-              'h-9 flex-none rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors',
+              'h-10 flex-none rounded-full border px-4 text-sm font-medium whitespace-nowrap transition-colors',
               filter === entry.key
                 ? 'border-foreground bg-foreground text-background'
                 : 'text-muted-foreground hover:text-foreground',

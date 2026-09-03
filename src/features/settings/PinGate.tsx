@@ -1,9 +1,10 @@
 import { useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useApp, useT } from '../../appStore';
-import { NumberPad } from '../../components/NumberPad';
-import { pinMatches } from '../../lib/pin';
+import { useApp, useT } from '@/appStore';
+import { NumberPad } from '@/components/NumberPad';
+import { Screen } from '@/components/app/Screen';
+import { pinMatches } from '@/lib/pin';
 
 /**
  * Guards Settings and Reports behind the optional PIN.
@@ -27,31 +28,26 @@ export function PinGate({ children }: { children: ReactNode }) {
   if (stored === '' || unlocked) return <>{children}</>;
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <h1 className="screen__title">{t('settings.pinEnter')}</h1>
+    <Screen title={t('settings.pinEnter')} onBack={() => navigate('/sell')}>
+      <div className="mx-auto max-w-xs p-4">
+        <NumberPad
+          allowDecimal={false}
+          confirmLabel={t('action.continue')}
+          hint={wrong ? t('settings.pinWrong') : undefined}
+          onCancel={() => navigate('/sell')}
+          onConfirm={(value) => {
+            void pinMatches(value, stored).then((ok) => {
+              if (ok) {
+                unlockedThisSession = true;
+                setUnlocked(true);
+              } else {
+                setWrong(true);
+              }
+            });
+          }}
+        />
       </div>
-      <div className="screen__body screen__pad">
-        <div style={{ maxInlineSize: 320, marginInline: 'auto' }}>
-          <NumberPad
-            allowDecimal={false}
-            confirmLabel={t('action.continue')}
-            hint={wrong ? t('settings.pinWrong') : undefined}
-            onCancel={() => navigate('/sell')}
-            onConfirm={(value) => {
-              void pinMatches(value, stored).then((ok) => {
-                if (ok) {
-                  unlockedThisSession = true;
-                  setUnlocked(true);
-                } else {
-                  setWrong(true);
-                }
-              });
-            }}
-          />
-        </div>
-      </div>
-    </div>
+    </Screen>
   );
 }
 

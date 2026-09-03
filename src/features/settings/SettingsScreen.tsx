@@ -1,10 +1,20 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useApp, useLanguage, useT, useToast } from '../../appStore';
-import { setSettings } from '../../db/repos/settingsRepo';
-import { LANGUAGES, type Language } from '../../i18n';
-import { installAvailable, isIosSafari, isStandalone, onInstallAvailabilityChange, promptInstall } from '../../pwa';
+import { useApp, useLanguage, useT, useToast } from '@/appStore';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { setSettings } from '@/db/repos/settingsRepo';
+import { LANGUAGES, type Language } from '@/i18n';
+import { cn } from '@/lib/cn';
+import {
+  installAvailable,
+  isIosSafari,
+  isStandalone,
+  onInstallAvailabilityChange,
+  promptInstall,
+} from '@/pwa';
 import { DataSection } from './DataSection';
 import { PinSection } from './PinSection';
 
@@ -16,6 +26,15 @@ const SHOP_FIELDS = [
   ['invoice_prefix', 'settings.invoicePrefix'],
   ['low_stock_default', 'settings.lowStockDefault'],
 ] as const;
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="border-b p-4">
+      <h2 className="mb-3 text-base font-semibold">{title}</h2>
+      {children}
+    </section>
+  );
+}
 
 export function SettingsScreen() {
   const t = useT();
@@ -44,19 +63,16 @@ export function SettingsScreen() {
   }
 
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <h1 className="screen__title">{t('settings.title')}</h1>
-      </div>
-
-      <div className="screen__body">
-        <div className="section-head">{t('settings.shop')}</div>
-        <div className="form-grid">
+    <Screen title={t('settings.title')}>
+      <Section title={t('settings.shop')}>
+        <div className="grid gap-4 sm:grid-cols-2">
           {SHOP_FIELDS.map(([key, label]) => (
-            <label key={key} className="field">
-              <span className="field__label">{t(label)}</span>
-              <input
-                className={`input${key === 'shop_phone' || key === 'low_stock_default' ? ' num' : ''}`}
+            <label key={key} className="grid gap-2">
+              <span className="text-sm font-medium">{t(label)}</span>
+              <Input
+                className={cn(
+                  (key === 'shop_phone' || key === 'low_stock_default') && 'num',
+                )}
                 value={draft[key] ?? ''}
                 onChange={(event) =>
                   setDraft((current) => ({ ...current, [key]: event.target.value }))
@@ -66,67 +82,59 @@ export function SettingsScreen() {
               />
             </label>
           ))}
-          <div className="form-grid__wide">
-            <button
-              type="button"
-              className="btn btn--primary"
-              onClick={() => void save()}
-              data-testid="save-settings"
-            >
+          <div className="sm:col-span-2">
+            <Button onClick={() => void save()} data-testid="save-settings">
               {t('action.save')}
-            </button>
+            </Button>
           </div>
         </div>
+      </Section>
 
-        <div className="section-head">{t('settings.language')}</div>
-        <div className="screen__pad">
-          <div className="segmented" role="group" aria-label={t('settings.language')}>
-            {LANGUAGES.map((code: Language) => (
-              <button
-                key={code}
-                type="button"
-                className="segmented__item"
-                aria-pressed={language === code}
-                onClick={() => void setLanguage(code)}
-              >
-                {code === 'ur' ? t('settings.languageUr') : t('settings.languageEn')}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {!isStandalone() && (
-          <>
-            <div className="section-head">{t('settings.install')}</div>
-            <div className="screen__pad stack">
-              {canInstall && (
-                <button
-                  type="button"
-                  className="btn btn--primary btn--block"
-                  onClick={() => void promptInstall()}
-                >
-                  {t('settings.installAndroid')}
-                </button>
+      <Section title={t('settings.language')}>
+        <div className="inline-flex rounded-lg border p-1" role="group" aria-label={t('settings.language')}>
+          {LANGUAGES.map((code: Language) => (
+            <button
+              key={code}
+              type="button"
+              aria-pressed={language === code}
+              onClick={() => void setLanguage(code)}
+              className={cn(
+                'min-w-24 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+                language === code
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
-              {isIosSafari() && <p className="field__hint">{t('settings.installIos')}</p>}
-            </div>
-          </>
-        )}
-
-        <PinSection />
-
-        <DataSection />
-
-        <div className="screen__pad">
-          <button
-            type="button"
-            className="btn btn--block"
-            onClick={() => navigate('/settings/storage')}
-          >
-            {t('settings.storageDebug')}
-          </button>
+            >
+              {code === 'ur' ? t('settings.languageUr') : t('settings.languageEn')}
+            </button>
+          ))}
         </div>
+      </Section>
+
+      {!isStandalone() && (
+        <Section title={t('settings.install')}>
+          <div className="grid gap-2">
+            {canInstall && (
+              <Button className="w-full" onClick={() => void promptInstall()}>
+                {t('settings.installAndroid')}
+              </Button>
+            )}
+            {isIosSafari() && (
+              <p className="text-sm text-muted-foreground">{t('settings.installIos')}</p>
+            )}
+          </div>
+        </Section>
+      )}
+
+      <PinSection />
+
+      <DataSection />
+
+      <div className="p-4">
+        <Button variant="outline" className="w-full" onClick={() => navigate('/settings/storage')}>
+          {t('settings.storageDebug')}
+        </Button>
       </div>
-    </div>
+    </Screen>
   );
 }

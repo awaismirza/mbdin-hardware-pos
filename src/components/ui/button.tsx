@@ -25,7 +25,7 @@ const buttonVariants = cva(
         // and primary actions clear 48px (--touch). See CLAUDE.md.
         default: "h-11 px-5 py-2 has-[>svg]:px-4",
         xs: "h-7 gap-1 rounded-md px-2 text-xs has-[>svg]:px-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-9 gap-1.5 rounded-md px-3 has-[>svg]:px-2.5",
+        sm: "h-10 gap-1.5 rounded-md px-3.5 has-[>svg]:px-3",
         lg: "h-12 rounded-md px-7 text-base has-[>svg]:px-5",
         icon: "size-11",
         "icon-xs": "size-7 rounded-md [&_svg:not([class*='size-'])]:size-3",

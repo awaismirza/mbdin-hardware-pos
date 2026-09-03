@@ -1,23 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useApp, useT, useToast } from '../../appStore';
-import { db } from '../../db/client';
-import { formatDateTime, nowIso } from '../../lib/dates';
+import { useApp, useT, useToast } from '@/appStore';
+import { Screen } from '@/components/app/Screen';
+import { Button } from '@/components/ui/button';
+import { db } from '@/db/client';
+import { formatDateTime, nowIso } from '@/lib/dates';
 
 interface DebugRow {
   key: string;
   value: string;
 }
 
-/**
- * The storage check. This is the screen that proves M1: it shows which storage
- * path opened, lets you write a row, and lets you force the other path so both
- * can be verified on the same device.
- *
- * The test rows live in `meta` under debug_* keys, so the check exercises the
- * real transaction path without inventing a table that ships to a shopkeeper.
- */
 export function DebugScreen() {
   const t = useT();
   const navigate = useNavigate();
@@ -76,15 +70,10 @@ export function DebugScreen() {
     }
   }
 
-  /**
-   * Fills the shop with a realistic sample catalogue. This is how the "400
-   * products search in under 100 ms" figure gets checked on the actual tablet
-   * rather than only in a Node test.
-   */
   async function seed() {
     setBusy(true);
     try {
-      const { seedSampleCatalogue } = await import('../../db/seed');
+      const { seedSampleCatalogue } = await import('@/db/seed');
       const made = await seedSampleCatalogue({ count: 400 });
       toast(t('debug.seeded', { count: made }));
       await refresh();
@@ -95,17 +84,10 @@ export function DebugScreen() {
     }
   }
 
-  /**
-   * Times the catalogue search the Sell screen depends on, on this device.
-   *
-   * The budget is 100 ms at 2,000 products. A cheap tablet is a different
-   * machine from a laptop, so this measures where it matters rather than
-   * trusting a number from a development box.
-   */
   async function benchmark() {
     setBusy(true);
     try {
-      const { listProducts } = await import('../../db/repos/productsRepo');
+      const { listProducts } = await import('@/db/repos/productsRepo');
       const terms = ['چین', 'sug', 'gh', 'daal', 'SKU01', ''];
       let worst = 0;
       for (const term of terms) {
@@ -129,159 +111,139 @@ export function DebugScreen() {
     }
   }
 
+  const kv = (label: string, value: React.ReactNode, testid?: string) => (
+    <div className="flex items-baseline gap-3 py-2 text-sm">
+      <span className="flex-1 text-muted-foreground">{label}</span>
+      <span className="text-end" data-testid={testid}>
+        {value}
+      </span>
+    </div>
+  );
+
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <button type="button" className="btn btn--quiet" onClick={() => navigate('/settings')}>
-          {t('action.back')}
-        </button>
-        <h1 className="screen__title">{t('debug.title')}</h1>
-      </div>
-
-      <div className="screen__body">
-        <div className="kv">
-          <span className="kv__key">{t('debug.mode')}</span>
-          <span className="kv__value" data-testid="storage-mode">
-            {info?.mode === 'opfs' ? t('settings.storageOpfs') : t('settings.storageIdb')}
-          </span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.schema')}</span>
-          <span className="kv__value num">{info?.schemaVersion ?? '—'}</span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.sqlite')}</span>
-          <span className="kv__value num">{info?.sqliteVersion ?? '—'}</span>
-        </div>
-        {info?.fallbackReason && (
-          <div className="kv">
-            <span className="kv__key">{t('debug.fallbackReason')}</span>
-            <span className="kv__value">{info.fallbackReason}</span>
-          </div>
-        )}
-        <div className="kv">
-          <span className="kv__key">{t('settings.onHomeScreen')}</span>
-          <span className="kv__value" data-testid="on-home-screen">
-            {installed ? t('settings.persistentYes') : t('settings.persistentNo')}
-          </span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.persisted')}</span>
-          <span className="kv__value" data-testid="persisted-status">
-            {persisted === null ? '—' : persisted ? t('settings.persistentYes') : t('settings.persistentNo')}
-          </span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('settings.dbSize')}</span>
-          <span className="kv__value num">{dbBytes === null ? '—' : formatBytes(dbBytes)}</span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.products')}</span>
-          <span className="kv__value num" data-testid="product-count">
-            {productCount ?? '—'}
-          </span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.searchSpeed')}</span>
-          <span className="kv__value num" data-testid="search-ms">
-            {searchMs === null ? '—' : `${searchMs} ms`}
-          </span>
-        </div>
-        <div className="kv">
-          <span className="kv__key">{t('debug.usage')}</span>
-          <span className="kv__value num">
-            {estimate?.usage === undefined ? '—' : formatBytes(estimate.usage)}
-            {estimate?.quota !== undefined ? ` / ${formatBytes(estimate.quota)}` : ''}
-          </span>
+    <Screen title={t('debug.title')} onBack={() => navigate('/settings')}>
+      <div className="p-4">
+        <div className="divide-y rounded-xl border px-4">
+          {kv(
+            t('debug.mode'),
+            info?.mode === 'opfs' ? t('settings.storageOpfs') : t('settings.storageIdb'),
+            'storage-mode',
+          )}
+          {kv(t('debug.schema'), <span className="num">{info?.schemaVersion ?? '—'}</span>)}
+          {kv(t('debug.sqlite'), <span className="num">{info?.sqliteVersion ?? '—'}</span>)}
+          {info?.fallbackReason && kv(t('debug.fallbackReason'), info.fallbackReason)}
+          {kv(
+            t('settings.onHomeScreen'),
+            installed ? t('settings.persistentYes') : t('settings.persistentNo'),
+            'on-home-screen',
+          )}
+          {kv(
+            t('debug.persisted'),
+            persisted === null
+              ? '—'
+              : persisted
+                ? t('settings.persistentYes')
+                : t('settings.persistentNo'),
+            'persisted-status',
+          )}
+          {kv(
+            t('settings.dbSize'),
+            <span className="num">{dbBytes === null ? '—' : formatBytes(dbBytes)}</span>,
+          )}
+          {kv(
+            t('debug.products'),
+            <span className="num" data-testid="product-count">
+              {productCount ?? '—'}
+            </span>,
+          )}
+          {kv(
+            t('debug.searchSpeed'),
+            <span className="num" data-testid="search-ms">
+              {searchMs === null ? '—' : `${searchMs} ms`}
+            </span>,
+          )}
+          {kv(
+            t('debug.usage'),
+            <span className="num">
+              {estimate?.usage === undefined ? '—' : formatBytes(estimate.usage)}
+              {estimate?.quota !== undefined ? ` / ${formatBytes(estimate.quota)}` : ''}
+            </span>,
+          )}
         </div>
 
-        <div className="section-head">
-          <span>{t('debug.testRow')}</span>
-          <span className="section-head__spacer" />
-          <span className="meta num">{rows.length}</span>
-        </div>
-
-        <p className="meta screen__pad" style={{ paddingBlock: 0 }}>
-          {t('debug.hint')}
-        </p>
-
-        <div className="screen__pad row" style={{ flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn btn--primary"
-            data-testid="write-row"
-            onClick={() => void writeRow()}
-            disabled={busy}
-          >
+        <h2 className="mt-6 mb-1 flex items-center gap-3 text-base font-semibold">
+          {t('debug.testRow')}
+          <span className="num ms-auto text-sm text-muted-foreground">{rows.length}</span>
+        </h2>
+        <p className="mb-3 text-sm text-muted-foreground">{t('debug.hint')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button data-testid="write-row" onClick={() => void writeRow()} disabled={busy}>
             {t('debug.writeRow')}
-          </button>
-          <button
-            type="button"
-            className="btn"
+          </Button>
+          <Button
+            variant="outline"
             data-testid="clear-rows"
             onClick={() => void clearRows()}
             disabled={busy}
           >
             {t('action.clear')}
-          </button>
-          <button
-            type="button"
-            className="btn"
+          </Button>
+          <Button
+            variant="outline"
             data-testid="benchmark-search"
             onClick={() => void benchmark()}
             disabled={busy}
           >
             {t('debug.runBenchmark')}
-          </button>
-          <button
-            type="button"
-            className="btn"
+          </Button>
+          <Button
+            variant="outline"
             data-testid="seed-catalogue"
             onClick={() => void seed()}
             disabled={busy}
           >
             {t('debug.seed')}
-          </button>
+          </Button>
         </div>
 
-        <div className="section-head">{t('debug.switchTitle')}</div>
-        <p className="meta screen__pad" style={{ paddingBlock: 0 }}>
-          {t('debug.switchHint')}
-        </p>
-        <div className="screen__pad row" style={{ flexWrap: 'wrap' }}>
-          <button
-            type="button"
-            className="btn"
+        <h2 className="mt-6 mb-1 text-base font-semibold">{t('debug.switchTitle')}</h2>
+        <p className="mb-3 text-sm text-muted-foreground">{t('debug.switchHint')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
             data-testid="force-idb"
             onClick={() => void reopenAs('idb')}
             disabled={busy}
           >
             {t('debug.forceIdb')}
-          </button>
-          <button
-            type="button"
-            className="btn"
+          </Button>
+          <Button
+            variant="outline"
             data-testid="force-opfs"
             onClick={() => void reopenAs('opfs')}
             disabled={busy}
           >
             {t('debug.forceOpfs')}
-          </button>
-          <button type="button" className="btn" onClick={() => window.location.reload()}>
+          </Button>
+          <Button variant="outline" onClick={() => window.location.reload()}>
             {t('debug.reload')}
-          </button>
+          </Button>
         </div>
 
-        <ul className="list" style={{ listStyle: 'none' }}>
+        <ul className="mt-4 divide-y rounded-xl border">
           {rows.map((row) => (
-            <li key={row.key} className="list__row">
-              <span className="list__main truncate num">{row.key}</span>
-              <span className="meta num">{formatDateTime(row.value)}</span>
+            <li
+              key={row.key}
+              data-testid="debug-row"
+              className="flex items-center gap-3 px-4 py-3 text-sm"
+            >
+              <span className="num min-w-0 flex-1 truncate">{row.key}</span>
+              <span className="num text-muted-foreground">{formatDateTime(row.value)}</span>
             </li>
           ))}
         </ul>
       </div>
-    </div>
+    </Screen>
   );
 }
 
