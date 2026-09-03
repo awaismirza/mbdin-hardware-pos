@@ -52,6 +52,9 @@ export function gatewayFor(engine: Engine): DbGateway {
     async exportBytes() {
       return engine.exportBytes().slice();
     },
+    async inspectBytes() {
+      throw new Error('inspectBytes is not supported against the in-memory test database');
+    },
     async importBytes() {
       throw new Error('importBytes is not supported against the in-memory test database');
     },

@@ -6,9 +6,17 @@
 
 import * as Comlink from 'comlink';
 
-import type { DbApi, InitOptions, InitResult, SqlParam, TxStep, WriteResult } from './api';
+import type {
+  BackupSummary,
+  DbApi,
+  InitOptions,
+  InitResult,
+  SqlParam,
+  TxStep,
+  WriteResult,
+} from './api';
 
-export type { InitResult, StorageMode } from './api';
+export type { BackupSummary, InitResult, StorageMode } from './api';
 export { lastIdOf } from './api';
 
 /**
@@ -111,6 +119,7 @@ export interface DbGateway {
   exec(sql: string, params?: SqlParam[]): Promise<WriteResult>;
   transaction(steps: TxStep[]): Promise<WriteResult[]>;
   exportBytes(): Promise<Uint8Array>;
+  inspectBytes(bytes: Uint8Array): Promise<BackupSummary>;
   importBytes(bytes: Uint8Array): Promise<void>;
   vacuum(): Promise<void>;
   byteSize(): Promise<number>;
@@ -134,6 +143,9 @@ const workerGateway: DbGateway = {
   },
   exportBytes(): Promise<Uint8Array> {
     return connect().exportBytes();
+  },
+  inspectBytes(bytes: Uint8Array): Promise<BackupSummary> {
+    return connect().inspectBytes(bytes);
   },
   importBytes(bytes: Uint8Array): Promise<void> {
     return connect().importBytes(Comlink.transfer(bytes, [bytes.buffer]));
@@ -165,6 +177,7 @@ export const db: DbGateway = {
   exec: (sql, params) => gateway.exec(sql, params),
   transaction: (steps) => gateway.transaction(steps),
   exportBytes: () => gateway.exportBytes(),
+  inspectBytes: (bytes) => gateway.inspectBytes(bytes),
   importBytes: (bytes) => gateway.importBytes(bytes),
   vacuum: () => gateway.vacuum(),
   byteSize: () => gateway.byteSize(),

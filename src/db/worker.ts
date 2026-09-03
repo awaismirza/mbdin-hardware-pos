@@ -29,7 +29,15 @@
 import * as Comlink from 'comlink';
 import sqlite3InitModule, { type Sqlite3Static, type Database } from '@sqlite.org/sqlite-wasm';
 
-import type { DbApi, InitOptions, InitResult, SqlParam, TxStep, WriteResult } from './api';
+import type {
+  BackupSummary,
+  DbApi,
+  InitOptions,
+  InitResult,
+  SqlParam,
+  TxStep,
+  WriteResult,
+} from './api';
 import { Engine, type SqliteHandle } from './engine';
 import { clearImage, loadImage, saveImage } from './idbStore';
 
@@ -238,6 +246,65 @@ const api: DbApi = {
   async exportBytes(): Promise<Uint8Array> {
     // Copy out of WASM memory before it crosses the Comlink boundary.
     return requireEngine().exportBytes().slice();
+  },
+
+  /**
+   * Opens a candidate backup in a throwaway in-memory database and reports what
+   * it holds. The live database is never touched, so a corrupt or hostile file
+   * cannot damage anything by being inspected.
+   */
+  async inspectBytes(bytes: Uint8Array): Promise<BackupSummary> {
+    const sqlite = await loadSqlite();
+    assertSqliteImage(bytes);
+
+    const probe = new sqlite.oo1.DB(':memory:', 'c');
+    try {
+      deserialiseInto(sqlite, probe, bytes);
+
+      const count = (table: string): number => {
+        try {
+          return Number(probe.selectValue(`SELECT COUNT(*) FROM ${table}`) ?? 0);
+        } catch {
+          // A table added by a later migration simply is not there yet.
+          return 0;
+        }
+      };
+      const setting = (key: string): string | null => {
+        try {
+          const value = probe.selectValue('SELECT value FROM settings WHERE key = ?', [key]);
+          return value === undefined || value === null ? null : String(value);
+        } catch {
+          return null;
+        }
+      };
+      const meta = (key: string): string | null => {
+        try {
+          const value = probe.selectValue('SELECT value FROM meta WHERE key = ?', [key]);
+          return value === undefined || value === null ? null : String(value);
+        } catch {
+          return null;
+        }
+      };
+
+      const version = Number(meta('schema_version') ?? 0);
+      if (!Number.isFinite(version) || version <= 0) {
+        throw new Error(
+          'Backup file not recognised. Choose a .sqlite3 or .json file exported from Dukaan.',
+        );
+      }
+
+      return {
+        schemaVersion: version,
+        products: count('products'),
+        sales: count('sales'),
+        customers: count('customers'),
+        ledgerEntries: count('ledger_entries'),
+        createdAt: meta('created_at'),
+        shopName: setting('shop_name'),
+      };
+    } finally {
+      probe.close();
+    }
   },
 
   /**

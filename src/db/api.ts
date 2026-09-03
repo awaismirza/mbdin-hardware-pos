@@ -56,6 +56,17 @@ export interface InitOptions {
   forceMode?: StorageMode;
 }
 
+/** What a candidate backup file turns out to contain. */
+export interface BackupSummary {
+  schemaVersion: number;
+  products: number;
+  sales: number;
+  customers: number;
+  ledgerEntries: number;
+  createdAt: string | null;
+  shopName: string | null;
+}
+
 export interface DbApi {
   init(options?: InitOptions): Promise<InitResult>;
   query<T>(sql: string, params?: SqlParam[]): Promise<T[]>;
@@ -63,6 +74,13 @@ export interface DbApi {
   /** Runs every step in one transaction. Any throw rolls the whole thing back. */
   transaction(steps: TxStep[]): Promise<WriteResult[]>;
   exportBytes(): Promise<Uint8Array>;
+  /**
+   * Opens a candidate backup in a throwaway database and reports what is in it,
+   * without touching the live one. This is what the restore confirmation counts
+   * come from — the user is told what they are about to replace, using the
+   * incoming file's own numbers.
+   */
+  inspectBytes(bytes: Uint8Array): Promise<BackupSummary>;
   importBytes(bytes: Uint8Array): Promise<void>;
   vacuum(): Promise<void>;
   /** Byte size of the database as it stands, for the Settings screen. */
