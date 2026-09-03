@@ -121,7 +121,7 @@ export function DataSection() {
       // Reload rather than patch the screens back into agreement: every cached
       // list, the settings and the cart all refer to a database that no longer
       // exists.
-      window.location.assign('/sell');
+      window.location.assign(`${import.meta.env.BASE_URL}sell`);
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'bad');
       setBusy(false);
@@ -333,7 +333,7 @@ function ResetDialog({ onClose }: { onClose: () => void }) {
     setBusy(true);
     try {
       await db.resetEverything();
-      window.location.assign('/sell');
+      window.location.assign(`${import.meta.env.BASE_URL}sell`);
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'bad');
       setBusy(false);

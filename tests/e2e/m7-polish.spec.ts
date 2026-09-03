@@ -165,30 +165,60 @@ test.describe('the printed receipt', () => {
 });
 
 test.describe('installability', () => {
-  test('serves a manifest, icons and a service worker', async ({ page, request }) => {
+  test('serves a manifest, icons and a service worker', async ({ page, request, baseURL }) => {
+    // §10: the only network call in the whole app is a wa.me link the user
+    // taps. Nothing loaded by the app itself may come from another origin —
+    // no font CDN, no script host, no analytics beacon.
+    const ownOrigin = new URL(baseURL ?? 'http://localhost:4173').origin;
+    const offOrigin: string[] = [];
+    page.on('request', (outgoing) => {
+      const url = new URL(outgoing.url());
+      if (url.protocol === 'data:' || url.protocol === 'blob:') return;
+      if (url.origin !== ownOrigin) offOrigin.push(outgoing.url());
+    });
+
     await page.goto('/sell');
 
-    const manifestResponse = await request.get('/manifest.webmanifest');
+    const manifestUrl = new URL('/manifest.webmanifest', page.url());
+    const manifestResponse = await request.get(manifestUrl.href);
     expect(manifestResponse.ok()).toBe(true);
     const manifest = (await manifestResponse.json()) as {
       name: string;
       start_url: string;
+      scope: string;
       display: string;
       icons: { src: string; sizes: string; purpose?: string }[];
     };
     expect(manifest.display).toBe('standalone');
-    expect(manifest.start_url).toBe('/sell');
     expect(manifest.icons.some((icon) => icon.sizes === '512x512')).toBe(true);
     expect(manifest.icons.some((icon) => icon.purpose === 'maskable')).toBe(true);
 
+    // Every path in the manifest is relative, so it resolves against the
+    // manifest's own URL and the same file works at the domain root and under
+    // a GitHub Pages project subpath. Assert the resolved URLs, not literals.
+    expect(new URL(manifest.start_url, manifestUrl).href).toBe(
+      new URL('sell', manifestUrl).href,
+    );
+    expect(new URL(manifest.scope, manifestUrl).href).toBe(new URL('./', manifestUrl).href);
+
     for (const icon of manifest.icons) {
-      const iconResponse = await request.get(icon.src);
+      const iconResponse = await request.get(new URL(icon.src, manifestUrl).href);
       expect(iconResponse.ok(), icon.src).toBe(true);
     }
 
-    // The fonts are self-hosted, so the app never reaches for a CDN offline.
-    const font = await request.get('/fonts/ibm-plex-sans-arabic-400.woff2');
-    expect(font.ok()).toBe(true);
+    // Fonts are declared as IBM Plex and nothing else, and are fetched from
+    // this origin. A browser only downloads a face once a glyph needs it, so
+    // which families end up loaded depends on what is on screen — the property
+    // worth asserting is where they come from, not which ones fired.
+    const declared = await page.evaluate(async () => {
+      await document.fonts.ready;
+      // FontFaceSet is iterable at runtime; its lib.dom typing is not.
+      const families: string[] = [];
+      document.fonts.forEach((face) => families.push(face.family));
+      return [...new Set(families)];
+    });
+    expect(declared.length).toBeGreaterThan(0);
+    expect(declared.every((family) => family.startsWith('IBM Plex'))).toBe(true);
 
     await page.waitForFunction(
       async () => {
@@ -199,6 +229,8 @@ test.describe('installability', () => {
       null,
       { timeout: 60_000 },
     );
+
+    expect(offOrigin, 'the app fetched something from another origin').toEqual([]);
   });
 
   test('the whole day works in aeroplane mode', async ({ page, context }) => {

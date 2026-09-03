@@ -4,6 +4,20 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  /*
+   * Root by default, so `npm run dev`, `npm run preview` and the whole test
+   * suite behave as they always have.
+   *
+   * A GitHub Pages *project* site is served from /<repo>/, not from the domain
+   * root, so the deploy workflow sets VITE_BASE to that subpath. Vite then
+   * rewrites the asset URLs in index.html and the font url() calls in the CSS
+   * on its own; what it cannot rewrite is public/manifest.webmanifest (copied
+   * verbatim) — which is why every path in that file is relative — and any
+   * absolute path written by hand in code, which is why the router takes a
+   * basename and hard navigations go through import.meta.env.BASE_URL.
+   */
+  base: process.env['VITE_BASE'] ?? '/',
+
   plugins: [
     react(),
     VitePWA({

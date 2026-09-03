@@ -1,0 +1,69 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  # So a broken main can be redeployed from the Actions tab without a commit.
+  workflow_dispatch:
+
+# Pages needs to read the repo, mint an OIDC token, and write a deployment.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy at a time. `cancel-in-progress: false` because cancelling a
+# half-finished deployment can leave the live site on a partial upload.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # The gate. Nothing reaches the shop's tablet without passing these.
+      - run: npm run lint
+      - run: npx tsc -b
+      - run: npm test
+
+      - name: Install Chromium for the browser tests
+        run: npx playwright install --with-deps chromium
+
+      # These are the tests that matter most: both storage paths, the sale
+      # transaction, a tab kill mid-cart, backup/restore round trips, RTL.
+      - name: Browser tests
+        run: npm run test:e2e
+
+      - name: Build for Pages
+        env:
+          # A project site is served from /<repo>/. Derived from the repository
+          # name rather than hard-coded, so renaming the repo does not silently
+          # publish a site with broken asset paths.
+          VITE_BASE: /${{ github.event.repository.name }}/
+        run: npm run build:pages
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

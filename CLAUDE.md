@@ -38,11 +38,21 @@ The IndexedDB fallback is for browsers with no OPFS at all. It runs the same WAS
 build on an in-memory database and rewrites the serialised image after every
 write transaction.
 
+## Base path
+
+The app must work at the domain root *and* under a GitHub Pages project subpath,
+so nothing may hard-code a root-absolute URL. Routes go through the router
+(which carries `basename={import.meta.env.BASE_URL}`), full-page navigations
+build their URL from `import.meta.env.BASE_URL`, and every path in
+`public/manifest.webmanifest` stays relative — that file is copied verbatim and
+the bundler never touches it.
+
 ## Commands
 
     npm run dev / build / preview / test / test:e2e / typecheck / lint
     npm run fonts    # refresh public/fonts from the Fontsource packages
     npm run icons    # regenerate PWA icons from the design tokens
 
-`npm run test:e2e` needs a built app; set `PLAYWRIGHT_CHROMIUM_PATH` if the
+`npm run build:pages` produces a GitHub Pages build; set `VITE_BASE=/<repo>/`
+with it. `npm run test:e2e` needs a built app; set `PLAYWRIGHT_CHROMIUM_PATH` if the
 environment ships its own Chromium instead of Playwright's.

@@ -75,16 +75,22 @@ interface Snapshot {
 
 async function snapshot(page: Page): Promise<Snapshot> {
   await page.goto('/settings/storage');
-  const products = await page.getByTestId('product-count').innerText();
+  // The count renders "—" until its query resolves. Reading straight after the
+  // navigation catches that placeholder often enough to make the comparison
+  // below meaningless, so wait for a real figure first.
+  const count = page.getByTestId('product-count');
+  await expect(count).not.toHaveText('—');
+  const products = await count.innerText();
 
   await page.goto('/stock');
   const stock = await page.getByRole('button', { name: /چینی|Sugar/ }).innerText();
 
   await page.goto('/people');
   await page.getByRole('button', { name: /Akram/ }).click();
-  const balance = await page.getByTestId('customer-balance').innerText();
+  const balance = page.getByTestId('customer-balance');
+  await expect(balance).not.toHaveText('—');
 
-  return { products, stock, balance };
+  return { products, stock, balance: await balance.innerText() };
 }
 
 test('export, wipe, restore — and every number comes back', async ({ page }, testInfo) => {
