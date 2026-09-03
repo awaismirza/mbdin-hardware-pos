@@ -1,17 +1,17 @@
-import { useT } from '../../appStore';
-import { EmptyState } from '../../components/EmptyState';
+import { Route, Routes } from 'react-router-dom';
 
-/** Placeholder until M4. */
+import { CustomerDetail } from './CustomerDetail';
+import { CustomerEditor } from './CustomerEditor';
+import { PeopleList } from './PeopleList';
+
+import './people.css';
+
 export function PeopleRoutes() {
-  const t = useT();
   return (
-    <div className="screen">
-      <div className="screen__head">
-        <h1 className="screen__title">{t('people.title')}</h1>
-      </div>
-      <div className="screen__body">
-        <EmptyState text={t('people.empty')} />
-      </div>
-    </div>
+    <Routes>
+      <Route index element={<PeopleList />} />
+      <Route path="customer/:id" element={<CustomerEditor />} />
+      <Route path=":id" element={<CustomerDetail />} />
+    </Routes>
   );
 }

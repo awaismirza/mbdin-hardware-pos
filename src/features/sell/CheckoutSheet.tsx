@@ -61,20 +61,29 @@ export function CheckoutSheet({
   const needsCustomer = duePaisa > 0 && customerId === null;
   const canConfirm = !busy && !needsCustomer;
 
-  function submit() {
+  async function submit() {
     if (!canConfirm) return;
 
     // Warn, never block. The shopkeeper knows who is good for it and the app
     // does not — but they should see the numbers before deciding.
-    if (
-      duePaisa > 0 &&
-      customer &&
-      customer.creditLimitPaisa > 0 &&
-      customer.balancePaisa + duePaisa > customer.creditLimitPaisa &&
-      !overLimit
-    ) {
-      setOverLimit(true);
-      return;
+    //
+    // The customer is re-read here rather than taken from the state loaded by
+    // the effect above. Tapping Confirm the instant after choosing a customer
+    // would otherwise race the fetch, and a race that loses skips the warning
+    // silently — which is the one outcome this check exists to prevent. It also
+    // picks up a balance that moved while the sheet was open.
+    if (duePaisa > 0 && customerId !== null && !overLimit) {
+      const latest = customer?.id === customerId ? customer : await getCustomer(customerId);
+      if (latest) {
+        setCustomer(latest);
+        if (
+          latest.creditLimitPaisa > 0 &&
+          latest.balancePaisa + duePaisa > latest.creditLimitPaisa
+        ) {
+          setOverLimit(true);
+          return;
+        }
+      }
     }
 
     onConfirm({
@@ -199,7 +208,7 @@ export function CheckoutSheet({
         <button
           type="button"
           className="btn btn--primary btn--lg btn--block"
-          onClick={submit}
+          onClick={() => void submit()}
           disabled={!canConfirm}
           data-testid="confirm-sale"
         >

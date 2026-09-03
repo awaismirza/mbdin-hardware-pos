@@ -1,0 +1,95 @@
+/* People. The list is sorted by what is owed, descending, because that is the
+   question the shopkeeper opens this screen to answer. */
+
+.person-row__balance {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+}
+
+/* The one loud element on a customer page. */
+.balance-panel {
+  display: grid;
+  gap: var(--s1);
+  padding: var(--s4);
+  border-block-end: var(--rule);
+  text-align: center;
+}
+.balance-panel__label {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.balance-panel__value {
+  font-size: var(--size-total);
+  font-weight: var(--weight-bold);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.balance-panel__value--owes {
+  color: var(--seal);
+}
+.balance-panel__value--settled {
+  color: var(--settled);
+}
+
+.person-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: var(--s2);
+  padding: var(--s4);
+}
+
+/* ---- The ledger, read like a paper khata: date, what, amount, running ---- */
+.ledger-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--s3);
+  align-items: baseline;
+  padding: var(--s3) var(--s4);
+  border-block-end: var(--rule);
+}
+
+.ledger-row__what {
+  min-inline-size: 0;
+}
+.ledger-row__kind {
+  font-size: var(--size-body);
+}
+.ledger-row__when {
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.ledger-row__amount {
+  inline-size: 10ch;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--weight-money);
+}
+.ledger-row__amount--charge {
+  color: var(--seal);
+}
+.ledger-row__amount--payment {
+  color: var(--settled);
+}
+.ledger-row__running {
+  inline-size: 10ch;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+
+.ledger-head {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: var(--s3);
+  padding: var(--s2) var(--s4);
+  border-block-end: 2px solid var(--ink);
+  font-size: var(--size-meta);
+  color: var(--ink-soft);
+}
+.ledger-head__amount,
+.ledger-head__running {
+  inline-size: 10ch;
+  text-align: end;
+}
