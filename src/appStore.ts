@@ -4,6 +4,7 @@ import { dbInfo, initDb, reopenDb, type InitResult, type StorageMode } from './d
 import { getAllSettings, setSetting, type SettingsMap } from './db/repos/settingsRepo';
 import { DEFAULT_SETTINGS } from './db/migrations';
 import { direction, isLanguage, translator, type Language, type Translate } from './i18n';
+import { isStandalone } from './pwa';
 
 export type BootStatus = 'idle' | 'booting' | 'ready' | 'failed';
 
@@ -23,6 +24,8 @@ interface AppState {
   toasts: Toast[];
   /** Result of navigator.storage.persist(), or null if never asked. */
   persisted: boolean | null;
+  /** Running from the home screen (standalone display mode), not a browser tab. */
+  installed: boolean;
 
   boot(forceMode?: StorageMode): Promise<void>;
   refreshSettings(): Promise<void>;
@@ -43,6 +46,9 @@ export const useApp = create<AppState>((set, get) => ({
   t: translator('ur'),
   toasts: [],
   persisted: null,
+  // Display mode does not change without a fresh launch, so this is read once
+  // here rather than re-checked on every render.
+  installed: isStandalone(),
 
   async boot(forceMode) {
     set({ status: 'booting', error: null });

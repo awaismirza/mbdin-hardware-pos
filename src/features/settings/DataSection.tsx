@@ -28,6 +28,7 @@ export function DataSection() {
   const toast = useToast();
   const info = useApp((state) => state.info);
   const persisted = useApp((state) => state.persisted);
+  const installed = useApp((state) => state.installed);
   const settings = useApp((state) => state.settings);
   const refreshSettings = useApp((state) => state.refreshSettings);
 
@@ -152,8 +153,14 @@ export function DataSection() {
         </span>
       </div>
       <div className="kv">
+        <span className="kv__key">{t('settings.onHomeScreen')}</span>
+        <span className="kv__value" data-testid="on-home-screen">
+          {installed ? t('settings.persistentYes') : t('settings.persistentNo')}
+        </span>
+      </div>
+      <div className="kv">
         <span className="kv__key">{t('settings.persistent')}</span>
-        <span className="kv__value">
+        <span className="kv__value" data-testid="persisted-status">
           {persisted === null
             ? '—'
             : persisted

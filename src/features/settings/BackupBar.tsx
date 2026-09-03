@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useApp, useT } from '../../appStore';
 import { runDailyArchive } from '../../backup/archive';
 import { hoursSince } from '../../lib/dates';
+import { shouldWarnAboutPersistence } from '../../lib/protection';
 
 /**
  * Two quiet, non-blocking notices that live above every screen.
@@ -13,8 +14,10 @@ import { hoursSince } from '../../lib/dates';
  * this device does not silence it — only a backup that has actually left the
  * tablet does.
  *
- * The persistence banner appears once if the browser refused to protect the
- * ledger from being cleared, which is the normal answer on iOS Safari.
+ * The persistence banner appears only when the app is both NOT on the home
+ * screen and NOT persisted — see lib/protection.ts. An installed app whose
+ * persisted flag simply has not caught up (routine, especially on iOS) gets no
+ * banner: "add to home screen" is not useful advice to someone who already has.
  */
 export function BackupBar() {
   const t = useT();
@@ -24,6 +27,7 @@ export function BackupBar() {
   const settings = useApp((state) => state.settings);
   const status = useApp((state) => state.status);
   const persisted = useApp((state) => state.persisted);
+  const installed = useApp((state) => state.installed);
   const saveSetting = useApp((state) => state.saveSetting);
 
   const [archiveChecked, setArchiveChecked] = useState(false);
@@ -48,13 +52,16 @@ export function BackupBar() {
   // pushing the content of a screen opened for some other reason down.
   const onSellScreen = location.pathname === '/' || location.pathname.startsWith('/sell');
   const bannerDismissed = settings['persist_banner_dismissed'] === '1';
-  const showPersistWarning = persisted === false && !bannerDismissed;
+  const showPersistWarning = shouldWarnAboutPersistence(installed, persisted, bannerDismissed);
 
   return (
     <>
       {showPersistWarning && (
-        <div className="amber-bar" role="status">
+        <div className="amber-bar" role="status" data-testid="persist-warning">
           <span className="amber-bar__text">{t('backup.notPersisted')}</span>
+          <button type="button" className="btn" onClick={() => navigate('/settings')}>
+            {t('settings.install')}
+          </button>
           <button
             type="button"
             className="btn"

@@ -266,6 +266,7 @@ export const en = {
   'settings.storageIdb': 'IndexedDB (fallback)',
   'settings.spaceUsed': 'Space used',
   'settings.dbSize': 'Ledger size',
+  'settings.onHomeScreen': 'On home screen',
   'settings.persistent': 'Protected from clearing',
   'settings.persistentYes': 'Yes',
   'settings.persistentNo': 'No',
