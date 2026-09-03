@@ -79,6 +79,21 @@ function offsetMinutes(date: Date): number {
   return Math.round((asUtc - Math.floor(date.getTime() / 1000) * 1000) / 60000);
 }
 
+/**
+ * The shop's UTC offset as a SQLite date-modifier, e.g. "+5 hours".
+ *
+ * SQL that buckets timestamps by shop day needs this: the rows are stored in
+ * UTC, so a sale at 2am in Mandi Bahauddin is on the previous UTC date and
+ * would land in yesterday's takings. Derived rather than hard-coded — Pakistan
+ * has had no DST since 2009, but the books should not quietly go wrong if that
+ * ever changes again.
+ */
+export function shopOffsetModifier(at: Date = new Date()): string {
+  const minutes = offsetMinutes(at);
+  const sign = minutes < 0 ? '-' : '+';
+  return `${sign}${String(Math.abs(minutes))} minutes`;
+}
+
 /** The Karachi calendar day of an instant, as YYYY-MM-DD. */
 export function karachiDay(date: Date | string = new Date()): string {
   const instant = typeof date === 'string' ? new Date(date) : date;
