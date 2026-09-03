@@ -10,10 +10,10 @@ export async function completeSetup(page: Page, options: SetupOptions = {}): Pro
   const { language = 'en', shopName = 'Test Store' } = options;
   await page.goto('/sell');
   const name = page.getByTestId('setup-shop-name');
-  const shell = page.locator('.shell');
+  const ready = page.getByTestId('app-ready');
   await Promise.race([
     name.waitFor({ state: 'visible', timeout: 15_000 }),
-    shell.waitFor({ state: 'visible', timeout: 15_000 }),
+    ready.waitFor({ state: 'visible', timeout: 15_000 }),
   ]);
 
   if (await name.isVisible()) {

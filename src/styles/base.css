@@ -203,60 +203,78 @@ button {
   border-block-start: var(--rule);
 }
 
-/* ---- Buttons ---------------------------------------------------------- */
+/* ---- Buttons — matched to the shadcn button so legacy screens sit
+       alongside the migrated ones without a visible seam ---------------- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: var(--s2);
-  min-height: var(--touch);
-  padding-inline: var(--s4);
-  border: 1px solid var(--paper-rule);
+  min-height: 44px;
+  padding-inline: var(--s5);
+  border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--card);
-  color: var(--ink);
-  font-size: var(--size-body);
-  font-weight: var(--weight-money);
-  transition: background var(--motion) var(--ease);
+  color: var(--foreground);
+  font-size: var(--size-meta);
+  font-weight: 500;
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
+  transition:
+    background var(--motion) var(--ease),
+    border-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
+}
+.btn:hover {
+  background: var(--accent);
+}
+.btn:focus-visible {
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 45%, transparent);
 }
 .btn:active {
-  background: var(--ink-wash);
+  background: var(--accent);
 }
 .btn[disabled] {
-  opacity: 0.45;
-  cursor: not-allowed;
+  opacity: 0.5;
+  pointer-events: none;
 }
 
 .btn--primary {
-  background: var(--seal);
-  border-color: var(--seal);
-  color: #fff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-foreground);
 }
+.btn--primary:hover,
 .btn--primary:active {
-  background: var(--seal-deep);
-  border-color: var(--seal-deep);
+  background: color-mix(in oklch, var(--primary) 90%, black);
+  border-color: color-mix(in oklch, var(--primary) 90%, black);
 }
 
 .btn--danger {
   background: transparent;
-  border-color: var(--seal);
-  color: var(--seal);
+  border-color: var(--destructive);
+  color: var(--destructive);
 }
+.btn--danger:hover,
 .btn--danger:active {
-  background: var(--seal-wash);
+  background: color-mix(in oklch, var(--destructive) 12%, var(--background));
 }
 
 .btn--quiet {
   background: transparent;
   border-color: transparent;
+  box-shadow: none;
 }
+.btn--quiet:hover,
 .btn--quiet:active {
-  background: var(--ink-wash);
+  background: var(--accent);
 }
 
 .btn--lg {
-  min-height: var(--touch-lg);
-  font-size: var(--size-section);
+  min-height: 48px;
+  padding-inline: var(--s6);
+  font-size: var(--size-body);
 }
 
 .btn--block {
@@ -264,40 +282,46 @@ button {
   inline-size: 100%;
 }
 
-/* ---- Fields ----------------------------------------------------------- */
+/* ---- Fields --------------------------------------------------------- */
 .field {
   display: block;
 }
 .field__label {
   display: block;
   font-size: var(--size-meta);
-  color: var(--ink-soft);
-  margin-block-end: var(--s1);
+  font-weight: 500;
+  color: var(--foreground);
+  margin-block-end: var(--s2);
 }
 .input,
 .select,
 .textarea {
   inline-size: 100%;
-  min-height: var(--touch);
+  min-height: 44px;
   padding: var(--s2) var(--s3);
-  border: 1px solid var(--paper-rule);
+  border: 1px solid var(--input);
   border-radius: var(--radius);
   background: var(--card);
-  color: var(--ink);
+  color: var(--foreground);
+  box-shadow: 0 1px 2px oklch(0 0 0 / 0.04);
+  transition:
+    border-color var(--motion) var(--ease),
+    box-shadow var(--motion) var(--ease);
 }
 .input::placeholder {
-  color: var(--ink-soft);
+  color: var(--muted-foreground);
 }
 .textarea {
-  min-height: 76px;
+  min-height: 84px;
   padding-block: var(--s3);
   resize: vertical;
 }
 .input:focus,
 .select:focus,
 .textarea:focus {
-  outline: 2px solid var(--seal);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--ring);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 45%, transparent);
 }
 
 /* ---- Chips ------------------------------------------------------------ */
@@ -314,21 +338,26 @@ button {
 
 .chip {
   flex: none;
-  min-height: 38px;
-  padding-inline: var(--s3);
-  border: 1px solid var(--paper-rule);
-  border-radius: var(--radius);
+  min-height: 36px;
+  padding-inline: var(--s4);
+  border: 1px solid var(--border);
+  border-radius: 999px;
   background: var(--card);
-  color: var(--ink-soft);
+  color: var(--muted-foreground);
   font-size: var(--size-meta);
+  font-weight: 500;
   white-space: nowrap;
+  transition: background var(--motion) var(--ease);
+}
+.chip:hover {
+  background: var(--accent);
+  color: var(--foreground);
 }
 .chip[aria-pressed='true'],
 .chip--on {
-  background: var(--ink);
-  border-color: var(--ink);
-  color: var(--paper);
-  font-weight: var(--weight-money);
+  background: var(--foreground);
+  border-color: var(--foreground);
+  color: var(--background);
 }
 
 /* ---- Status marks ----------------------------------------------------- */

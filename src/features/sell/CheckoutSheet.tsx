@@ -1,10 +1,14 @@
 import { useEffect, useState } from 'react';
 
-import { useT } from '../../appStore';
-import { Dialog, Sheet } from '../../components/Dialog';
-import { getCustomer } from '../../db/repos/customersRepo';
-import { formatPKR, parsePaisa, TENDER_DENOMINATIONS } from '../../lib/money';
-import type { CustomerWithBalance, PaymentMethod } from '../../types/domain';
+import { useT } from '@/appStore';
+import { Dialog, Sheet } from '@/components/Dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getCustomer } from '@/db/repos/customersRepo';
+import { formatPKR, parsePaisa, TENDER_DENOMINATIONS } from '@/lib/money';
+import { cn } from '@/lib/cn';
+import type { CustomerWithBalance, PaymentMethod } from '@/types/domain';
 
 interface CheckoutSheetProps {
   totalPaisa: number;
@@ -52,8 +56,6 @@ export function CheckoutSheet({
   const tenderedPaisa = parsePaisa(tendered) ?? 0;
   const partialPaisa = parsePaisa(partial);
 
-  // On udhaar, anything entered as a part payment is taken now and the rest
-  // becomes a charge. On any other method the sale is paid in full.
   const paidPaisa = isCredit ? Math.min(Math.max(partialPaisa ?? 0, 0), totalPaisa) : totalPaisa;
   const duePaisa = totalPaisa - paidPaisa;
   const changePaisa = Math.max(0, tenderedPaisa - totalPaisa);
@@ -64,14 +66,6 @@ export function CheckoutSheet({
   async function submit() {
     if (!canConfirm) return;
 
-    // Warn, never block. The shopkeeper knows who is good for it and the app
-    // does not — but they should see the numbers before deciding.
-    //
-    // The customer is re-read here rather than taken from the state loaded by
-    // the effect above. Tapping Confirm the instant after choosing a customer
-    // would otherwise race the fetch, and a race that loses skips the warning
-    // silently — which is the one outcome this check exists to prevent. It also
-    // picks up a balance that moved while the sheet was open.
     if (duePaisa > 0 && customerId !== null && !overLimit) {
       const latest = customer?.id === customerId ? customer : await getCustomer(customerId);
       if (latest) {
@@ -95,66 +89,64 @@ export function CheckoutSheet({
 
   return (
     <Sheet title={t('checkout.title')} onClose={onClose}>
-      <div className="stack">
-        <div className="cart__total">
-          <span className="cart__total-label">{t('common.total')}</span>
-          <span className="money money--total">{formatPKR(totalPaisa)}</span>
+      <div className="grid gap-4">
+        <div className="flex items-baseline gap-3 border-b-2 border-foreground pb-2">
+          <span className="flex-1 text-lg font-semibold">{t('common.total')}</span>
+          <span className="money text-2xl font-bold text-primary">{formatPKR(totalPaisa)}</span>
         </div>
 
-        <div className="methods">
+        <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
           {METHODS.map((entry) => (
-            <button
+            <Button
               key={entry.key}
-              type="button"
-              className="btn"
+              variant="outline"
               aria-pressed={method === entry.key}
               onClick={() => setMethod(entry.key)}
               data-testid={`method-${entry.key}`}
+              className={cn(
+                'min-h-12',
+                method === entry.key && 'border-foreground bg-foreground text-background',
+              )}
             >
               {t(entry.label as never)}
-            </button>
+            </Button>
           ))}
         </div>
 
         {method === 'cash' && (
-          <div className="stack">
-            <div className="numpad__quick">
-              <button
-                type="button"
-                className="btn num"
-                onClick={() => setTendered(String(totalPaisa / 100))}
-              >
+          <div className="grid gap-3">
+            <div className="grid grid-cols-3 gap-2">
+              <Button variant="outline" className="num" onClick={() => setTendered(String(totalPaisa / 100))}>
                 {t('checkout.exact')}
-              </button>
+              </Button>
               {TENDER_DENOMINATIONS.map((paisa) => (
-                <button
+                <Button
                   key={paisa}
-                  type="button"
-                  className="btn num"
+                  variant="outline"
+                  className="num"
                   onClick={() =>
-                    setTendered((current) =>
-                      String(((parsePaisa(current) ?? 0) + paisa) / 100),
-                    )
+                    setTendered((current) => String(((parsePaisa(current) ?? 0) + paisa) / 100))
                   }
                 >
                   {formatPKR(paisa, { symbol: false })}
-                </button>
+                </Button>
               ))}
             </div>
 
-            <label className="field">
-              <span className="field__label">{t('checkout.tendered')}</span>
-              <input
-                className="input num"
+            <div className="grid gap-2">
+              <Label htmlFor="tendered">{t('checkout.tendered')}</Label>
+              <Input
+                id="tendered"
+                className="num"
                 inputMode="decimal"
                 value={tendered}
                 onChange={(event) => setTendered(event.target.value)}
               />
-            </label>
+            </div>
 
-            <div className="checkout__due">
-              <span className="checkout__due-label">{t('checkout.change')}</span>
-              <span className="money money--total" data-testid="change-due">
+            <div className="flex items-baseline gap-3">
+              <span className="flex-1 text-muted-foreground">{t('checkout.change')}</span>
+              <span className="money text-2xl font-bold text-primary" data-testid="change-due">
                 {formatPKR(changePaisa)}
               </span>
             </div>
@@ -162,58 +154,55 @@ export function CheckoutSheet({
         )}
 
         {isCredit && (
-          <div className="stack">
-            <button type="button" className="btn btn--block" onClick={onPickCustomer}>
+          <div className="grid gap-3">
+            <Button variant="outline" className="w-full" onClick={onPickCustomer}>
               {customer ? customer.name : t('sell.customer')}
-            </button>
+            </Button>
 
-            {needsCustomer && <p className="field__error">{t('checkout.needCustomer')}</p>}
+            {needsCustomer && <p className="text-sm text-destructive">{t('checkout.needCustomer')}</p>}
 
             {customer && customer.balancePaisa !== 0 && (
-              <div className="kv" style={{ paddingInline: 0 }}>
-                <span className="kv__key">{t('people.owes')}</span>
-                <span className="kv__value money">{formatPKR(customer.balancePaisa)}</span>
+              <div className="flex items-baseline gap-3 text-sm">
+                <span className="flex-1 text-muted-foreground">{t('people.owes')}</span>
+                <span className="money">{formatPKR(customer.balancePaisa)}</span>
               </div>
             )}
 
-            <label className="field">
-              <span className="field__label">{t('checkout.amountPaid')}</span>
-              <input
-                className="input num"
+            <div className="grid gap-2">
+              <Label htmlFor="amount-paid">{t('checkout.amountPaid')}</Label>
+              <Input
+                id="amount-paid"
+                className="num"
                 inputMode="decimal"
                 value={partial}
                 onChange={(event) => setPartial(event.target.value)}
                 placeholder="0"
               />
-            </label>
+            </div>
 
-            <div className="checkout__due">
-              <span className="checkout__due-label">{t('checkout.remainder')}</span>
-              <span className="money money--total" data-testid="udhaar-due">
+            <div className="flex items-baseline gap-3">
+              <span className="flex-1 text-muted-foreground">{t('checkout.remainder')}</span>
+              <span className="money text-2xl font-bold text-primary" data-testid="udhaar-due">
                 {formatPKR(duePaisa)}
               </span>
             </div>
           </div>
         )}
 
-        <label className="field">
-          <span className="field__label">{t('checkout.note')}</span>
-          <input
-            className="input"
-            value={note}
-            onChange={(event) => setNote(event.target.value)}
-          />
-        </label>
+        <div className="grid gap-2">
+          <Label htmlFor="sale-note">{t('checkout.note')}</Label>
+          <Input id="sale-note" value={note} onChange={(event) => setNote(event.target.value)} />
+        </div>
 
-        <button
-          type="button"
-          className="btn btn--primary btn--lg btn--block"
+        <Button
+          size="lg"
+          className="w-full"
           onClick={() => void submit()}
           disabled={!canConfirm}
           data-testid="confirm-sale"
         >
           {t('checkout.confirm')}
-        </button>
+        </Button>
       </div>
 
       {overLimit && customer && (
@@ -222,12 +211,10 @@ export function CheckoutSheet({
           onClose={() => setOverLimit(false)}
           footer={
             <>
-              <button type="button" className="btn" onClick={() => setOverLimit(false)}>
+              <Button variant="outline" onClick={() => setOverLimit(false)}>
                 {t('action.cancel')}
-              </button>
-              <button
-                type="button"
-                className="btn btn--primary"
+              </Button>
+              <Button
                 data-testid="charge-anyway"
                 onClick={() =>
                   onConfirm({
@@ -238,7 +225,7 @@ export function CheckoutSheet({
                 }
               >
                 {t('checkout.chargeAnyway')}
-              </button>
+              </Button>
             </>
           }
         >
@@ -256,10 +243,6 @@ export function CheckoutSheet({
   );
 }
 
-/**
- * A part-paid credit sale is 'mixed': some money came in and some went on the
- * book. Recording it as 'credit' would make the day's cash figure wrong.
- */
 function resolveMethod(
   method: PaymentMethod,
   paidPaisa: number,

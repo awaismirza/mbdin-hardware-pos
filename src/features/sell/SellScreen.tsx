@@ -1,20 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { ScanLine } from 'lucide-react';
 
-import { useApp, useT, useToast } from '../../appStore';
-import { Dialog, Sheet } from '../../components/Dialog';
-import { NumberPad } from '../../components/NumberPad';
-import { getCustomer } from '../../db/repos/customersRepo';
-import { findByBarcode } from '../../db/repos/productsRepo';
+import { useApp, useT, useToast } from '@/appStore';
+import { Dialog, Sheet } from '@/components/Dialog';
+import { NumberPad } from '@/components/NumberPad';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { getCustomer } from '@/db/repos/customersRepo';
+import { findByBarcode } from '@/db/repos/productsRepo';
 import {
   completeSale,
   countHeldCarts,
   discardHeldCart,
   listHeldCarts,
-} from '../../db/repos/salesRepo';
-import { formatDateTime } from '../../lib/dates';
-import { formatPKR } from '../../lib/money';
-import type { HeldCart, PaymentMethod } from '../../types/domain';
+} from '@/db/repos/salesRepo';
+import { formatDateTime } from '@/lib/dates';
+import { formatPKR } from '@/lib/money';
+import type { HeldCart, PaymentMethod } from '@/types/domain';
+import { AddToCartSheet } from './AddToCartSheet';
 import { BarcodeScanner } from './BarcodeScanner';
 import { CartPane } from './CartPane';
 import { CatalogueGrid } from './CatalogueGrid';
@@ -22,14 +27,6 @@ import { CheckoutSheet } from './CheckoutSheet';
 import { CustomerPicker } from './CustomerPicker';
 import { useCart } from './cartStore';
 
-import './sell.css';
-
-/**
- * Checkout is tracked separately from the other overlays, not as one of them.
- * Choosing a customer from inside checkout has to leave the sheet standing:
- * collapsing it would throw away the payment method and the amount already
- * typed, and send the shopkeeper back to tap Charge again.
- */
 type Overlay = 'none' | 'scan' | 'customer' | 'quick' | 'held' | 'hold';
 
 export function SellScreen() {
@@ -59,6 +56,7 @@ export function SellScreen() {
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
+  const [pickedId, setPickedId] = useState<number | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -85,11 +83,9 @@ export function SellScreen() {
   }, [customerId]);
 
   /**
-   * A USB barcode scanner behaves as a keyboard: it types the code into the
-   * focused field and presses Enter. The field is not autofocused — on a tablet
-   * that just raises the on-screen keyboard every time Sell opens — so a scanner
-   * user taps the field once; after each hit we refocus it for the next scan.
-   * Enter here means "if this is exactly one product's barcode, add it".
+   * A USB barcode scanner types the code into the focused field and presses
+   * Enter. The field is not autofocused (that raises the keyboard on a tablet);
+   * a scanner user taps it once, and it refocuses after each hit.
    */
   const onSearchSubmit = useCallback(async () => {
     const term = search.trim();
@@ -135,7 +131,6 @@ export function SellScreen() {
       clear();
       setCheckoutOpen(false);
       setOverlay('none');
-      // The invoice counter moved, so the cached settings are stale.
       await refreshSettings();
       toast(t('sell.saleSaved'));
       navigate(`/sell/receipt/${String(sale.saleId)}`);
@@ -146,12 +141,14 @@ export function SellScreen() {
     }
   }
 
+  const customerLabel = customerName ?? t('common.walkIn');
+
   return (
-    <div className="sell">
-      <div className="catalogue__search">
-        <input
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex shrink-0 items-center gap-2 border-b bg-card p-3">
+        <Input
           ref={searchInput}
-          className="input num grow"
+          className="num flex-1"
           type="search"
           value={search}
           onChange={(event) => {
@@ -167,45 +164,42 @@ export function SellScreen() {
           placeholder={t('sell.searchPlaceholder')}
           aria-label={t('action.search')}
         />
-        <button
-          type="button"
-          className="btn"
+        <Button
+          variant="outline"
+          size="icon"
           onClick={() => setOverlay('scan')}
           aria-label={t('action.scan')}
         >
-          <span aria-hidden="true">◉</span>
-        </button>
+          <ScanLine className="size-5" />
+        </Button>
         {heldCount > 0 && (
-          <button
-            type="button"
-            className="btn"
+          <Button
+            variant="outline"
             onClick={() => {
               void listHeldCarts().then(setHeld);
               setOverlay('held');
             }}
           >
-            {t('sell.hold')} <span className="held-badge num">{heldCount}</span>
-          </button>
+            {t('sell.hold')}
+            <span className="num ms-1 inline-grid min-w-5 place-items-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
+              {heldCount}
+            </span>
+          </Button>
         )}
       </div>
 
-      <div className="sell__panes">
-        <div className="sell__catalogue">
-          <CatalogueGrid
-            search={search}
-            onPick={(product) => navigate(`/sell/product/${String(product.id)}`)}
-            onQuickSell={() => setOverlay('quick')}
-            unknownBarcode={unknownBarcode}
-            onAddWithBarcode={(barcode) => navigate(`/stock/product/new?barcode=${barcode}`)}
-          />
-        </div>
+      <div className="flex min-h-0 min-w-0 flex-1 lg:landscape:flex-row">
+        <CatalogueGrid
+          search={search}
+          onPick={(product) => setPickedId(product.id)}
+          onQuickSell={() => setOverlay('quick')}
+          unknownBarcode={unknownBarcode}
+          onAddWithBarcode={(barcode) => navigate(`/stock/product/new?barcode=${barcode}`)}
+        />
 
-        {/* Landscape: the cart is a permanent right-hand pane. Portrait: it
-            collapses to a summary bar that opens it as a bottom sheet, so the
-            catalogue keeps the whole screen while items are being tapped in. */}
-        <div className="sell__cart">
+        <div className="hidden w-[22rem] shrink-0 border-s bg-card lg:landscape:flex">
           <CartPane
-            customerLabel={customerName ?? t('common.walkIn')}
+            customerLabel={customerLabel}
             onPickCustomer={() => setOverlay('customer')}
             onCheckout={() => setCheckoutOpen(true)}
             onHold={() => setOverlay('hold')}
@@ -215,22 +209,21 @@ export function SellScreen() {
 
       <button
         type="button"
-        className="cart-bar"
         onClick={() => setCartOpen(true)}
         data-testid="cart-bar"
+        className="flex shrink-0 items-center gap-3 border-t bg-card px-4 py-3 text-start lg:landscape:hidden"
       >
-        <span className="cart-bar__count">
-          {t('sell.cart')} · <span className="num">{lines.length}</span> ·{' '}
-          {customerName ?? t('common.walkIn')}
+        <span className="text-sm text-muted-foreground">
+          {t('sell.cart')} · <span className="num">{lines.length}</span> · {customerLabel}
         </span>
-        <span className="cart-bar__total">{formatPKR(total)}</span>
+        <span className="money ms-auto text-lg font-bold text-primary">{formatPKR(total)}</span>
       </button>
 
       {cartOpen && (
         <Sheet title={t('sell.cart')} onClose={() => setCartOpen(false)}>
-          <div className="cart-sheet">
+          <div className="flex max-h-[70dvh] min-h-[50dvh] flex-col">
             <CartPane
-              customerLabel={customerName ?? t('common.walkIn')}
+              customerLabel={customerLabel}
               onPickCustomer={() => setOverlay('customer')}
               onCheckout={() => {
                 setCartOpen(false);
@@ -243,6 +236,10 @@ export function SellScreen() {
             />
           </div>
         </Sheet>
+      )}
+
+      {pickedId != null && (
+        <AddToCartSheet productId={pickedId} onClose={() => setPickedId(null)} />
       )}
 
       {overlay === 'scan' && (
@@ -286,47 +283,49 @@ export function SellScreen() {
 
       {overlay === 'held' && (
         <Sheet title={t('sell.held')} onClose={() => setOverlay('none')}>
-          {held.length === 0 && <p className="meta">{t('sell.heldEmpty')}</p>}
-          {held.map((cart) => (
-            <div key={cart.id} className="list__row">
-              <span className="list__main">
-                <span className="list__name">
-                  {cart.label ?? <span className="num">{formatDateTime(cart.createdAt)}</span>}
+          {held.length === 0 && (
+            <p className="py-6 text-center text-muted-foreground">{t('sell.heldEmpty')}</p>
+          )}
+          <div className="divide-y">
+            {held.map((cart) => (
+              <div key={cart.id} className="flex items-center gap-3 py-3">
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate">
+                    {cart.label ?? <span className="num">{formatDateTime(cart.createdAt)}</span>}
+                  </span>
+                  <span className="num block text-sm text-muted-foreground">
+                    {cart.lineCount} · {formatPKR(cart.totalPaisa)}
+                  </span>
                 </span>
-                <span className="list__meta num">
-                  {cart.lineCount} · {formatPKR(cart.totalPaisa)}
-                </span>
-              </span>
-              <button
-                type="button"
-                className="btn"
-                onClick={() => {
-                  void useCart
-                    .getState()
-                    .resume(cart.id)
-                    .then(() => setOverlay('none'));
-                }}
-              >
-                {t('sell.resume')}
-              </button>
-              <button
-                type="button"
-                className="btn btn--quiet"
-                onClick={() => {
-                  void discardHeldCart(cart.id).then(() =>
-                    listHeldCarts().then(setHeld),
-                  );
-                }}
-                aria-label={t('action.delete')}
-              >
-                ×
-              </button>
-            </div>
-          ))}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    void useCart
+                      .getState()
+                      .resume(cart.id)
+                      .then(() => setOverlay('none'));
+                  }}
+                >
+                  {t('sell.resume')}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    void discardHeldCart(cart.id).then(() => listHeldCarts().then(setHeld));
+                  }}
+                  aria-label={t('action.delete')}
+                >
+                  ×
+                </Button>
+              </div>
+            ))}
+          </div>
         </Sheet>
       )}
 
-      {!hydrated && <div className="visually-hidden">{t('common.loading')}</div>}
+      {!hydrated && <div className="sr-only">{t('common.loading')}</div>}
     </div>
   );
 }
@@ -343,15 +342,15 @@ function QuickSellDialog({
 
   return (
     <Dialog title={t('sell.quickSellTitle')} onClose={onClose}>
-      <label className="field" style={{ marginBlockEnd: 'var(--s3)' }}>
-        <span className="field__label">{t('sell.quickSellLabel')}</span>
-        <input
-          className="input"
+      <div className="mb-3 grid gap-2">
+        <Label htmlFor="quick-label">{t('sell.quickSellLabel')}</Label>
+        <Input
+          id="quick-label"
+          autoFocus
           value={label}
           onChange={(event) => setLabel(event.target.value)}
-          data-autofocus
         />
-      </label>
+      </div>
       <NumberPad
         label={t('sell.quickSellAmount')}
         confirmLabel={t('action.add')}
@@ -378,32 +377,30 @@ function HoldDialog({ onClose, disabled }: { onClose: () => void; disabled: bool
       onClose={onClose}
       footer={
         <>
-          <button type="button" className="btn" onClick={onClose}>
+          <Button variant="outline" onClick={onClose}>
             {t('action.cancel')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary"
+          </Button>
+          <Button
             disabled={disabled}
             onClick={() => {
               void hold(label.trim() || null).then(onClose);
             }}
           >
             {t('sell.hold')}
-          </button>
+          </Button>
         </>
       }
     >
-      <label className="field">
-        <span className="field__label">{t('sell.holdLabel')}</span>
-        <input
-          className="input"
+      <div className="grid gap-2">
+        <Label htmlFor="hold-label">{t('sell.holdLabel')}</Label>
+        <Input
+          id="hold-label"
+          autoFocus
           value={label}
           onChange={(event) => setLabel(event.target.value)}
           placeholder={t('common.optional')}
-          data-autofocus
         />
-      </label>
+      </div>
     </Dialog>
   );
 }

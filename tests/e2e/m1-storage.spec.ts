@@ -113,7 +113,7 @@ test.describe('storage', () => {
 
     await context.setOffline(true);
     await page.reload();
-    await expect(page.locator('.shell__brand')).toBeVisible();
+    await expect(page.getByTestId('app-ready')).toBeVisible();
     // The database has to open offline too, not just the shell.
     await page.goto('/settings/storage');
     await expect(page.getByTestId('storage-mode')).toHaveText('OPFS');

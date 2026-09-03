@@ -51,12 +51,12 @@ test.describe('layout', () => {
     // nowrap, and a grid track sized 1fr will grow to fit it unless told not to.
     await page.goto('/sell');
     await page.waitForTimeout(800);
-    const tiles = page.locator('.tile:not(.tile--quick)');
+    const tiles = page.locator('[data-testid="product-tile"]');
     await tiles.nth(0).click();
     await page.getByTestId('add-product-to-cart').click();
     await page.goto('/sell');
     await page.waitForTimeout(400);
-    const refreshedTiles = page.locator('.tile:not(.tile--quick)');
+    const refreshedTiles = page.locator('[data-testid="product-tile"]');
     await refreshedTiles.nth(1).click();
     await page.getByTestId('add-product-to-cart').click();
     await page.waitForTimeout(400);
@@ -126,9 +126,16 @@ test.describe('layout', () => {
       for (const el of Array.from(document.querySelectorAll('button, a[href], select'))) {
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) continue;
-        // The toast dismiss and the header gear are secondary affordances that
-        // sit inside larger hit areas; everything a sale depends on is checked.
-        if (el.closest('.toast') || el.classList.contains('chip')) continue;
+        // Toasts are transient overlays with their own dismiss affordance;
+        // category chips sit inside a larger scroll strip. Everything a sale
+        // depends on is checked.
+        if (
+          el.closest('[data-sonner-toast]') ||
+          el.closest('.toast') ||
+          el.hasAttribute('data-close-button') ||
+          el.classList.contains('chip')
+        )
+          continue;
         if (rect.height < 38) {
           offenders.push(`${el.className || el.tagName} ${String(Math.round(rect.height))}px`);
         }
@@ -152,12 +159,12 @@ test.describe('the till frame on a portrait tablet', () => {
     await seed(page);
     await useEnglish(page);
     await page.goto('/sell');
-    await page.locator('.catalogue__grid').waitFor();
+    await page.locator('[data-testid="catalogue-scroll"]').waitFor();
     await page.waitForTimeout(800);
 
     // The grid holds far more than one screen of product tiles...
     const gridOverflow = await page
-      .locator('.catalogue__grid')
+      .locator('[data-testid="catalogue-scroll"]')
       .evaluate((el) => el.scrollHeight - el.clientHeight);
     expect(gridOverflow).toBeGreaterThan(200);
 
@@ -166,15 +173,17 @@ test.describe('the till frame on a portrait tablet', () => {
     await page.mouse.wheel(0, 20_000);
     await page.evaluate(() => {
       document.scrollingElement!.scrollTop = 99_999;
-      document.querySelector('.catalogue__grid')!.scrollTop = 99_999;
+      document.querySelector('[data-testid="catalogue-scroll"]')!.scrollTop = 99_999;
     });
     await page.waitForTimeout(200);
 
     const state = await page.evaluate(() => {
-      const nav = document.querySelector('.shell__nav')!.getBoundingClientRect();
+      const nav = document
+        .querySelector('[data-testid="tab-bar"]')!
+        .getBoundingClientRect();
       return {
         bodyScroll: document.scrollingElement!.scrollTop,
-        gridScrolled: document.querySelector('.catalogue__grid')!.scrollTop,
+        gridScrolled: document.querySelector('[data-testid="catalogue-scroll"]')!.scrollTop,
         navBottom: Math.round(nav.bottom),
         viewport: window.innerHeight,
       };
@@ -208,8 +217,8 @@ test.describe('the printed receipt', () => {
     await page.emulateMedia({ media: 'print' });
 
     // App chrome is not paper. Nothing but the slip goes through the printer.
-    await expect(page.locator('.shell__header')).toBeHidden();
-    await expect(page.locator('.shell__nav')).toBeHidden();
+    await expect(page.getByTestId('app-header')).toBeHidden();
+    await expect(page.getByTestId('tab-bar')).toBeHidden();
     await expect(page.locator('.receipt__actions')).toBeHidden();
     await expect(page.locator('.slip')).toBeVisible();
 

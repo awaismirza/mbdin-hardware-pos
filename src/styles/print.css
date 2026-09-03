@@ -21,9 +21,13 @@
   }
 
   /* Everything except the slip is chrome, and chrome does not print. */
+  [data-testid='app-header'],
+  [data-testid='tab-bar'],
+  [data-testid='side-rail'],
   .shell__header,
   .shell__nav,
   .toasts,
+  [data-sonner-toaster],
   .amber-bar,
   .receipt__actions,
   .screen__head,
@@ -34,6 +38,9 @@
     display: none !important;
   }
 
+  [data-testid='app-ready'],
+  [data-testid='app-ready'] > div,
+  main,
   .shell,
   .shell__main,
   .screen,

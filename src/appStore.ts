@@ -1,3 +1,5 @@
+import { createElement } from 'react';
+import { toast as sonnerToast } from 'sonner';
 import { create } from 'zustand';
 
 import { dbInfo, initDb, reopenDb, type InitResult, type StorageMode } from './db/client';
@@ -8,11 +10,8 @@ import { isStandalone } from './pwa';
 
 export type BootStatus = 'idle' | 'booting' | 'ready' | 'failed';
 
-export interface Toast {
-  id: number;
-  message: string;
-  tone: 'plain' | 'warn' | 'bad';
-}
+/** Kept for call-site compatibility: `toast(msg, 'bad' | 'warn')`. */
+export type ToastTone = 'plain' | 'warn' | 'bad';
 
 interface AppState {
   status: BootStatus;
@@ -21,7 +20,6 @@ interface AppState {
   settings: SettingsMap;
   language: Language;
   t: Translate;
-  toasts: Toast[];
   /** Result of navigator.storage.persist(), or null if never asked. */
   persisted: boolean | null;
   /** Running from the home screen (standalone display mode), not a browser tab. */
@@ -31,11 +29,8 @@ interface AppState {
   refreshSettings(): Promise<void>;
   setLanguage(language: Language): Promise<void>;
   saveSetting(key: string, value: string): Promise<void>;
-  toast(message: string, tone?: Toast['tone']): void;
-  dismissToast(id: number): void;
+  toast(message: string, tone?: ToastTone): void;
 }
-
-let toastSeq = 0;
 
 export const useApp = create<AppState>((set, get) => ({
   status: 'idle',
@@ -44,7 +39,6 @@ export const useApp = create<AppState>((set, get) => ({
   settings: { ...DEFAULT_SETTINGS },
   language: 'en',
   t: translator('en'),
-  toasts: [],
   persisted: null,
   // Display mode does not change without a fresh launch, so this is read once
   // here rather than re-checked on every render.
@@ -97,13 +91,17 @@ export const useApp = create<AppState>((set, get) => ({
   },
 
   toast(message, tone = 'plain') {
-    const id = (toastSeq += 1);
-    set((state) => ({ toasts: [...state.toasts, { id, message, tone }] }));
-    setTimeout(() => get().dismissToast(id), tone === 'plain' ? 2600 : 5000);
-  },
-
-  dismissToast(id) {
-    set((state) => ({ toasts: state.toasts.filter((toast) => toast.id !== id) }));
+    // The span carries the test hook the suite keys off, and an assertive role
+    // for warnings/errors so they can be told apart from a status toast that is
+    // still fading out.
+    const node = createElement(
+      'span',
+      { 'data-testid': 'toast', role: tone === 'plain' ? 'status' : 'alert' },
+      message,
+    );
+    if (tone === 'bad') sonnerToast.error(node);
+    else if (tone === 'warn') sonnerToast.warning(node);
+    else sonnerToast(node);
   },
 }));
 
@@ -137,6 +135,6 @@ export function useLanguage(): Language {
   return useApp((state) => state.language);
 }
 
-export function useToast(): (message: string, tone?: Toast['tone']) => void {
+export function useToast(): (message: string, tone?: ToastTone) => void {
   return useApp((state) => state.toast);
 }

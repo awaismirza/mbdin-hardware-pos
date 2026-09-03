@@ -6,6 +6,9 @@
     "moduleResolution": "bundler",
     "types": ["vite/client", "vite-plugin-pwa/client"],
 
+    "baseUrl": ".",
+    "paths": { "@/*": ["./src/*"] },
+
     "jsx": "react-jsx",
     "useDefineForClassFields": true,
     "allowImportingTsExtensions": true,

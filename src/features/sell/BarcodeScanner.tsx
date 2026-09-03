@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 
 import { useT } from '../../appStore';
 
+import './scanner.css';
+
 interface BarcodeScannerProps {
   onScan: (code: string) => void;
   onClose: () => void;

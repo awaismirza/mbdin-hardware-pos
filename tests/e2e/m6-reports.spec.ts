@@ -122,7 +122,7 @@ test('a voided sale drops out of the takings', async ({ page }) => {
   await page.getByTestId('confirm-sale').click();
   await page.getByRole('button', { name: 'Void this sale' }).click();
   await page.getByTestId('confirm-void').click();
-  await expect(page.locator('.tag--void')).toBeVisible();
+  await expect(page.locator('[data-testid="void-tag"]')).toBeVisible();
 
   // Two sales rung up, one voided: the takings show only the surviving one.
   await page.goto('/reports');

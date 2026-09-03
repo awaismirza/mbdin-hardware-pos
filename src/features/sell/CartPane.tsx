@@ -1,10 +1,13 @@
 import { useState } from 'react';
+import { Minus, Plus, X } from 'lucide-react';
 
-import { useT } from '../../appStore';
-import { Dialog } from '../../components/Dialog';
-import { NumberPad } from '../../components/NumberPad';
-import { formatPKR, formatQty, lineTotal, parsePaisa } from '../../lib/money';
-import { FRACTIONAL_UNITS, type CartLine } from '../../types/domain';
+import { useT } from '@/appStore';
+import { Dialog } from '@/components/Dialog';
+import { NumberPad } from '@/components/NumberPad';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/cn';
+import { formatPKR, formatQty, lineTotal, parsePaisa } from '@/lib/money';
+import { FRACTIONAL_UNITS, type CartLine } from '@/types/domain';
 import { useCart, type DiscountMode } from './cartStore';
 
 interface CartPaneProps {
@@ -26,16 +29,20 @@ export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: 
   const [editingDiscount, setEditingDiscount] = useState(false);
 
   return (
-    <div className="cart">
-      <div className="cart__customer">
-        <span className="meta">{t('sell.customer')}</span>
-        <button type="button" className="btn btn--quiet grow" onClick={onPickCustomer}>
-          <span className="truncate">{customerLabel}</span>
-        </button>
-      </div>
+    <div className="flex min-h-0 flex-1 flex-col bg-card">
+      <button
+        type="button"
+        onClick={onPickCustomer}
+        className="flex min-h-12 shrink-0 items-center gap-2 border-b px-4 py-2 text-start hover:bg-accent"
+      >
+        <span className="text-xs text-muted-foreground">{t('sell.customer')}</span>
+        <span className="truncate font-medium">{customerLabel}</span>
+      </button>
 
-      <div className="cart__lines">
-        {lines.length === 0 && <p className="empty">{t('sell.cartEmpty')}</p>}
+      <div className="min-h-0 flex-1 divide-y overflow-y-auto overscroll-contain">
+        {lines.length === 0 && (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t('sell.cartEmpty')}</p>
+        )}
         {lines.map((line) => (
           <CartRow
             key={line.key}
@@ -46,44 +53,43 @@ export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: 
         ))}
       </div>
 
-      <div className="cart__foot">
-        <div className="cart__row">
-          <span className="cart__row-label">{t('common.subtotal')}</span>
-          <span className="cart__row-value num">{formatPKR(subtotal)}</span>
+      <div className="shrink-0 border-t px-4 py-3">
+        <div className="flex items-baseline gap-3 text-sm">
+          <span className="flex-1 text-muted-foreground">{t('common.subtotal')}</span>
+          <span className="num tabular-nums">{formatPKR(subtotal)}</span>
         </div>
 
-        <button type="button" className="cart__row" onClick={() => setEditingDiscount(true)}>
-          <span className="cart__row-label">{t('common.discount')}</span>
-          <span className="cart__row-value num">
+        <button
+          type="button"
+          onClick={() => setEditingDiscount(true)}
+          className="flex min-h-11 w-full items-center gap-3 text-start text-sm"
+        >
+          <span className="flex-1 text-muted-foreground">{t('common.discount')}</span>
+          <span className="num tabular-nums">
             {discount === 0 ? '—' : `- ${formatPKR(discount)}`}
           </span>
         </button>
 
-        <div className="cart__total">
-          <span className="cart__total-label">{t('common.total')}</span>
-          <span className="money money--total" data-testid="cart-total">
+        <div className="mt-1 flex items-baseline gap-3 border-t-2 border-foreground pt-2">
+          <span className="flex-1 text-lg font-semibold">{t('common.total')}</span>
+          <span className="money text-2xl font-bold text-primary" data-testid="cart-total">
             {formatPKR(total)}
           </span>
         </div>
 
-        <div className="cart__actions">
-          <button
-            type="button"
-            className="btn"
-            onClick={onHold}
-            disabled={lines.length === 0}
-          >
+        <div className="mt-3 flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={onHold} disabled={lines.length === 0}>
             {t('sell.hold')}
-          </button>
-          <button
-            type="button"
-            className="btn btn--primary btn--lg"
+          </Button>
+          <Button
+            size="lg"
+            className="flex-[2]"
             onClick={onCheckout}
             disabled={lines.length === 0}
             data-testid="charge"
           >
             {t('sell.charge')}
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -108,46 +114,56 @@ function CartRow({
   const removeLine = useCart((state) => state.removeLine);
 
   return (
-    <div className="cart-line">
-      <div className="cart-line__top">
-        <span className="cart-line__name truncate">{line.name}</span>
-        <button type="button" className="cart-line__unit btn btn--quiet" onClick={onEditPrice}>
+    <div className="grid gap-2 px-4 py-3" data-testid="cart-line">
+      <div className="flex items-baseline gap-3">
+        <span className="min-w-0 flex-1 truncate">{line.name}</span>
+        <button
+          type="button"
+          onClick={onEditPrice}
+          className="num text-xs text-muted-foreground tabular-nums underline-offset-2 hover:underline"
+        >
           {formatPKR(line.pricePaisa)} / {t(`unit.${line.unit}` as never)}
         </button>
       </div>
 
-      <div className="cart-line__bottom">
-        <div className="stepper">
+      <div className="flex items-center gap-2">
+        <div className="flex items-center overflow-hidden rounded-lg border">
           <button
             type="button"
-            className="stepper__btn"
+            className="grid size-11 place-items-center bg-muted/50 active:bg-muted"
             onClick={() => bumpQty(line.key, -stepFor(line))}
             aria-label="−"
           >
-            −
+            <Minus className="size-4" />
           </button>
-          <button type="button" className="stepper__value" onClick={onEditQty}>
+          <button
+            type="button"
+            onClick={onEditQty}
+            className="num grid h-11 min-w-16 place-items-center border-x px-2 font-semibold tabular-nums"
+          >
             {formatQty(line.qty)}
           </button>
           <button
             type="button"
-            className="stepper__btn"
+            className="grid size-11 place-items-center bg-muted/50 active:bg-muted"
             onClick={() => bumpQty(line.key, stepFor(line))}
             aria-label="+"
           >
-            +
+            <Plus className="size-4" />
           </button>
         </div>
 
-        <span className="cart-line__total">{formatPKR(lineTotal(line.pricePaisa, line.qty))}</span>
+        <span className="num flex-1 text-end font-semibold tabular-nums">
+          {formatPKR(lineTotal(line.pricePaisa, line.qty))}
+        </span>
 
         <button
           type="button"
-          className="cart-line__remove"
           onClick={() => removeLine(line.key)}
           aria-label={t('action.remove')}
+          className="grid size-11 place-items-center text-muted-foreground hover:text-destructive"
         >
-          ×
+          <X className="size-4" />
         </button>
       </div>
     </div>
@@ -187,9 +203,7 @@ function PriceDialog({ line, onClose }: { line: CartLine; onClose: () => void })
 
   return (
     <Dialog title={t('sell.priceOverride')} onClose={onClose}>
-      <p className="meta" style={{ marginBlockEnd: 'var(--s3)' }}>
-        {t('sell.priceOverrideHint')}
-      </p>
+      <p className="mb-3 text-sm text-muted-foreground">{t('sell.priceOverrideHint')}</p>
       <NumberPad
         initial={String(line.pricePaisa / 100)}
         label={line.name}
@@ -214,29 +228,27 @@ function DiscountDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog title={t('common.discount')} onClose={onClose}>
-      <div className="segmented" style={{ marginBlockEnd: 'var(--s3)' }}>
-        <button
-          type="button"
-          className="segmented__item"
-          aria-pressed={pending === 'rupees'}
-          onClick={() => setPending('rupees')}
-        >
-          {t('common.rupees')}
-        </button>
-        <button
-          type="button"
-          className="segmented__item"
-          aria-pressed={pending === 'percent'}
-          onClick={() => setPending('percent')}
-        >
-          {t('common.percent')}
-        </button>
+      <div className="mb-3 inline-flex rounded-lg border p-1">
+        {(['rupees', 'percent'] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            aria-pressed={pending === m}
+            onClick={() => setPending(m)}
+            className={cn(
+              'min-w-24 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+              pending === m
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {m === 'rupees' ? t('common.rupees') : t('common.percent')}
+          </button>
+        ))}
       </div>
 
       <NumberPad
-        initial={
-          mode === pending ? String(pending === 'percent' ? input : input / 100) : ''
-        }
+        initial={mode === pending ? String(pending === 'percent' ? input : input / 100) : ''}
         confirmLabel={t('action.apply')}
         onCancel={onClose}
         onConfirm={(value) => {

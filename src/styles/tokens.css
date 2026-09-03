@@ -1,50 +1,48 @@
 /*
- * Design tokens. Nothing in this app hard-codes a colour or a font size.
+ * Legacy design tokens.
  *
- * The reference is the bahi khata — the cloth-bound ledger under the counter of
- * every shop in Punjab. Ruled lines instead of floating cards, ink on paper
- * instead of grey on white, one red used only where money changes hands.
- *
- * Dark mode is deliberately out of scope: the tablet sits under shop lighting
- * all day and never sees a dark room. See README.
+ * These names are still referenced by screens that have not yet been migrated
+ * to the new design system. Rather than carry a second palette, each one now
+ * aliases onto the shadcn/Tailwind token in app.css, so every legacy screen
+ * follows the new light/dark theme until it is rebuilt. Once a screen is
+ * migrated it should stop using these.
  */
 
 :root {
-  /* ---- Colour ------------------------------------------------------- */
-  --paper: #edefe8; /* ledger page, faintly green — app background       */
-  --paper-rule: #d3d8cb; /* ruled lines and all dividers                 */
-  --card: #f7f8f3; /* raised surfaces: cart, sheets, dialogs             */
-  --ink: #17211c; /* all primary text                                    */
-  --ink-soft: #55605a; /* secondary text; the lightest permitted on paper */
-  --seal: #a32c24; /* ledger red: totals, primary actions, destructive   */
-  --seal-deep: #7c1f19; /* pressed state of --seal                       */
-  --brass: #8a6d2f; /* warnings, low stock, backup-overdue bar           */
-  --settled: #2f6b4f; /* paid, in stock, success                         */
+  /* ---- Colour (aliased onto the new theme) ------------------------- */
+  --paper: var(--background);
+  --paper-rule: var(--border);
+  /* --card is intentionally not redefined: the new theme token of the same
+     name (a raised surface) is exactly what the legacy screens want. */
+  --ink: var(--foreground);
+  --ink-soft: var(--muted-foreground);
+  --seal: var(--primary);
+  --seal-deep: color-mix(in oklch, var(--primary) 82%, black);
+  --brass: var(--warning);
+  --settled: var(--success);
 
-  /* Tints, derived from the above. Used for chip and banner grounds only,
-     never for text. */
-  --seal-wash: #f6e7e5;
-  --brass-wash: #f4ecdb;
-  --settled-wash: #e2eee8;
-  --ink-wash: #e3e6dd;
+  --seal-wash: color-mix(in oklch, var(--primary) 14%, var(--background));
+  --brass-wash: color-mix(in oklch, var(--warning) 16%, var(--background));
+  --settled-wash: color-mix(in oklch, var(--success) 16%, var(--background));
+  --ink-wash: color-mix(in oklch, var(--foreground) 8%, var(--background));
 
-  /* ---- Type --------------------------------------------------------- */
+  /* ---- Type ------------------------------------------------------- */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
   --font-arabic:
     'IBM Plex Sans Arabic', 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Segoe UI', tahoma, sans-serif;
 
-  --size-total: 40px; /* total / balance — one per screen, no more       */
-  --size-screen: 24px; /* screen heading                                 */
-  --size-section: 18px; /* section heading                               */
-  --size-body: 16px; /* body / list row                                  */
-  --size-meta: 14px; /* secondary / meta                                 */
-  --size-min: 13px; /* never below this                                  */
+  --size-total: 40px;
+  --size-screen: 24px;
+  --size-section: 18px;
+  --size-body: 16px;
+  --size-meta: 14px;
+  --size-min: 13px;
 
   --weight-regular: 400;
   --weight-money: 500;
   --weight-bold: 600;
 
-  /* ---- Space -------------------------------------------------------- */
+  /* ---- Space ----------------------------------------------------- */
   --s1: 4px;
   --s2: 8px;
   --s3: 12px;
@@ -52,11 +50,11 @@
   --s5: 24px;
   --s6: 32px;
 
-  /* ---- Structure ---------------------------------------------------- */
-  --radius: 4px;
-  --rule: 1px solid var(--paper-rule);
-  --touch: 48px; /* minimum touch target                                 */
-  --touch-lg: 56px; /* number pad and payment buttons                    */
+  /* ---- Structure ----------------------------------------------- */
+  /* --radius comes from app.css (the shadcn scale reads it). */
+  --rule: 1px solid var(--border);
+  --touch: 48px;
+  --touch-lg: 56px;
 
   --header-h: 60px;
   --tabbar-h: 60px;

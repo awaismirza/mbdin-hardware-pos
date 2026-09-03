@@ -76,7 +76,7 @@ test('a cart survives the tab being killed mid-sale', async ({ context }) => {
   const reopened = await context.newPage();
   await reopened.goto('/sell');
   await expect(reopened.getByTestId('cart-total')).toHaveText('Rs 2,160', { timeout: 20_000 });
-  await expect(reopened.locator('.cart-line')).toHaveCount(1);
+  await expect(reopened.locator('[data-testid="cart-line"]')).toHaveCount(1);
   await reopened.close();
 });
 
@@ -114,7 +114,7 @@ test('an udhaar sale charges the customer and voiding it reverses everything', a
   // Void it: stock returns and the udhaar charge is reversed.
   await page.getByRole('button', { name: 'Void this sale' }).click();
   await page.getByTestId('confirm-void').click();
-  await expect(page.locator('.tag--void')).toBeVisible();
+  await expect(page.locator('[data-testid="void-tag"]')).toBeVisible();
 
   await page.goto('/stock');
   await expect(page.getByRole('button', { name: /Atta/ })).toContainText('100');
