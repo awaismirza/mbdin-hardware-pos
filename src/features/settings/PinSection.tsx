@@ -34,23 +34,39 @@ export function PinSection() {
   }
 
   return (
-    <section className="border-b p-4">
-      <h2 className="mb-3 text-base font-semibold">{t('settings.pin')}</h2>
-      <p className="mb-3 text-sm text-muted-foreground">{t('settings.pinHint')}</p>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => setEditing(true)} data-testid="set-pin">
+    <section className="rounded-[14px] border border-line bg-panel p-4 shadow-card">
+      <h2 className="mb-1.5 text-[14.5px] font-bold">{t('settings.pin')}</h2>
+      <p className="mb-3 text-xs text-fg2">{t('settings.pinHint')}</p>
+
+      {/* Four boxes, filled or empty, so "is there a PIN?" is answered by
+          looking rather than by remembering. The digits are never shown: only
+          the hash is stored. */}
+      <div className="flex items-center gap-2">
+        {[0, 1, 2, 3].map((slot) => (
+          <span
+            key={slot}
+            aria-hidden="true"
+            className="num grid h-[52px] w-[46px] place-items-center rounded-[11px] border border-line bg-panel2 text-[22px] font-semibold text-fg2"
+          >
+            {hasPin ? '•' : ''}
+          </span>
+        ))}
+        <span className="flex-1" />
+        <Button
+          variant="outline"
+          className="h-[52px]"
+          onClick={() => setEditing(true)}
+          data-testid="set-pin"
+        >
           {t('settings.pinSet')}
         </Button>
-        {hasPin && (
-          <Button
-            variant="ghost"
-            className="text-destructive hover:text-destructive"
-            onClick={() => void clear()}
-          >
-            {t('settings.pinClear')}
-          </Button>
-        )}
       </div>
+
+      {hasPin && (
+        <Button variant="muted" className="mt-2 text-bad" onClick={() => void clear()}>
+          {t('settings.pinClear')}
+        </Button>
+      )}
 
       {editing && (
         <Dialog

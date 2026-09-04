@@ -29,19 +29,23 @@ export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: 
   const [editingDiscount, setEditingDiscount] = useState(false);
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col bg-card">
-      <button
-        type="button"
-        onClick={onPickCustomer}
-        className="flex min-h-12 shrink-0 items-center gap-2 border-b px-4 py-2 text-start hover:bg-accent"
-      >
-        <span className="text-xs text-muted-foreground">{t('sell.customer')}</span>
-        <span className="truncate font-medium">{customerLabel}</span>
-      </button>
+    <div className="flex min-h-0 flex-1 flex-col bg-panel">
+      <div className="flex min-h-12 shrink-0 items-center gap-2.5 border-b border-line px-4 py-2.5">
+        <span className="grid size-[34px] flex-none place-items-center rounded-full bg-brand-soft text-[13px] font-bold text-brand">
+          {customerLabel.trim().charAt(0).toUpperCase() || '—'}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-[13.5px] font-bold">{customerLabel}</span>
+          <span className="block text-xs text-fg2">{t('sell.customer')}</span>
+        </span>
+        <Button variant="outline" size="sm" onClick={onPickCustomer}>
+          {t('action.change')}
+        </Button>
+      </div>
 
-      <div className="min-h-0 flex-1 divide-y overflow-y-auto overscroll-contain">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto overscroll-contain p-2.5">
         {lines.length === 0 && (
-          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{t('sell.cartEmpty')}</p>
+          <p className="m-auto px-4 py-6 text-center text-[13px] text-fg2">{t('sell.cartEmpty')}</p>
         )}
         {lines.map((line) => (
           <CartRow
@@ -53,37 +57,41 @@ export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: 
         ))}
       </div>
 
-      <div className="shrink-0 border-t px-4 py-3">
-        <div className="flex items-baseline gap-3 text-sm">
-          <span className="flex-1 text-muted-foreground">{t('common.subtotal')}</span>
-          <span className="num tabular-nums">{formatPKR(subtotal)}</span>
+      <div className="flex shrink-0 flex-col gap-[7px] border-t border-line px-4 py-3">
+        <div className="flex items-baseline gap-2.5 text-[12.5px]">
+          <span className="flex-1 text-fg2">{t('common.subtotal')}</span>
+          <span className="num text-[13.5px]">{formatPKR(subtotal)}</span>
         </div>
 
         <button
           type="button"
           onClick={() => setEditingDiscount(true)}
-          className="flex min-h-11 w-full items-center gap-3 text-start text-sm"
+          className="flex min-h-9 items-center gap-2.5 text-start text-[12.5px]"
         >
-          <span className="flex-1 text-muted-foreground">{t('common.discount')}</span>
-          <span className="num tabular-nums">
+          <span className="flex-1 text-fg2">
+            {t('common.discount')} <span className="font-bold text-brand">{t('action.edit')}</span>
+          </span>
+          <span className={cn('num text-[13.5px]', discount > 0 && 'text-ok')}>
             {discount === 0 ? '—' : `- ${formatPKR(discount)}`}
           </span>
         </button>
 
-        <div className="mt-1 flex items-baseline gap-3 border-t-2 border-foreground pt-2">
-          <span className="flex-1 text-lg font-semibold">{t('common.total')}</span>
-          <span className="money text-2xl font-bold text-primary" data-testid="cart-total">
+        <div className="flex items-end gap-2.5 border-t border-dashed border-line pt-[9px]">
+          <span className="flex-1 text-[13.5px] font-bold">{t('common.total')}</span>
+          <span
+            className="money text-[34px] leading-none font-semibold tracking-[-0.03em]"
+            data-testid="cart-total"
+          >
             {formatPKR(total)}
           </span>
         </div>
 
-        <div className="mt-3 flex gap-2">
+        <div className="mt-1 flex gap-2">
           <Button variant="outline" className="flex-1" onClick={onHold} disabled={lines.length === 0}>
             {t('sell.hold')}
           </Button>
           <Button
-            size="lg"
-            className="flex-[2]"
+            className="h-[46px] flex-[2] text-[14.5px]"
             onClick={onCheckout}
             disabled={lines.length === 0}
             data-testid="charge"
@@ -114,23 +122,28 @@ function CartRow({
   const removeLine = useCart((state) => state.removeLine);
 
   return (
-    <div className="grid gap-2 px-4 py-3" data-testid="cart-line">
-      <div className="flex items-baseline gap-3">
-        <span className="min-w-0 flex-1 truncate">{line.name}</span>
+    <div
+      className="animate-line-in rounded-xl border border-line bg-panel2 p-[11px]"
+      data-testid="cart-line"
+    >
+      <div className="mb-[9px] flex items-baseline gap-2.5">
+        <span className="min-w-0 flex-1 truncate text-[13.5px] font-semibold">{line.name}</span>
         <button
           type="button"
           onClick={onEditPrice}
-          className="num text-xs text-muted-foreground tabular-nums underline-offset-2 hover:underline"
+          className="num text-[11.5px] text-fg2 underline-offset-2 hover:underline"
         >
           {formatPKR(line.pricePaisa)} / {t(`unit.${line.unit}` as never)}
         </button>
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex items-center overflow-hidden rounded-lg border">
+      <div className="flex items-center gap-2.5">
+        {/* Spec: one bordered group with a divided centre value — the three
+            parts are never spaced apart. */}
+        <div className="flex items-center overflow-hidden rounded-[10px] border border-line bg-panel">
           <button
             type="button"
-            className="grid size-11 place-items-center bg-muted/50 active:bg-muted"
+            className="grid size-11 place-items-center text-fg2 active:bg-panel2"
             onClick={() => bumpQty(line.key, -stepFor(line))}
             aria-label="−"
           >
@@ -139,13 +152,13 @@ function CartRow({
           <button
             type="button"
             onClick={onEditQty}
-            className="num grid h-11 min-w-16 place-items-center border-x px-2 font-semibold tabular-nums"
+            className="num grid h-11 min-w-[46px] place-items-center border-x border-line px-2 text-sm font-semibold"
           >
             {formatQty(line.qty)}
           </button>
           <button
             type="button"
-            className="grid size-11 place-items-center bg-muted/50 active:bg-muted"
+            className="grid size-11 place-items-center text-fg2 active:bg-panel2"
             onClick={() => bumpQty(line.key, stepFor(line))}
             aria-label="+"
           >
@@ -153,7 +166,7 @@ function CartRow({
           </button>
         </div>
 
-        <span className="num flex-1 text-end font-semibold tabular-nums">
+        <span className="num flex-1 text-end text-[14.5px] font-semibold">
           {formatPKR(lineTotal(line.pricePaisa, line.qty))}
         </span>
 
@@ -161,7 +174,7 @@ function CartRow({
           type="button"
           onClick={() => removeLine(line.key)}
           aria-label={t('action.remove')}
-          className="grid size-11 place-items-center text-muted-foreground hover:text-destructive"
+          className="grid size-9 place-items-center rounded-[9px] text-fg2 hover:text-bad"
         >
           <X className="size-4" />
         </button>
@@ -228,7 +241,7 @@ function DiscountDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Dialog title={t('common.discount')} onClose={onClose}>
-      <div className="mb-3 inline-flex rounded-lg border p-1">
+      <div className="mb-3 inline-flex rounded-xl border border-line bg-panel2 p-1">
         {(['rupees', 'percent'] as const).map((m) => (
           <button
             key={m}
@@ -236,10 +249,8 @@ function DiscountDialog({ onClose }: { onClose: () => void }) {
             aria-pressed={pending === m}
             onClick={() => setPending(m)}
             className={cn(
-              'min-w-24 rounded-md px-4 py-2 text-sm font-medium transition-colors',
-              pending === m
-                ? 'bg-primary text-primary-foreground'
-                : 'text-muted-foreground hover:text-foreground',
+              'min-w-24 rounded-[9px] px-4 py-2 text-sm font-semibold transition-colors',
+              pending === m ? 'bg-fg text-bg' : 'text-fg2 hover:text-fg',
             )}
           >
             {m === 'rupees' ? t('common.rupees') : t('common.percent')}

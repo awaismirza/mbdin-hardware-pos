@@ -24,6 +24,8 @@
   [data-testid='app-header'],
   [data-testid='tab-bar'],
   [data-testid='side-rail'],
+  [data-testid='side-nav'],
+  [data-testid='install-prompt'],
   .shell__header,
   .shell__nav,
   .toasts,

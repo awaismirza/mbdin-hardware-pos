@@ -52,7 +52,7 @@ const EMPTY: FormState = {
 };
 
 const SELECT_CLASS =
-  'h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/40';
+  'h-11 w-full rounded-[11px] border border-line bg-panel2 px-3 text-[13.5px] outline-none focus:border-brand focus:ring-[3px] focus:ring-ring/30';
 
 export function ProductEditor() {
   const t = useT();
@@ -166,8 +166,8 @@ export function ProductEditor() {
       onBack={() => navigate('/stock')}
       scroll={false}
     >
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <div className="grid gap-4 p-4 sm:grid-cols-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4">
+        <div className="grid gap-3 rounded-[14px] border border-line bg-panel p-4 shadow-card sm:grid-cols-2">
           <Field label={t('stock.nameUr')} error={errors.nameUr}>
             <Input
               value={form.nameUr}
@@ -333,11 +333,11 @@ interface FieldProps {
 
 function Field({ label, error, hint, children }: FieldProps) {
   return (
-    <label className={cn('grid gap-2', error && '[&_input]:border-destructive')}>
-      <span className="text-sm font-medium">{label}</span>
+    <label className={cn('grid gap-1.5', error && '[&_input]:border-destructive')}>
+      <span className="text-[11.5px] font-semibold text-fg2">{label}</span>
       {children}
-      {error && <span className="text-sm text-destructive">{error}</span>}
-      {!error && hint && <span className="text-sm text-muted-foreground">{hint}</span>}
+      {error && <span className="text-[11.5px] font-medium text-bad">{error}</span>}
+      {!error && hint && <span className="text-[11.5px] text-fg2">{hint}</span>}
     </label>
   );
 }

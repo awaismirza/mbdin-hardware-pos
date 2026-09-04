@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Printer, RotateCcw, Send, Trash2 } from 'lucide-react';
+import { Check, Printer, RotateCcw, Send, Trash2 } from 'lucide-react';
 
 import { useApp, useLanguage, useT, useToast } from '@/appStore';
 import { Dialog } from '@/components/Dialog';
@@ -74,7 +74,22 @@ export function ReceiptView() {
         ) : undefined
       }
     >
-      <div className="mx-auto max-w-md p-4">
+      {/* Spec: success header, then the white slip, then a stack of full-width
+          actions with New sale primary. Two columns where there is room. */}
+      <div className="grid items-start gap-3.5 p-4 xl:grid-cols-[1.55fr_1fr]">
+        <div className="rounded-2xl border border-line bg-panel p-5 shadow-card">
+          <div className="mb-4 flex items-center gap-2.5">
+            <span className="grid size-[34px] place-items-center rounded-full bg-ok-soft text-ok">
+              <Check className="size-4" />
+            </span>
+            <span>
+              <span className="block text-[15.5px] font-bold">{t('sell.saleSaved')}</span>
+              <span className="num block text-[11.5px] text-fg2">
+                {sale.invoiceNo} · {formatDateTime(sale.createdAt)}
+              </span>
+            </span>
+          </div>
+
         <div className="slip" lang={language}>
           {shop.name && <div className="slip__shop">{shop.name}</div>}
           {shop.phone && <div className="slip__meta num">{shop.phone}</div>}
@@ -154,23 +169,20 @@ export function ReceiptView() {
           <hr className="slip__rule" />
           <div className="slip__footer">{shop.footer || t('receipt.thankYou')}</div>
         </div>
+        </div>
 
-        <div className="receipt__actions mt-4 grid gap-2">
-          <Button size="lg" onClick={() => window.print()}>
-            <Printer className="size-4" /> {t('receipt.print')}
-          </Button>
-          <Button variant="outline" onClick={sendWhatsapp}>
-            <Send className="size-4" /> {t('receipt.whatsapp')}
-          </Button>
-          <Button onClick={() => navigate('/sell')} data-testid="new-sale">
+        <div className="receipt__actions grid gap-2.5">
+          <Button size="lg" onClick={() => navigate('/sell')} data-testid="new-sale">
             <RotateCcw className="size-4" /> {t('receipt.newSale')}
           </Button>
+          <Button variant="outline" className="w-full" onClick={() => window.print()}>
+            <Printer className="size-4" /> {t('receipt.print')}
+          </Button>
+          <Button variant="outline" className="w-full" onClick={sendWhatsapp}>
+            <Send className="size-4" /> {t('receipt.whatsapp')}
+          </Button>
           {sale.status !== 'void' && (
-            <Button
-              variant="ghost"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setConfirmVoid(true)}
-            >
+            <Button variant="destructive" className="w-full" onClick={() => setConfirmVoid(true)}>
               <Trash2 className="size-4" /> {t('receipt.void')}
             </Button>
           )}

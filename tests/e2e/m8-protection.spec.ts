@@ -7,8 +7,13 @@ import { completeSetup } from './setup';
  * Two signals, checked separately elsewhere in the app: whether it is running
  * from the home screen (standalone display mode) and whether the browser
  * granted persistent storage. The one behaviour worth locking down here is
- * that the "add to home screen" banner never fires once the app already is
+ * that the "add to home screen" nudge never fires once the app already is
  * installed — see src/lib/protection.ts for why that combination mattered.
+ *
+ * Two bars can carry that nudge and only ever one is on screen at a time:
+ * `install-prompt` (cobalt, offers the install directly) takes precedence, and
+ * `persist-warning` (amber) is the fallback for the day after the prompt has
+ * been snoozed. Both are asserted here.
  */
 
 async function useEnglish(page: Page): Promise<void> {
@@ -40,24 +45,42 @@ test('a browser tab, never installed: the banner nudges toward the home screen',
   await expect(page.getByTestId('persisted-status')).toHaveText('No');
 
   await page.goto('/sell');
-  const banner = page.getByTestId('persist-warning');
-  await expect(banner).toBeVisible();
+  const prompt = page.getByTestId('install-prompt');
+  await expect(prompt).toBeVisible();
 
-  // The banner's fix actually goes somewhere, not just "Got it".
-  await banner.getByRole('button', { name: 'Add to home screen' }).click();
-  await expect(page).toHaveURL(/\/settings$/);
+  // The nudge's fix actually goes somewhere, not just "Got it". Headless
+  // Chromium fires no `beforeinstallprompt`, so this falls to the guide.
+  await prompt.getByTestId('install-prompt-action').click();
+  await expect(page).toHaveURL(/\/install$/);
+
+  // And the guide says something true for this browser rather than a generic
+  // "add to home screen" that would send a desktop user hunting for a Share
+  // sheet that is not there.
+  await expect(page.getByText('On a computer')).toBeVisible();
 });
 
-test('dismissing the banner keeps it gone across a reload', async ({ page }) => {
+test('the install nudge snoozes for the day, then the amber bar takes over', async ({ page }) => {
   await useEnglish(page);
   await page.goto('/sell');
 
+  const prompt = page.getByTestId('install-prompt');
+  await expect(prompt).toBeVisible();
+  await prompt.getByRole('button', { name: 'Got it' }).click();
+  await expect(prompt).toHaveCount(0);
+
+  // Snoozed, not muted: it stays gone for the rest of the day...
+  await page.reload();
+  await expect(page.getByTestId('app-ready')).toBeVisible();
+  await expect(page.getByTestId('install-prompt')).toHaveCount(0);
+
+  // ...and the amber persistence bar steps in, so the risk is never silent.
   const banner = page.getByTestId('persist-warning');
   await expect(banner).toBeVisible();
   await banner.getByRole('button', { name: 'Got it' }).click();
   await expect(banner).toHaveCount(0);
 
   await page.reload();
+  await expect(page.getByTestId('app-ready')).toBeVisible();
   await expect(page.getByTestId('persist-warning')).toHaveCount(0);
 });
 
@@ -77,6 +100,7 @@ test('installed to the home screen: no nag, even though persist() still lags', a
 
   await page.goto('/sell');
   await expect(page.getByTestId('persist-warning')).toHaveCount(0);
+  await expect(page.getByTestId('install-prompt')).toHaveCount(0);
 
   // The install section on Settings agrees: nothing left to do there either.
   // (It is a section heading, not a landmark <h*>, so matched by its exact

@@ -140,8 +140,9 @@ test('quick sell adds an unlisted item and holding parks the cart', async ({ pag
 
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 0');
 
-  // The held cart is listed and can be resumed.
-  await page.getByRole('button', { name: /Hold 1/ }).click();
+  // The held cart is listed and can be resumed. The quick-action strip only
+  // grows a "Held carts" pill once something is actually parked.
+  await page.getByRole('button', { name: /Held carts/ }).click();
   await expect(page.getByText('Blue shirt man')).toBeVisible();
   await page.getByRole('button', { name: 'Resume' }).click();
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 50');

@@ -5,8 +5,14 @@
  * home screen in aeroplane mode. Fontsource is a devDependency purely as a
  * delivery mechanism for the woff2 files; nothing imports it at runtime.
  *
- * Latin subset for IBM Plex Sans (English text and every numeral), Arabic
- * subset for IBM Plex Sans Arabic (Urdu). Together about 100 KB.
+ * Three families, all latin-subset except the Arabic one:
+ *
+ *   Plus Jakarta Sans   — the UI face (400–800)
+ *   IBM Plex Mono       — every numeral, per the design spec: amounts,
+ *                         quantities, dates, phone numbers, SKUs (400–600)
+ *   IBM Plex Sans Arabic — Urdu (400–600)
+ *
+ * Together about 180 KB.
  *
  * Run with `node scripts/copy-fonts.mjs` — wired into `npm run fonts` and the
  * prebuild step.
@@ -21,9 +27,14 @@ const out = join(root, 'public', 'fonts');
 const modules = join(root, 'node_modules', '@fontsource');
 
 const files = [
-  ['ibm-plex-sans/files/ibm-plex-sans-latin-400-normal.woff2', 'ibm-plex-sans-400.woff2'],
-  ['ibm-plex-sans/files/ibm-plex-sans-latin-500-normal.woff2', 'ibm-plex-sans-500.woff2'],
-  ['ibm-plex-sans/files/ibm-plex-sans-latin-600-normal.woff2', 'ibm-plex-sans-600.woff2'],
+  ['plus-jakarta-sans/files/plus-jakarta-sans-latin-400-normal.woff2', 'jakarta-400.woff2'],
+  ['plus-jakarta-sans/files/plus-jakarta-sans-latin-500-normal.woff2', 'jakarta-500.woff2'],
+  ['plus-jakarta-sans/files/plus-jakarta-sans-latin-600-normal.woff2', 'jakarta-600.woff2'],
+  ['plus-jakarta-sans/files/plus-jakarta-sans-latin-700-normal.woff2', 'jakarta-700.woff2'],
+  ['plus-jakarta-sans/files/plus-jakarta-sans-latin-800-normal.woff2', 'jakarta-800.woff2'],
+  ['ibm-plex-mono/files/ibm-plex-mono-latin-400-normal.woff2', 'plex-mono-400.woff2'],
+  ['ibm-plex-mono/files/ibm-plex-mono-latin-500-normal.woff2', 'plex-mono-500.woff2'],
+  ['ibm-plex-mono/files/ibm-plex-mono-latin-600-normal.woff2', 'plex-mono-600.woff2'],
   [
     'ibm-plex-sans-arabic/files/ibm-plex-sans-arabic-arabic-400-normal.woff2',
     'ibm-plex-sans-arabic-400.woff2',

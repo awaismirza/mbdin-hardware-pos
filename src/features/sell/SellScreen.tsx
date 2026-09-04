@@ -1,13 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ScanLine } from 'lucide-react';
+import { HandCoins, PackagePlus, PauseCircle, ScanLine, Zap } from 'lucide-react';
 
 import { useApp, useT, useToast } from '@/appStore';
 import { Dialog, Sheet } from '@/components/Dialog';
 import { NumberPad } from '@/components/NumberPad';
+import { Screen } from '@/components/app/Screen';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/cn';
 import { getCustomer } from '@/db/repos/customersRepo';
 import { findByBarcode } from '@/db/repos/productsRepo';
 import {
@@ -34,6 +36,7 @@ export function SellScreen() {
   const toast = useToast();
   const navigate = useNavigate();
   const refreshSettings = useApp((state) => state.refreshSettings);
+  const shopName = useApp((state) => state.settings['shop_name']) ?? '';
 
   const hydrate = useCart((state) => state.hydrate);
   const hydrated = useCart((state) => state.hydrated);
@@ -143,48 +146,81 @@ export function SellScreen() {
 
   const customerLabel = customerName ?? t('common.walkIn');
 
+  const searchField = (
+    <div className="flex flex-1 items-center gap-2">
+      <Input
+        ref={searchInput}
+        className={cn('flex-1', search && 'num')}
+        type="search"
+        value={search}
+        onChange={(event) => {
+          setSearch(event.target.value);
+          setUnknownBarcode(null);
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            void onSearchSubmit();
+          }
+        }}
+        placeholder={t('sell.searchPlaceholder')}
+        aria-label={t('action.search')}
+      />
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => setOverlay('scan')}
+        aria-label={t('action.scan')}
+      >
+        <ScanLine className="size-5" />
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-      <div className="flex shrink-0 items-center gap-2 border-b bg-card p-3">
-        <Input
-          ref={searchInput}
-          className="num flex-1"
-          type="search"
-          value={search}
-          onChange={(event) => {
-            setSearch(event.target.value);
-            setUnknownBarcode(null);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              event.preventDefault();
-              void onSearchSubmit();
-            }
-          }}
-          placeholder={t('sell.searchPlaceholder')}
-          aria-label={t('action.search')}
+    <Screen
+      title={t('nav.sell')}
+      subtitle={shopName || undefined}
+      scroll={false}
+      actions={
+        <div className="hidden w-[min(340px,34vw)] md:flex">{searchField}</div>
+      }
+    >
+      {/* Phone: the header has no room, so search lives at the top of the body. */}
+      <div className="flex shrink-0 items-center gap-2 px-4 pt-3 md:hidden">{searchField}</div>
+
+      {/* Quick actions. A horizontally scrolling strip of the things a
+          shopkeeper reaches for between sales, accent on the first only. */}
+      <div className="flex shrink-0 items-center gap-2 overflow-x-auto border-b border-line px-4 py-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <QuickAction
+          accent
+          icon={Zap}
+          label={t('sell.quickSell')}
+          sub={t('sell.quickSellSub')}
+          onClick={() => setOverlay('quick')}
         />
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => setOverlay('scan')}
-          aria-label={t('action.scan')}
-        >
-          <ScanLine className="size-5" />
-        </Button>
+        <QuickAction
+          icon={HandCoins}
+          label={t('sell.takePayment')}
+          sub={t('sell.takePaymentSub')}
+          onClick={() => navigate('/people')}
+        />
+        <QuickAction
+          icon={PackagePlus}
+          label={t('stock.receive')}
+          sub={t('sell.receiveStockSub')}
+          onClick={() => navigate('/stock')}
+        />
         {heldCount > 0 && (
-          <Button
-            variant="outline"
+          <QuickAction
+            icon={PauseCircle}
+            label={t('sell.held')}
+            sub={t('sell.heldSub', { count: heldCount })}
             onClick={() => {
               void listHeldCarts().then(setHeld);
               setOverlay('held');
             }}
-          >
-            {t('sell.hold')}
-            <span className="num ms-1 inline-grid min-w-5 place-items-center rounded-full bg-primary px-1 text-xs text-primary-foreground">
-              {heldCount}
-            </span>
-          </Button>
+          />
         )}
       </div>
 
@@ -192,12 +228,11 @@ export function SellScreen() {
         <CatalogueGrid
           search={search}
           onPick={(product) => setPickedId(product.id)}
-          onQuickSell={() => setOverlay('quick')}
           unknownBarcode={unknownBarcode}
           onAddWithBarcode={(barcode) => navigate(`/stock/product/new?barcode=${barcode}`)}
         />
 
-        <div className="hidden w-[22rem] shrink-0 border-s bg-card lg:landscape:flex">
+        <div className="hidden w-[392px] shrink-0 border-s border-line bg-panel lg:landscape:flex">
           <CartPane
             customerLabel={customerLabel}
             onPickCustomer={() => setOverlay('customer')}
@@ -207,16 +242,21 @@ export function SellScreen() {
         </div>
       </div>
 
+      {/* Spec: on anything without room for the pane, the cart collapses to a
+          cobalt summary bar that opens it as a sheet. */}
       <button
         type="button"
         onClick={() => setCartOpen(true)}
         data-testid="cart-bar"
-        className="flex shrink-0 items-center gap-3 border-t bg-card px-4 py-3 text-start lg:landscape:hidden"
+        className="flex shrink-0 items-center gap-3 bg-brand px-4 py-3 text-start text-on-brand lg:landscape:hidden"
       >
-        <span className="text-sm text-muted-foreground">
-          {t('sell.cart')} · <span className="num">{lines.length}</span> · {customerLabel}
+        <span className="num grid h-[26px] min-w-[26px] place-items-center rounded-full bg-white/25 px-2 text-[12.5px] font-semibold">
+          {lines.length}
         </span>
-        <span className="money ms-auto text-lg font-bold text-primary">{formatPKR(total)}</span>
+        <span className="flex-1 truncate text-[12.5px] font-semibold opacity-90">
+          {customerLabel} · {t('sell.viewCart')}
+        </span>
+        <span className="money text-[17px] font-semibold">{formatPKR(total)}</span>
       </button>
 
       {cartOpen && (
@@ -326,7 +366,51 @@ export function SellScreen() {
       )}
 
       {!hydrated && <div className="sr-only">{t('common.loading')}</div>}
-    </div>
+    </Screen>
+  );
+}
+
+/**
+ * One pill in the quick-action strip: a 24px icon well, a label and a
+ * sub-label. Only the first is accented — spec: one accent per screen.
+ */
+function QuickAction({
+  icon: Icon,
+  label,
+  sub,
+  onClick,
+  accent = false,
+}: {
+  icon: ComponentType<{ className?: string }>;
+  label: string;
+  sub: string;
+  onClick: () => void;
+  accent?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'flex min-h-11 flex-none items-center gap-2.5 rounded-xl border px-3 text-start transition-colors',
+        accent
+          ? 'border-brand/30 bg-brand-soft text-brand'
+          : 'border-line bg-panel text-fg hover:bg-panel2',
+      )}
+    >
+      <span
+        className={cn(
+          'grid size-6 flex-none place-items-center rounded-[7px]',
+          accent ? 'bg-brand text-on-brand' : 'bg-panel2 text-fg2',
+        )}
+      >
+        <Icon className="size-3.5" />
+      </span>
+      <span className="flex flex-col leading-tight">
+        <span className="text-[13px] font-bold whitespace-nowrap">{label}</span>
+        <span className="text-[10.5px] whitespace-nowrap opacity-70">{sub}</span>
+      </span>
+    </button>
   );
 }
 

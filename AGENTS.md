@@ -11,8 +11,10 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
 2. **[`docs/product-spec.md`](docs/product-spec.md)** — what the app is and its
    hard rules.
 3. **[`CLAUDE.md`](CLAUDE.md)** — engineering non-negotiables (paisa, repos,
-   one-transaction sale, offline, `opfs-sahpool`, base path).
-4. **[`README.md`](README.md)** — product narrative and the manual pre-release
+   one-transaction sale, offline, `opfs-sahpool`, cascade layers, base path).
+4. **[`docs/design-spec.md`](docs/design-spec.md)** — canonical for how the app
+   looks: colour, type, shape, every component.
+5. **[`README.md`](README.md)** — product narrative and the manual pre-release
    checklist.
 
 ## Documentation map
@@ -25,6 +27,8 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
 | `docs/spec-changelog.md` | One line per spec change | Only when the spec itself moves |
 | `CHANGELOG.md` | What shipped, per version (Keep a Changelog) | Every user-facing change; cut at release |
 | `docs/roadmap.md` | Forward-looking, status per item | When priorities or "done" change |
+| `docs/design-spec.md` | Canonical visual spec — colour, type, shape, components | A visual rule changes; it is the bug report when code disagrees |
+| `docs/auto-backup.md` | What a PWA can and cannot automate for backups, and why | A browser ships the File System Access API, or the backup story changes |
 | `docs/RELEASING.md` | The release runbook | Follow it when asked to "make a release" |
 | `README.md` / `AGENTS.md` / `CLAUDE.md` | Product / process / engineering | When behaviour, architecture, commands, or rules change |
 
@@ -41,8 +45,12 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
 - `src/features/stock/` — products, photos, movements, CSV import, summaries.
 - `src/features/people/` — customer directory (route stays `/people`, copy says
   "Customers"), photos, ledger, payments.
-- `src/features/settings/` — onboarding, shop settings, backup/restore, PIN,
-  storage diagnostics, the **About** card (version + build date).
+- `src/features/settings/` — onboarding, shop settings, appearance, backup/
+  restore, PIN, storage diagnostics, the **About** card (version + build date).
+- `src/features/install/` — platform detection (`platform.ts`, unit-tested),
+  the `/install` guide screen, and the in-tab install prompt.
+- `src/backup/autoExport.ts` — the daily write into a chosen folder, on the
+  browsers that can do it. Read `docs/auto-backup.md` before touching it.
 - `src/db/repos/` — the only application-level SQL boundary. `src/db/worker.ts`
   owns the SQLite connection. `src/db/jsonRestore.ts` is the dependency-free JSON
   backup wire format shared by the worker, the exporter and tests.
@@ -50,8 +58,10 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
   build time.
 - `src/i18n/en.ts` — translation key source of truth; `ur.ts` is type-checked
   against it.
-- `src/styles/app.css` — Tailwind entry; layer order `theme, base, components,
-  legacy, utilities` so legacy stylesheets can never outrank a utility.
+- `src/styles/app.css` — Tailwind entry, the full palette, and the type stack.
+  Layer order `theme, base, components, legacy, utilities` so legacy stylesheets
+  can never outrank a utility. `.num`/`.money` are declared **unlayered** at the
+  bottom so they beat the legacy sheets — see CLAUDE.md for why that matters.
 - `tests/e2e/setup.ts` — completes the real first-launch setup for browser
   scenarios.
 
@@ -68,8 +78,12 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
   English is the default for a new shop; Urdu is an intentional RTL path.
 - Money is integer paisa. A sale is one transaction. A balance is
   `SUM(ledger_entries.amount_paisa)`.
-- Numbers/dates carry `.num` or `.money` (LTR isolate) or the bidi algorithm
-  mangles them in Urdu.
+- Numbers/dates carry `.num` or `.money`: mono, tabular, and isolated LTR, or
+  the bidi algorithm mangles them in Urdu. Mixed text keeps the sans face and
+  wraps only the numeric run.
+- Follow `docs/design-spec.md` for anything visual. One cobalt primary action
+  per view; red only for owed, out, or destructive. Nothing tappable below 34px,
+  and the controls a sale passes through clear 44px.
 - First launch is incomplete until `shop_name` is saved; never re-show setup for
   a named shop. A reset returns to first launch.
 - New screens use the `Screen` component; scroll containers are always a plain

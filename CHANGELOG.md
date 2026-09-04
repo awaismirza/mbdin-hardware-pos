@@ -10,7 +10,54 @@ a release moves the `[Unreleased]` items into a dated section — see
 
 ## [Unreleased]
 
-_Nothing yet._
+### Changed
+
+- **Complete visual redesign** to the cobalt design system in
+  [`docs/design-spec.md`](docs/design-spec.md). Cards on cool grey instead of
+  ruled paper; one cobalt accent carrying every primary action and active state;
+  red reserved for money owed, out-of-stock and destructive actions; generous
+  radii and ambient shadow. Both themes ship — "Daylight" and "Night" — and the
+  choice persists.
+- **Every numeral is now IBM Plex Mono with tabular figures** — amounts,
+  quantities, dates, phone numbers, SKUs — so a column of figures never shifts
+  as the digits change. Plus Jakarta Sans is the UI face. Both are self-hosted;
+  the app still touches no font CDN.
+- **New navigation shape.** A 248px labelled sidebar with count badges on a
+  counter screen, an 88px icon rail on a tablet, a bottom tab bar on a phone —
+  all pinned by construction, so nothing scrolls off the bottom on iOS. Settings
+  moved into the nav; the app header is now a per-screen title and subtitle.
+- **Screens rebuilt to the spec** — Sell gains a quick-action strip and a cobalt
+  cart summary bar; Stock is a proper table with margin and a proportional
+  on-hand bar; Reports leads with four KPI cards and a hero takings card;
+  Customers is a card grid over three KPIs; the customer ledger's balance card is
+  solid cobalt; Settings is two columns with real theme swatches and a PIN
+  display; the receipt slip is white paper in both themes.
+
+### Added
+
+- **One-tap install, and a guide for every device.** A cobalt bar appears when
+  Dukaan is running in a browser tab and offers the install directly where the
+  browser supports it. `/install` explains the actual gesture per platform —
+  iOS Safari, iOS Chrome/Firefox (which cannot install, and says so), Android,
+  desktop Chromium, desktop Safari — and shows whether the browser has granted
+  persistent storage. Dismissal is a snooze until the next day, not a mute.
+- **Automatic daily backup to a folder** where the browser can do it (desktop
+  Chromium). Choose a folder once — one your Google Drive, iCloud Drive or
+  OneDrive client already syncs — and the daily copy lands there with no tap.
+  Everywhere else Settings says plainly that no browser on a phone or tablet can
+  do this, and the daily one-tap reminder stands. Full analysis in
+  [`docs/auto-backup.md`](docs/auto-backup.md).
+- Low-stock and outstanding-balance counts as badges on the navigation.
+- Average basket as a fourth KPI on Reports.
+
+### Fixed
+
+- `.money` lost its intended font because a legacy stylesheet in a higher
+  cascade layer redefined it. The numeric styles are now declared once, and
+  unlayered, so nothing can outrank them.
+- The persistence warning and the install prompt no longer both appear at once.
+- The "Quick sell" tile no longer duplicates the quick-action button of the same
+  name.
 
 ## [1.0.0] — 2026-09-04
 

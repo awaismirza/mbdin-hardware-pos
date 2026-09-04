@@ -98,25 +98,41 @@ looks like an empty shop; switch back when you have finished checking.
 - Adding Dukaan to the iOS home screen is therefore not cosmetic — it is what
   stops Safari clearing the ledger.
 - Nothing above is a substitute for the daily backup. That is why the app nags
-  when the last off-device backup is over 24 hours old.
+  when the last off-device backup is over 24 hours old, and why a bar appears
+  offering to install the app whenever it is running in a browser tab. `/install`
+  explains the actual gesture for the device asking.
+- **Can it back up by itself?** On a desktop browser, yes: pick a folder once
+  (ideally one your Google Drive or iCloud Drive client already syncs) and the
+  daily copy lands there with no tap. On a phone or tablet, no — and no web app
+  can, on any browser. [`docs/auto-backup.md`](docs/auto-backup.md) is the full
+  analysis, including why every alternative was rejected.
 
 ---
 
 ## Design
 
-The reference is the **bahi khata**, the cloth-bound ledger under the counter of
-every shop in Punjab: ruled columns, ink on faintly green paper, a red spine, and
-numbers in disciplined vertical stacks. So the app is built from ruled lines
-rather than floating cards, and one red (`--seal`) appears only where money
-changes hands. One loud element per screen — the running total on Sell, the
-balance on a customer, today's takings on Reports — and everything else quiet.
+The app used to be built to look like a **bahi khata** — ruled lines on faintly
+green paper, a ledger red. It is now a modern POS surface: cards on cool grey,
+one cobalt accent, and generous radii. The full rules are in
+[`docs/design-spec.md`](docs/design-spec.md), which is canonical; the tokens that
+implement it live in `src/styles/app.css`.
 
-All tokens live in `src/styles/tokens.css`. Nothing hard-codes a colour or a
-font size.
+The four rules worth knowing without opening that document:
 
-**Dark mode is deliberately out of scope.** The tablet sits under shop lighting
-by a shop front all day and never sees a dark room; a second theme would be
-surface area with no user.
+- **Cobalt is the only accent.** It carries every primary action, active nav item
+  and data highlight, and only one such action appears per view. Red means
+  *owed*, *out of stock*, or *erase* — never branding.
+- **Everything numeric is IBM Plex Mono with tabular figures.** Amounts,
+  quantities, dates, phone numbers, SKUs. A column of figures then never shifts
+  as the digits change. Mixed text keeps the sans face (Plus Jakarta Sans) and
+  wraps only the number.
+- **Cards, not rules.** Hairline dividers appear only *inside* a card.
+- **Nothing tappable falls below 34px**, and the controls a sale passes through
+  clear 44px. Both are enforced by a test.
+
+**Both themes ship** — "Daylight" for a bright shop front, "Night" for late
+closing — and the choice persists. (An earlier version of this file said dark
+mode was out of scope. The design spec asked for it; it is in.)
 
 **Urdu is set in Naskh, not Nastaliq.** Nastaliq is the beautiful and culturally
 correct script, but at 14–16 px on a cheap tablet it is unreadable, and the line
@@ -136,12 +152,14 @@ renders as `Sept 2026, 03:11 pm 03`. Both were real, and both are covered by a
 test. The element's *box* is still placed by the RTL flow; only its contents are
 isolated.
 
-Money is right-aligned in every context, in both directions, so a column of
-figures lines up on its last digit and the eye can run down it.
+Alignment is decided per call site rather than globally: a hero figure reads
+better ranged left, a table column right. What is global is the mono face and the
+tabular figures, so either choice lines up.
 
-Fonts are self-hosted in `public/fonts` and copied from the Fontsource packages
-by `npm run fonts` (also wired into `prebuild`). The app never touches a font
-CDN, because it is expected to cold-launch in aeroplane mode.
+The three self-hosted families — Plus Jakarta Sans, IBM Plex Mono and IBM Plex
+Sans Arabic — live in `public/fonts`, copied from the Fontsource packages by
+`npm run fonts` (also wired into `prebuild`). The app never touches a font CDN,
+because it is expected to cold-launch in aeroplane mode.
 
 > **The Urdu strings need a human pass before this ships.** `src/i18n/ur.ts` is
 > written in plain shop Urdu, but a money app deserves a native speaker reading
@@ -267,16 +285,18 @@ stand), [`docs/product-spec.md`](docs/product-spec.md),
 
 Automated tests do not cover these. Run them on the real devices.
 
-- [ ] **Android install** — Chrome offers "Install app"; the icon lands on the home screen and launches without browser chrome.
-- [ ] **iOS home screen** — Safari → Share → Add to Home Screen. Launches standalone. (There is no install prompt on iOS; the app explains this in Settings.)
+- [ ] **Android install** — the cobalt bar's "Install Dukaan" button works; the icon lands on the home screen and launches without browser chrome.
+- [ ] **iOS home screen** — Safari → Share → Add to Home Screen. Launches standalone. (There is no install prompt on iOS; `/install` explains the gesture.)
+- [ ] **Install guide, per device** — open `/install` on iOS Safari, iOS Chrome, Android and a desktop browser. Each must describe *that* browser's actual gesture, and iOS Chrome must say plainly that it cannot install.
 - [ ] **Aeroplane mode** — turn the network off, cold-launch from the home screen, complete a sale, take a payment, export a backup.
 - [ ] **Hard kill mid-sale** — put items in the cart, force-quit the app, reopen. The cart comes back.
 - [ ] **Thermal print** — print a receipt to a 58 mm printer; amounts line up in a mono column and nothing is clipped.
 - [ ] **WhatsApp share** — send a receipt and a backup file through the share sheet.
 - [ ] **USB barcode scanner** — it behaves as a keyboard: scanning into the search field and pressing Enter adds the item.
 - [ ] **Camera** — barcode scan and a product photo, on both Android Chrome and iOS Safari, and in the installed app rather than only in a browser tab.
-- [ ] **Daylight** — read the screen at the shop front at midday.
-- [ ] **RTL** — walk the whole app in Urdu; nothing is mirrored wrongly and no money column loses its right alignment.
+- [ ] **Daylight** — read the screen at the shop front at midday, in the light theme.
+- [ ] **Night** — switch to the dark theme after closing; check the receipt slip is still white paper with black text.
+- [ ] **RTL** — walk the whole app in Urdu; nothing is mirrored wrongly, and every amount, date and phone number stays a left-to-right run in the mono face.
 
 ---
 

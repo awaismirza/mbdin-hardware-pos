@@ -130,12 +130,12 @@ async function snapshot(page: Page): Promise<Snapshot> {
   const products = await count.innerText();
 
   await page.goto('/stock');
-  // The stock card's photo renders a one-letter fallback for a frame before the
-  // image loads; read the quantity line only so the snapshot is stable.
+  // A stock row carries several numeric runs — price, margin, on-hand. Read the
+  // on-hand cell by its own hook rather than by position, so a column added to
+  // the table cannot quietly change what this snapshot is comparing.
   const stock = await page
     .getByRole('button', { name: /چینی|Sugar/ })
-    .locator('.num')
-    .first()
+    .getByTestId('stock-qty')
     .innerText();
 
   await page.goto('/people');

@@ -88,74 +88,122 @@ export function CustomerDetail() {
         </Button>
       }
     >
-      <div className="p-4">
-        <div className="flex items-center gap-4 rounded-xl border bg-card p-4">
-          <CustomerAvatar
-            customerId={customer.id}
-            hasPhoto={customer.hasPhoto}
-            name={customer.name}
-            className="size-16 flex-none"
-          />
-          <div className="grid gap-0.5">
-            <span className="text-sm text-muted-foreground">
+      <div className="flex flex-col gap-3 p-4">
+        <div className="grid items-start gap-3 xl:grid-cols-[1.55fr_1fr]">
+          {/* Spec: the balance card is solid cobalt with white text — the one
+              place in the app where the accent fills a whole surface. */}
+          <div className="rounded-2xl bg-brand p-[18px] text-white shadow-[0_6px_24px_var(--brand-glow)]">
+            <div className="mb-4 flex items-center gap-3">
+              <CustomerAvatar
+                customerId={customer.id}
+                hasPhoto={customer.hasPhoto}
+                name={customer.name}
+                className="size-[46px] flex-none [&:is(span)]:bg-white/20 [&:is(span)]:text-white"
+              />
+              <span className="min-w-0">
+                <span className="block truncate text-[16.5px] font-bold">{customer.name}</span>
+                {customer.phone && (
+                  <span className="num block text-xs opacity-80">{customer.phone}</span>
+                )}
+              </span>
+            </div>
+
+            <div className="label-caps text-white/85">
               {owes > 0 ? t('people.owes') : owes < 0 ? t('people.inCredit') : t('people.settled')}
-            </span>
-            <span
-              className={cn(
-                'money text-3xl font-bold',
-                owes > 0 ? 'text-destructive' : 'text-success',
-              )}
+            </div>
+            <div
+              className="money text-[44px] leading-[1.05] font-semibold tracking-[-0.035em]"
               data-testid="customer-balance"
             >
               {formatPKR(Math.abs(owes))}
-            </span>
+            </div>
+
             {customer.creditLimitPaisa > 0 && (
-              <span className="text-sm text-muted-foreground">
-                {t('people.creditLimit')} {formatPKR(customer.creditLimitPaisa)}
-              </span>
+              <>
+                <div className="my-3 h-1.5 overflow-hidden rounded-[3px] bg-white/25">
+                  <span
+                    className="block h-full rounded-[3px] bg-white"
+                    style={{
+                      inlineSize: `${String(
+                        Math.max(0, Math.min(100, (owes / customer.creditLimitPaisa) * 100)),
+                      )}%`,
+                    }}
+                  />
+                </div>
+                <div className="text-xs opacity-85">
+                  <span className="num">
+                    {Math.round((owes / customer.creditLimitPaisa) * 100)}%
+                  </span>{' '}
+                  {t('people.ofCreditLimit')}{' '}
+                  <span className="num">{formatPKR(customer.creditLimitPaisa)}</span>
+                </div>
+              </>
             )}
+
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                className="min-w-[120px] flex-1 bg-white text-brand shadow-none hover:bg-white/90"
+                onClick={() => setOverlay('payment')}
+                data-testid="take-payment"
+              >
+                {t('people.takePayment')}
+              </Button>
+              <Button
+                variant="outline"
+                className="min-w-[120px] flex-1 border-white/50 bg-transparent text-white hover:bg-white/10"
+                onClick={sendReminder}
+                disabled={owes <= 0}
+              >
+                {t('people.sendReminder')}
+              </Button>
+            </div>
+          </div>
+
+          <div className="rounded-[14px] border border-line bg-panel p-[15px] shadow-card">
+            <div className="mb-3 text-[14.5px] font-bold">{t('people.actions')}</div>
+            <div className="flex flex-wrap gap-2">
+              {customer.phone && (
+                <>
+                  <Button variant="outline" className="min-w-[100px] flex-1" asChild>
+                    <a href={`tel:${customer.phone}`}>
+                      <Phone className="size-4" /> {t('people.call')}
+                    </a>
+                  </Button>
+                  <Button variant="outline" className="min-w-[100px] flex-1" asChild>
+                    <a href={`sms:${customer.phone}`}>
+                      <MessageSquare className="size-4" /> {t('people.sms')}
+                    </a>
+                  </Button>
+                </>
+              )}
+              <Button
+                variant="outline"
+                className="min-w-[100px] flex-1"
+                onClick={() => setOverlay('adjust')}
+              >
+                {t('people.adjust')}
+              </Button>
+            </div>
           </div>
         </div>
 
-        <div className="mt-4 flex flex-wrap gap-2">
-          <Button onClick={() => setOverlay('payment')} data-testid="take-payment">
-            {t('people.takePayment')}
-          </Button>
-          <Button variant="outline" onClick={sendReminder} disabled={owes <= 0}>
-            {t('people.sendReminder')}
-          </Button>
-          {customer.phone && (
-            <>
-              <Button variant="outline" asChild>
-                <a href={`tel:${customer.phone}`}>
-                  <Phone className="size-4" /> {t('people.call')}
-                </a>
-              </Button>
-              <Button variant="outline" asChild>
-                <a href={`sms:${customer.phone}`}>
-                  <MessageSquare className="size-4" /> {t('people.sms')}
-                </a>
-              </Button>
-            </>
-          )}
-          <Button variant="outline" onClick={() => setOverlay('adjust')}>
-            {t('people.adjust')}
-          </Button>
-        </div>
+        <div className="overflow-hidden rounded-[14px] border border-line bg-panel shadow-card">
+          <div className="label-caps grid grid-cols-[1fr_100px_100px] gap-3 border-b border-line bg-panel2 px-4 py-2.5">
+            <span>{t('people.ledger')}</span>
+            <span className="text-end">{t('sell.quickSellAmount')}</span>
+            <span className="text-end">{t('people.running')}</span>
+          </div>
 
-        <h2 className="mt-6 mb-2 text-base font-semibold">{t('people.ledger')}</h2>
-
-        {entries.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('people.ledgerEmpty')}</p>
-        ) : (
-          <div className="divide-y rounded-xl border">
-            {entries.map((entry) => (
+          {entries.length === 0 ? (
+            <p className="px-4 py-3 text-[13px] text-fg2">{t('people.ledgerEmpty')}</p>
+          ) : (
+            entries.map((entry) => (
               <div
                 key={entry.id}
-                className="ledger-row grid grid-cols-[1fr_auto_auto] items-baseline gap-3 px-4 py-3"
+                className="ledger-row grid grid-cols-[1fr_100px_100px] items-center gap-3 border-b border-line px-4 py-3 last:border-b-0"
               >
                 <span className="min-w-0">
-                  <span className="block text-sm font-medium">
+                  <span className="block text-[13.5px] font-semibold">
                     {t(`people.entry.${entry.kind}` as never)}
                     {entry.invoiceNo && (
                       <>
@@ -164,7 +212,7 @@ export function CustomerDetail() {
                       </>
                     )}
                   </span>
-                  <span className="ledger-row__when block text-xs text-muted-foreground">
+                  <span className="ledger-row__when block text-[11.5px] text-fg2">
                     <span className="num">{formatDateTime(entry.createdAt)}</span>
                     {entry.method ? ` · ${t(`checkout.method.${entry.method}` as never)}` : ''}
                     {entry.note ? ` · ${entry.note}` : ''}
@@ -172,19 +220,19 @@ export function CustomerDetail() {
                 </span>
                 <span
                   className={cn(
-                    'ledger-row__amount num w-20 text-end font-semibold tabular-nums',
-                    entry.amountPaisa > 0 ? 'text-destructive' : 'text-success',
+                    'ledger-row__amount num text-end text-[13.5px] font-semibold',
+                    entry.amountPaisa > 0 ? 'text-bad' : 'text-ok',
                   )}
                 >
                   {formatPKR(entry.amountPaisa, { signed: true, symbol: false })}
                 </span>
-                <span className="ledger-row__running num w-20 text-end text-muted-foreground tabular-nums">
+                <span className="ledger-row__running num text-end text-[12.5px] text-fg2">
                   {formatPKR(entry.runningPaisa, { symbol: false })}
                 </span>
               </div>
-            ))}
-          </div>
-        )}
+            ))
+          )}
+        </div>
       </div>
 
       {overlay === 'payment' && (

@@ -1,10 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { TriangleAlert, X } from 'lucide-react';
 
 import { useApp, useT } from '@/appStore';
 import { Button } from '@/components/ui/button';
 import { runDailyArchive } from '@/backup/archive';
-import { hoursSince } from '@/lib/dates';
+import { LAST_AUTO_EXPORT, runDailyAutoExport } from '@/backup/autoExport';
+import { INSTALL_SNOOZED } from '@/features/install/InstallPrompt';
+import { hoursSince, karachiDay } from '@/lib/dates';
 import { shouldWarnAboutPersistence } from '@/lib/protection';
 
 /**
@@ -30,16 +33,23 @@ export function BackupBar() {
   const persisted = useApp((state) => state.persisted);
   const installed = useApp((state) => state.installed);
   const saveSetting = useApp((state) => state.saveSetting);
+  const refreshSettings = useApp((state) => state.refreshSettings);
 
   const [archiveChecked, setArchiveChecked] = useState(false);
 
-  // The daily archive, once per boot, in the background. Never awaited by any
+  // The daily copies, once per boot, in the background. Never awaited by any
   // render path: opening the app must not wait on a file copy.
+  //
+  // Two of them: the OPFS archive (a safety net beside the ledger) and, where
+  // the browser can write to a folder, the automatic off-device export.
   useEffect(() => {
     if (status !== 'ready' || archiveChecked) return;
     setArchiveChecked(true);
     void runDailyArchive(settings['last_archive_at'] ?? '');
-  }, [status, archiveChecked, settings]);
+    void runDailyAutoExport(settings[LAST_AUTO_EXPORT] ?? '').then((result) => {
+      if (result === 'written') void refreshSettings();
+    });
+  }, [status, archiveChecked, settings, refreshSettings]);
 
   if (status !== 'ready') return null;
 
@@ -53,55 +63,89 @@ export function BackupBar() {
   // pushing the content of a screen opened for some other reason down.
   const onSellScreen = location.pathname === '/' || location.pathname.startsWith('/sell');
   const bannerDismissed = settings['persist_banner_dismissed'] === '1';
-  const showPersistWarning = shouldWarnAboutPersistence(installed, persisted, bannerDismissed);
+
+  /*
+   * The install prompt covers the same ground with a better action, so only one
+   * of the two is ever on screen. This bar is the fallback for the day after
+   * the prompt has been snoozed — the risk has not gone away just because the
+   * shopkeeper said "not now" this morning.
+   */
+  const installPromptShowing = !installed && settings[INSTALL_SNOOZED] !== karachiDay();
+  const showPersistWarning =
+    !installPromptShowing && shouldWarnAboutPersistence(installed, persisted, bannerDismissed);
 
   return (
     <>
       {showPersistWarning && (
-        <div
-          className="amber-bar flex shrink-0 items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning"
-          role="status"
-          data-testid="persist-warning"
-        >
-          <span className="flex-1">{t('backup.notPersisted')}</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-warning/50 text-warning"
-            onClick={() => navigate('/settings')}
-          >
-            {t('settings.install')}
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="text-warning"
-            onClick={() => void saveSetting('persist_banner_dismissed', '1')}
-          >
-            {t('backup.dismiss')}
-          </Button>
-        </div>
+        <Notice
+          testid="persist-warning"
+          text={t('backup.notPersisted')}
+          actionLabel={t('settings.install')}
+          onAction={() => navigate('/install')}
+          onDismiss={() => void saveSetting('persist_banner_dismissed', '1')}
+          dismissLabel={t('backup.dismiss')}
+        />
       )}
 
       {overdue && onSellScreen && (
-        <div
-          className="amber-bar flex shrink-0 items-center gap-3 border-b border-warning/40 bg-warning/10 px-4 py-2 text-sm text-warning"
-          role="status"
-          data-testid="backup-overdue"
-        >
-          <span className="flex-1">
-            {days && days >= 1 ? t('backup.overdue', { days }) : t('backup.overdueToday')}
-          </span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="border-warning/50 text-warning"
-            onClick={() => navigate('/settings')}
-          >
-            {t('backup.backupNow')}
-          </Button>
-        </div>
+        <Notice
+          testid="backup-overdue"
+          text={days && days >= 1 ? t('backup.overdue', { days }) : t('backup.overdueToday')}
+          actionLabel={t('backup.backupNow')}
+          onAction={() => navigate('/settings')}
+        />
       )}
     </>
+  );
+}
+
+/**
+ * One line, never two. These bars sit above every screen, so anything that
+ * wraps on a phone steals a third of the till — the message truncates and the
+ * action stays reachable instead.
+ */
+function Notice({
+  testid,
+  text,
+  actionLabel,
+  onAction,
+  onDismiss,
+  dismissLabel,
+}: {
+  testid: string;
+  text: string;
+  actionLabel: string;
+  onAction: () => void;
+  onDismiss?: () => void;
+  dismissLabel?: string;
+}) {
+  return (
+    <div
+      className="amber-bar flex shrink-0 items-center gap-2 border-b border-line bg-warn-soft px-3 py-1.5 text-warn md:px-4"
+      role="status"
+      data-testid={testid}
+    >
+      <TriangleAlert className="size-4 shrink-0" />
+      <span className="min-w-0 flex-1 truncate text-[12.5px] font-medium">{text}</span>
+      <Button
+        size="sm"
+        variant="outline"
+        className="shrink-0 border-warn/40 bg-transparent text-warn hover:bg-warn/10"
+        onClick={onAction}
+      >
+        {actionLabel}
+      </Button>
+      {onDismiss && (
+        <Button
+          size="icon-sm"
+          variant="muted"
+          className="shrink-0 text-warn hover:bg-warn/10"
+          onClick={onDismiss}
+          aria-label={dismissLabel}
+        >
+          <X className="size-4" />
+        </Button>
+      )}
+    </div>
   );
 }

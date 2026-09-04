@@ -16,18 +16,21 @@
      name (a raised surface) is exactly what the legacy screens want. */
   --ink: var(--foreground);
   --ink-soft: var(--muted-foreground);
-  --seal: var(--primary);
-  --seal-deep: color-mix(in oklch, var(--primary) 82%, black);
-  --brass: var(--warning);
-  --settled: var(--success);
+  --seal: var(--brand);
+  --seal-deep: color-mix(in srgb, var(--brand) 82%, black);
+  --brass: var(--warn);
+  --settled: var(--ok);
 
-  --seal-wash: color-mix(in oklch, var(--primary) 14%, var(--background));
-  --brass-wash: color-mix(in oklch, var(--warning) 16%, var(--background));
-  --settled-wash: color-mix(in oklch, var(--success) 16%, var(--background));
-  --ink-wash: color-mix(in oklch, var(--foreground) 8%, var(--background));
+  --seal-wash: var(--brand-soft);
+  --brass-wash: var(--warn-soft);
+  --settled-wash: var(--ok-soft);
+  --ink-wash: var(--panel2);
 
   /* ---- Type ------------------------------------------------------- */
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  /* Aliases only — the real values live in app.css so there is one palette
+     and one type stack, not two that drift. */
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', menlo, monospace;
   --font-arabic:
     'IBM Plex Sans Arabic', 'Noto Naskh Arabic', 'Noto Sans Arabic', 'Segoe UI', tahoma, sans-serif;
 

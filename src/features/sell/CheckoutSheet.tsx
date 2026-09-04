@@ -90,9 +90,11 @@ export function CheckoutSheet({
   return (
     <Sheet title={t('checkout.title')} onClose={onClose}>
       <div className="grid gap-4">
-        <div className="flex items-baseline gap-3 border-b-2 border-foreground pb-2">
-          <span className="flex-1 text-lg font-semibold">{t('common.total')}</span>
-          <span className="money text-2xl font-bold text-primary">{formatPKR(totalPaisa)}</span>
+        <div className="flex items-end gap-2.5 border-b border-dashed border-line pb-3">
+          <span className="flex-1 text-[13px] text-fg2">{t('common.total')}</span>
+          <span className="money text-[38px] leading-none font-semibold tracking-[-0.03em]">
+            {formatPKR(totalPaisa)}
+          </span>
         </div>
 
         <div className="grid grid-cols-[repeat(auto-fit,minmax(8rem,1fr))] gap-2">
@@ -104,8 +106,10 @@ export function CheckoutSheet({
               onClick={() => setMethod(entry.key)}
               data-testid={`method-${entry.key}`}
               className={cn(
-                'min-h-12',
-                method === entry.key && 'border-foreground bg-foreground text-background',
+                'min-h-[52px] border-[1.5px]',
+                method === entry.key
+                  ? 'border-brand bg-brand-soft text-brand'
+                  : 'border-line',
               )}
             >
               {t(entry.label as never)}
@@ -144,9 +148,12 @@ export function CheckoutSheet({
               />
             </div>
 
-            <div className="flex items-baseline gap-3">
-              <span className="flex-1 text-muted-foreground">{t('checkout.change')}</span>
-              <span className="money text-2xl font-bold text-primary" data-testid="change-due">
+            <div className="flex items-end gap-2.5 rounded-xl bg-ok-soft p-3 text-ok">
+              <span className="flex-1 text-[13px] font-semibold">{t('checkout.change')}</span>
+              <span
+                className="money text-[30px] leading-none font-semibold tracking-[-0.03em]"
+                data-testid="change-due"
+              >
                 {formatPKR(changePaisa)}
               </span>
             </div>
@@ -159,7 +166,11 @@ export function CheckoutSheet({
               {customer ? customer.name : t('sell.customer')}
             </Button>
 
-            {needsCustomer && <p className="text-sm text-destructive">{t('checkout.needCustomer')}</p>}
+            {needsCustomer && (
+              <p className="rounded-xl bg-warn-soft p-3 text-[12.5px] font-semibold text-warn">
+                {t('checkout.needCustomer')}
+              </p>
+            )}
 
             {customer && customer.balancePaisa !== 0 && (
               <div className="flex items-baseline gap-3 text-sm">
@@ -180,9 +191,12 @@ export function CheckoutSheet({
               />
             </div>
 
-            <div className="flex items-baseline gap-3">
-              <span className="flex-1 text-muted-foreground">{t('checkout.remainder')}</span>
-              <span className="money text-2xl font-bold text-primary" data-testid="udhaar-due">
+            <div className="flex items-end gap-2.5 rounded-xl bg-bad-soft p-3 text-bad">
+              <span className="flex-1 text-[13px] font-semibold">{t('checkout.remainder')}</span>
+              <span
+                className="money text-[30px] leading-none font-semibold tracking-[-0.03em]"
+                data-testid="udhaar-due"
+              >
                 {formatPKR(duePaisa)}
               </span>
             </div>
@@ -196,7 +210,7 @@ export function CheckoutSheet({
 
         <Button
           size="lg"
-          className="w-full"
+          className="h-[54px] w-full text-[15.5px]"
           onClick={() => void submit()}
           disabled={!canConfirm}
           data-testid="confirm-sale"
