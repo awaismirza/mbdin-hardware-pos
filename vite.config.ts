@@ -27,6 +27,13 @@ export default defineConfig({
     },
   },
 
+  // The version comes from package.json (imported in src/version.ts); the build
+  // time is stamped here so the Settings "About" card can show when the running
+  // bundle was produced.
+  define: {
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+  },
+
   plugins: [
     react(),
     tailwindcss(),

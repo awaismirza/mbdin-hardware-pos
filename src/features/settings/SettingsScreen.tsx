@@ -15,6 +15,7 @@ import {
   onInstallAvailabilityChange,
   promptInstall,
 } from '@/pwa';
+import { APP_VERSION, buildDate } from '@/version';
 import { DataSection } from './DataSection';
 import { PinSection } from './PinSection';
 
@@ -135,6 +136,23 @@ export function SettingsScreen() {
           {t('settings.storageDebug')}
         </Button>
       </div>
+
+      <Section title={t('settings.about')}>
+        <div className="divide-y" data-testid="about">
+          <div className="flex items-baseline gap-3 py-2 text-sm">
+            <span className="flex-1 text-muted-foreground">{t('app.name')}</span>
+            <span className="num font-medium" data-testid="app-version">
+              v{APP_VERSION}
+            </span>
+          </div>
+          {buildDate() && (
+            <div className="flex items-baseline gap-3 py-2 text-sm">
+              <span className="flex-1 text-muted-foreground">{t('settings.built')}</span>
+              <span className="num">{buildDate()}</span>
+            </div>
+          )}
+        </div>
+      </Section>
     </Screen>
   );
 }

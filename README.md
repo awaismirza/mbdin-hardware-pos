@@ -251,6 +251,18 @@ right-to-left acceptance path rather than an implicit default.
 
 ---
 
+## Version & releases
+
+The running version shows in **Settings → About** (it is `package.json`'s
+`version`). What shipped in each version is in [`CHANGELOG.md`](CHANGELOG.md); the
+step-by-step for cutting one is [`docs/RELEASING.md`](docs/RELEASING.md)
+(`npm run release -- <version>`). Merging to `main` is what deploys.
+
+Process docs for anyone — human or agent — picking up the work:
+[`AGENTS.md`](AGENTS.md) (canonical), [`STATUS.md`](STATUS.md) (where things
+stand), [`docs/product-spec.md`](docs/product-spec.md),
+[`docs/roadmap.md`](docs/roadmap.md).
+
 ## Manual checklist before a release
 
 Automated tests do not cover these. Run them on the real devices.
