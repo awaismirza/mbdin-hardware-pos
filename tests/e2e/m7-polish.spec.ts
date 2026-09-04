@@ -115,7 +115,13 @@ test.describe('layout', () => {
     await expect(page.getByTestId('customer-balance')).toHaveText('Rs 487.20');
   });
 
-  test('every tappable control clears the 48px touch floor', async ({ page }) => {
+  /*
+   * Two floors, per the design spec (§4): nothing tappable anywhere falls below
+   * 34px, and the controls a sale actually passes through are 44px or more.
+   * The second is the one that matters at a counter — the first only keeps
+   * secondary chrome from shrinking to a pinprick.
+   */
+  test('every tappable control clears the 34px touch floor', async ({ page }) => {
     await seed(page);
     await useEnglish(page);
     await page.goto('/sell');
@@ -126,23 +132,53 @@ test.describe('layout', () => {
       for (const el of Array.from(document.querySelectorAll('button, a[href], select'))) {
         const rect = el.getBoundingClientRect();
         if (rect.width === 0 || rect.height === 0) continue;
-        // Toasts are transient overlays with their own dismiss affordance;
-        // category chips sit inside a larger scroll strip. Everything a sale
-        // depends on is checked.
+        // Toasts are transient overlays with their own dismiss affordance.
         if (
           el.closest('[data-sonner-toast]') ||
           el.closest('.toast') ||
-          el.hasAttribute('data-close-button') ||
-          el.classList.contains('chip')
+          el.hasAttribute('data-close-button')
         )
           continue;
-        if (rect.height < 38) {
+        if (rect.height < 34) {
           offenders.push(`${el.className || el.tagName} ${String(Math.round(rect.height))}px`);
         }
       }
       return offenders;
     });
     expect(small).toEqual([]);
+  });
+
+  test('the controls a sale passes through clear 44px', async ({ page }) => {
+    // A cart line enters with a `scale(.97)`, which measures 43px instead of 44
+    // if the read lands mid-animation. Reduced motion removes it — and doubles
+    // as a check that the reduced-motion path actually suppresses animation.
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await seed(page);
+    await useEnglish(page);
+    await page.goto('/sell');
+
+    // Any product will do — this is about the size of the controls, not which
+    // item is being sold.
+    await page.getByTestId('product-tile').first().click();
+    await page.getByTestId('product-quantity').fill('1');
+    await page.getByTestId('add-product-to-cart').click();
+    await expect(page.getByTestId('cart-line')).toBeVisible();
+
+    const heights = await page.evaluate(() => {
+      const pick = (selector: string) => {
+        const el = document.querySelector(selector);
+        return el ? Math.round(el.getBoundingClientRect().height) : 0;
+      };
+      return {
+        tile: pick('[data-testid="product-tile"]'),
+        charge: pick('[data-testid="charge"]'),
+        stepper: pick('[data-testid="cart-line"] button[aria-label="+"]'),
+      };
+    });
+
+    expect(heights.tile).toBeGreaterThanOrEqual(44);
+    expect(heights.charge).toBeGreaterThanOrEqual(44);
+    expect(heights.stepper).toBeGreaterThanOrEqual(44);
   });
 });
 
@@ -152,9 +188,11 @@ test.describe('layout', () => {
  * carry the tab bar and cart bar off the bottom of the screen with it.
  */
 test.describe('the till frame on a portrait tablet', () => {
-  test.use({ viewport: { width: 1024, height: 1366 } });
+  // 900px wide: past the 768px rail breakpoint, short of the 1024px sidebar,
+  // which is the shape a 10-inch tablet held upright actually reports.
+  test.use({ viewport: { width: 900, height: 1366 } });
 
-  test('the catalogue scrolls on its own and the tab bar stays on screen', async ({ page }) => {
+  test('the catalogue scrolls on its own and the chrome stays on screen', async ({ page }) => {
     test.setTimeout(120_000);
     await seed(page);
     await useEnglish(page);
@@ -169,7 +207,7 @@ test.describe('the till frame on a portrait tablet', () => {
     expect(gridOverflow).toBeGreaterThan(200);
 
     // ...and it is the grid, not the page, that absorbs a scroll gesture.
-    await page.mouse.move(512, 683);
+    await page.mouse.move(450, 683);
     await page.mouse.wheel(0, 20_000);
     await page.evaluate(() => {
       document.scrollingElement!.scrollTop = 99_999;
@@ -178,13 +216,17 @@ test.describe('the till frame on a portrait tablet', () => {
     await page.waitForTimeout(200);
 
     const state = await page.evaluate(() => {
-      const nav = document
-        .querySelector('[data-testid="tab-bar"]')!
-        .getBoundingClientRect();
+      // Whichever nav this width gets — the rail at `md`, the tab bar below —
+      // it is part of the frame and cannot be scrolled away.
+      const nav =
+        document.querySelector('[data-testid="side-rail"]') ??
+        document.querySelector('[data-testid="tab-bar"]')!;
+      const cartBar = document.querySelector('[data-testid="cart-bar"]')!.getBoundingClientRect();
       return {
         bodyScroll: document.scrollingElement!.scrollTop,
         gridScrolled: document.querySelector('[data-testid="catalogue-scroll"]')!.scrollTop,
-        navBottom: Math.round(nav.bottom),
+        navBottom: Math.round(nav.getBoundingClientRect().bottom),
+        cartBarBottom: Math.round(cartBar.bottom),
         viewport: window.innerHeight,
       };
     });
@@ -192,6 +234,9 @@ test.describe('the till frame on a portrait tablet', () => {
     expect(state.bodyScroll).toBe(0);
     expect(state.gridScrolled).toBeGreaterThan(200);
     expect(Math.abs(state.navBottom - state.viewport)).toBeLessThanOrEqual(2);
+    // The cart bar is the last thing above the tab bar and the first casualty
+    // when the page itself starts scrolling — so it is the real canary.
+    expect(state.cartBarBottom).toBeLessThanOrEqual(state.viewport + 2);
   });
 });
 
@@ -273,10 +318,11 @@ test.describe('installability', () => {
       expect(iconResponse.ok(), icon.src).toBe(true);
     }
 
-    // Fonts are declared as IBM Plex and nothing else, and are fetched from
-    // this origin. A browser only downloads a face once a glyph needs it, so
-    // which families end up loaded depends on what is on screen — the property
-    // worth asserting is where they come from, not which ones fired.
+    // The three self-hosted families and nothing else, all fetched from this
+    // origin. A browser only downloads a face once a glyph needs it, so which
+    // families end up loaded depends on what is on screen — the property worth
+    // asserting is where they come from, not which ones fired.
+    const ALLOWED = new Set(['Plus Jakarta Sans', 'IBM Plex Mono', 'IBM Plex Sans Arabic']);
     const declared = await page.evaluate(async () => {
       await document.fonts.ready;
       // FontFaceSet is iterable at runtime; its lib.dom typing is not.
@@ -285,7 +331,7 @@ test.describe('installability', () => {
       return [...new Set(families)];
     });
     expect(declared.length).toBeGreaterThan(0);
-    expect(declared.every((family) => family.startsWith('IBM Plex'))).toBe(true);
+    expect(declared.filter((family) => !ALLOWED.has(family))).toEqual([]);
 
     await page.waitForFunction(
       async () => {
@@ -384,7 +430,7 @@ test.describe('the PIN', () => {
 
     // Moving to Settings inside the app does not ask again. (A full reload
     // does, which is the intended trade: the unlock lives in memory only.)
-    await page.getByRole('button', { name: 'Settings' }).click();
+    await page.getByRole('link', { name: 'Settings' }).click();
     await expect(page.getByLabel('Shop name')).toBeVisible();
   });
 });

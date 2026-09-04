@@ -34,9 +34,18 @@ export function ProductPhoto({ productId, hasPhoto, name, className = '' }: Prod
   }, [productId, hasPhoto]);
 
   if (!url) {
+    /*
+     * Spec: the image well carries the product's name when there is no photo.
+     * A whole word is a far better target on a busy grid than one letter — most
+     * of this shop's catalogue starts with the same handful of Urdu letters —
+     * so the name goes in whole and the box clips it.
+     */
     return (
-      <span className={`product-photo product-photo--empty ${className}`.trim()} aria-hidden="true">
-        {name.trim().slice(0, 1).toUpperCase() || '•'}
+      <span
+        className={`product-photo product-photo--empty overflow-hidden px-1 text-center leading-tight ${className}`.trim()}
+        aria-hidden="true"
+      >
+        <span className="line-clamp-2">{name.trim() || '•'}</span>
       </span>
     );
   }

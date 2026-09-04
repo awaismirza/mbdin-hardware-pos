@@ -11,10 +11,12 @@ something is half-built, say so and say what is left.
 ---
 
 **Last release:** `1.0.0` — 2026-09-04 (tag `v1.0.0`)
-**Branch:** all work merged to `main`; nothing outstanding on a feature branch
+**Branch:** `feature/redesign-cobalt` — pushed, **awaiting the user's manual
+testing**. Do not cut a release from it until they say so.
 **Deploy:** GitHub Pages, automatic on merge to `main` →
 <https://awaismirza.github.io/mbdin-hardware-pos/>
-**Health:** `npm test` 110 · `npm run test:e2e` 33 · typecheck · lint · build — all green
+**Health:** `npm test` · `npm run typecheck` · `npm run lint` ·
+`npm run build` · `npm run test:e2e` — all green on the branch
 
 ---
 
@@ -34,9 +36,20 @@ something is half-built, say so and say what is left.
   `docs/RELEASING.md`; `CHANGELOG.md`, `docs/product-spec.md`,
   `docs/roadmap.md` and this file established.
 
+- **Cobalt redesign** (`feature/redesign-cobalt`) — the whole view layer rebuilt
+  against `docs/design-spec.md`: new palette and type stack, sidebar/rail/tab-bar
+  navigation, every screen re-laid-out. No behaviour or data changes.
+- **Install experience** — an in-tab prompt plus a per-platform `/install` guide
+  (`src/features/install/`), with the platform detection unit-tested.
+- **Automatic daily backup** to a chosen folder where the browser allows it
+  (`src/backup/autoExport.ts`), with the full capability analysis written up in
+  `docs/auto-backup.md`.
+
 ## In progress
 
-_Nothing._
+- The cobalt redesign is code-complete and green, but **not merged**: it is
+  waiting on the user's manual testing on their own devices. The next action on
+  it is theirs, not an agent's.
 
 ## Blocked
 
@@ -54,6 +67,10 @@ _Nothing._
    busy counter, app-icon badge for customers who owe, Web Share Target for
    photos, `BarcodeDetector` to drop the ZXing bundle where supported.
 4. Trim the main JS chunk with lazy-loaded routes.
+5. **Design-spec gaps left deliberately unbuilt** because the data model has no
+   home for them: the day session (open/close the till, cash in the drawer),
+   purchase orders, and the returns/refund flow. All three appear in
+   `docs/design-spec.md`; none is faked in the UI. See `docs/roadmap.md`.
 
 ## House rules for this file
 

@@ -4,20 +4,24 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/cn"
 
+/*
+ * Status badge. Spec: 10.5px / 700, 3px 8px, fully round, and always a soft
+ * background paired with its own foreground — `--ok-soft` behind `--ok`, and so
+ * on. Vocabulary: In stock, Low, Out, Udhaar, Cash, settled, 31d overdue.
+ */
 const badgeVariants = cva(
-  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-0.5 text-xs font-medium whitespace-nowrap transition-[color,box-shadow] focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 [&>svg]:pointer-events-none [&>svg]:size-3",
+  "inline-flex w-fit shrink-0 items-center justify-center gap-1 overflow-hidden rounded-full border border-transparent px-2 py-[3px] text-[10.5px] font-bold whitespace-nowrap transition-[color,box-shadow] focus-visible:ring-[3px] focus-visible:ring-ring/40 [&>svg]:pointer-events-none [&>svg]:size-3",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground [a&]:hover:bg-primary/90",
-        secondary:
-          "bg-secondary text-secondary-foreground [a&]:hover:bg-secondary/90",
-        destructive:
-          "bg-destructive text-white focus-visible:ring-destructive/20 dark:bg-destructive/60 dark:focus-visible:ring-destructive/40 [a&]:hover:bg-destructive/90",
-        outline:
-          "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 [a&]:hover:underline",
+        default: "bg-brand-soft text-brand",
+        secondary: "bg-panel2 text-fg2",
+        success: "bg-ok-soft text-ok",
+        warning: "bg-warn-soft text-warn",
+        destructive: "bg-bad-soft text-bad",
+        outline: "border-line text-fg2",
+        ghost: "[a&]:hover:bg-panel2",
+        link: "text-brand underline-offset-4 [a&]:hover:underline",
       },
     },
     defaultVariants: {

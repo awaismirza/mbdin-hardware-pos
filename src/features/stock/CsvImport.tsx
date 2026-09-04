@@ -17,7 +17,7 @@ interface Loaded {
 }
 
 const SELECT_CLASS =
-  'h-11 w-full rounded-md border border-input bg-card px-3 text-sm shadow-xs outline-none focus:border-ring focus:ring-[3px] focus:ring-ring/40';
+  'h-11 w-full rounded-[11px] border border-line bg-panel2 px-3 text-[13.5px] outline-none focus:border-brand focus:ring-[3px] focus:ring-ring/30';
 
 export function CsvImport() {
   const t = useT();

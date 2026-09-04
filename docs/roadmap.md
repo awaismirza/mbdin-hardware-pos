@@ -12,8 +12,14 @@ landed.
 | View-layer redesign (Tailwind + shadcn, dark mode) | Modern, consistent UI | Done — 1.0.0 |
 | Backup/restore robustness + photo coverage | Reported data loss on JSON restore; `.sqlite3` unpickable on iOS | Done — 1.0.0 |
 | Version in Settings + release process | Know what is deployed; repeatable releases | Done — 1.0.0 |
+| Cobalt redesign to `docs/design-spec.md` | A modern POS surface, not a bahi-khata | Done — on `feature/redesign-cobalt`, awaiting manual testing |
+| One-tap install + per-platform install guide | Shopkeepers left it in a browser tab, where the ledger can be evicted | Done — same branch |
+| Automatic daily backup to a folder | "Can it export by itself at the end of the day?" | Done where the browser allows it (desktop Chromium); see `docs/auto-backup.md` |
+| Day session (open/close the till, cash in drawer) | In the design spec; no data model for it yet | Not started — spec'd, deliberately unbuilt |
+| Purchase orders / supplier invoices | In the design spec; needs a suppliers table | Not started — spec'd, deliberately unbuilt |
+| Returns and refunds flow | In the design spec; voiding a whole sale is the only reversal today | Not started — spec'd, deliberately unbuilt |
 | PWA update UX | Updates only apply on a cold start today, silently | Not started |
-| Domain-model / data-layer pass | User flagged it; scope undefined | Not started |
+| Domain-model / data-layer pass | User flagged it; scope undefined. The three spec'd-but-unbuilt rows above are the obvious first candidates | Not started |
 | Screen Wake Lock on Sell | Screen sleeps at a busy counter | Not started |
 | App-icon badge for debtors | Glanceable "someone owes money" | Not started |
 | Web Share Target for photos | Add a product/customer photo from the share sheet | Not started |

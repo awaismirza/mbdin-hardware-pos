@@ -15,13 +15,18 @@ no analytics. SQLite WASM on OPFS inside a Web Worker is the source of truth.
 - Completing a sale is a single transaction. All or nothing.
 - Nothing may require the network. `wa.me` links opened by the user are the only exception.
 - Feature-first folders. Shared UI in `src/components` only when used by 2+ features.
-- Design tokens in `src/styles/tokens.css`. No hard-coded colours or font sizes.
+- Design tokens live in `src/styles/app.css` and follow
+  [docs/design-spec.md](docs/design-spec.md). No hard-coded colours. Cobalt
+  (`--brand`) is the only accent and carries one primary action per view; red
+  (`--bad`) means *owed*, *out*, or *erase*, and is never branding.
 - Logical CSS properties only, so RTL works without a second stylesheet.
 - A customer's balance is always `SUM(ledger_entries.amount_paisa)`. Never denormalise it.
 - Never silently open a different database. See "Storage" below.
-- Numbers and dates carry `.num` (or `.money`), which isolates them as LTR runs.
-  Without it the bidi algorithm reorders signs, symbols and date separators in
-  Urdu — "+487.20" comes out as "487.20+".
+- Every numeral carries `.num` (or `.money`): it sets IBM Plex Mono with
+  tabular figures *and* isolates the run as LTR. Without the isolation the bidi
+  algorithm reorders signs, symbols and date separators in Urdu — "+487.20"
+  comes out as "487.20+". Mixed text keeps the sans face and wraps only the
+  number: `Warn below <span className="num">5</span>`.
 - Reports and Settings sit behind the optional PIN. Sell, Stock and People never
   do: the till must never lock mid-queue.
 
@@ -42,6 +47,38 @@ before the next boot.
 The IndexedDB fallback is for browsers with no OPFS at all. It runs the same WASM
 build on an in-memory database and rewrites the serialised image after every
 write transaction.
+
+## CSS cascade layers
+
+`src/styles/app.css` declares the order once:
+
+    @layer theme, base, components, legacy, utilities;
+
+The pre-redesign stylesheets are imported into `legacy`, which sits *above*
+Tailwind's `base` and `components` but below `utilities`. That is deliberate:
+their global resets (`* { padding: 0 }`, `button { border: 0 }`) then lose to
+every Tailwind utility, while their own component classes still style anything
+not yet migrated.
+
+The trap this creates, and it has bitten twice: a rule written in `@layer base`
+in app.css **loses** to a copy of the same selector in a legacy stylesheet. That
+is how `.money` silently kept the sans face after the redesign set it to mono.
+Anything that must beat the legacy sheets — `.num`, `.money` — is declared
+unlayered at the bottom of app.css, and must exist in exactly one place.
+
+## Layout and the frame
+
+`AppShell` is one `h-dvh` flex box with `overflow-hidden`. Every piece of chrome
+(sidebar, rail, tab bar, cart bar) is a flex child of that box, not
+`position: sticky`. The routed screen owns the *only* scroll container, a plain
+block with `overflow-y-auto min-h-0`, at most one flex level below `main`.
+
+Do not reach for `sticky` here. Sticky chrome slid off the bottom of the screen
+on iOS Safari every time it was tried; pinning by construction is what fixed it,
+and `tests/e2e/m7-polish.spec.ts` locks that behaviour down.
+
+Breakpoints follow the design spec: labelled sidebar from `lg` (1024px), an 88px
+icon rail at `md` (768px), a bottom tab bar below that.
 
 ## Base path
 

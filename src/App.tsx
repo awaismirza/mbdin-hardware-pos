@@ -5,6 +5,8 @@ import { useApp, useT } from './appStore';
 import { AppProviders } from './components/app/AppProviders';
 import { AppShell } from './components/app/AppShell';
 import { Button } from './components/ui/button';
+import { InstallPrompt } from './features/install/InstallPrompt';
+import { InstallScreen } from './features/install/InstallScreen';
 import { BackupBar } from './features/settings/BackupBar';
 import { DebugScreen } from './features/settings/DebugScreen';
 import { PinGate } from './features/settings/PinGate';
@@ -57,6 +59,7 @@ function Boot() {
 
   return (
     <AppShell>
+      <InstallPrompt />
       <BackupBar />
       <AppRoutes />
     </AppShell>
@@ -68,6 +71,9 @@ function AppRoutes() {
     <Routes>
       <Route path="/" element={<Navigate to="/sell" replace />} />
       <Route path="/sell" element={<SellScreen />} />
+      {/* The install guide is never behind the PIN: the shopkeeper may need it
+          on a device that has not been set up yet. */}
+      <Route path="/install" element={<InstallScreen />} />
       <Route path="/sell/receipt/:id" element={<ReceiptView />} />
       <Route path="/stock/*" element={<StockRoutes />} />
       <Route path="/people/*" element={<PeopleRoutes />} />

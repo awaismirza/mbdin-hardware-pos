@@ -69,9 +69,19 @@ less cost snapshot). Top products by revenue and by quantity. Outstanding total 
 debtors list. Low-stock list. CSV export of the range, money in rupees.
 
 ### Settings (behind PIN, except first run)
-Shop details for the receipt; language; theme (light / dark / system); Android
-install prompt; optional 4-digit PIN; **About** (version + build date); a link to
-storage diagnostics.
+Shop details for the receipt; appearance (theme swatches + language); install;
+optional 4-digit PIN; automatic-backup folder where the browser supports one;
+**About** (version + build date); a link to storage diagnostics.
+
+### Install (never behind the PIN)
+A bar appears whenever the app is running in a browser tab, offering the install
+directly on browsers that expose `beforeinstallprompt`, and otherwise leading to
+`/install`. That screen detects the platform and gives the real gesture for it —
+iOS Safari's Share sheet, Android's browser menu, the desktop address-bar icon,
+Safari's Add to Dock — and says plainly that Chrome and Firefox on iOS cannot
+install at all, because they are Safari underneath. It also reports whether the
+browser has granted persistent storage. Dismissal snoozes until the next Karachi
+day; it is never a permanent mute.
 
 ### Backup & restore
 Export: one `.sqlite3` (byte-exact), one portable `.json` (every table +
@@ -81,6 +91,14 @@ download. Restore **replaces** the ledger (never merges) from a `.sqlite3` or
 foreign file is refused by name. **Product and customer photos are carried in
 both `.sqlite3` and `.json`.** On-device archive keeps the last 14 copies plus a
 daily automatic one (OPFS only).
+
+**Automatic daily export** to a folder the shopkeeper picks, on browsers that
+implement the File System Access API (desktop Chromium today). Point it at a
+folder a cloud client syncs and the copy leaves the device unattended. No browser
+on a phone or tablet can do this and none can reach iCloud Drive or Google Drive
+in the background; there the daily reminder plus the share sheet is the answer,
+and the UI says so rather than offering a switch that would do nothing. See
+`docs/auto-backup.md`.
 
 ### First run
 A new ledger shows a setup screen. English default; only the shop name is
@@ -99,9 +117,12 @@ never edited.
 
 ## 6. Platform
 
-React + TypeScript + Vite. Tailwind v4 + shadcn/ui for the view layer, light and
-dark, RTL first-class via logical properties. The app shell is one flex column
-pinned to the visual viewport; the routed screen owns the only scroll container.
+React + TypeScript + Vite. Tailwind v4 + shadcn/ui for the view layer, built to
+`docs/design-spec.md` — cobalt accent, IBM Plex Mono for every numeral, both
+themes, RTL first-class via logical properties. The app shell is one flex box
+pinned to the visual viewport with the navigation as a flex child (sidebar at
+`lg`, icon rail at `md`, tab bar below); the routed screen owns the only scroll
+container.
 Service worker precaches the shell, the WASM binary and the fonts; updates apply
 on the next cold start (no interrupting prompt). Works at the domain root and
 under a GitHub Pages project subpath — no root-absolute URLs.

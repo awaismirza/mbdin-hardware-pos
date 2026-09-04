@@ -1,16 +1,24 @@
 /* The 58 mm slip, on screen. Print rules live in styles/print.css and target
    these same class names. A receipt is white paper in either theme. */
 
+/*
+ * Spec: the slip is white paper with black text in BOTH themes — it is a print
+ * preview, not a surface. Mono at 12px so the amount column cannot shift, with
+ * the shop name in the UI face.
+ */
 .slip {
   inline-size: 100%;
-  padding: var(--s4);
+  max-inline-size: 340px;
+  margin-inline: auto;
+  padding: 18px;
   background: #fff;
-  border: 1px solid #d8d8d8;
-  border-radius: var(--radius);
-  font-family: var(--font-sans);
-  font-size: 13px;
-  line-height: 1.4;
-  color: #000;
+  border: 0;
+  border-radius: 6px;
+  box-shadow: 0 2px 14px rgb(0 0 0 / 14%);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.55;
+  color: #111;
 }
 html[lang='ur'] .slip {
   font-family: var(--font-arabic);
@@ -18,16 +26,17 @@ html[lang='ur'] .slip {
 
 .slip__shop {
   text-align: center;
+  font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 16px;
+  font-size: 13px;
 }
 .slip__meta {
   text-align: center;
-  font-size: 12px;
+  font-size: 11px;
 }
 .slip__rule {
   border: 0;
-  border-block-start: 1px dashed #000;
+  border-block-start: 1px dashed #999;
   margin-block: var(--s2);
 }
 .slip__line {

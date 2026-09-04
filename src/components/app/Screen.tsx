@@ -6,9 +6,11 @@ import { cn } from '@/lib/cn';
 
 interface ScreenProps {
   title?: ReactNode;
+  /** 11.5px line under the title. Says what this screen is answering. */
+  subtitle?: ReactNode;
   /** Renders a back button before the title. */
   onBack?: () => void;
-  /** Trailing controls in the screen header. */
+  /** Trailing controls in the screen header — search, a primary action. */
   actions?: ReactNode;
   /**
    * `true` (default): children sit in a single vertical scroll area — the only
@@ -23,8 +25,15 @@ interface ScreenProps {
   contentClassName?: string;
 }
 
+/**
+ * A routed screen: a fixed header bar over one scroll region.
+ *
+ * The header is part of the frame, not `position: sticky` — see AppShell for
+ * why that distinction matters on iOS.
+ */
 export function Screen({
   title,
+  subtitle,
   onBack,
   actions,
   scroll = true,
@@ -37,13 +46,23 @@ export function Screen({
   return (
     <div className={cn('flex min-h-0 flex-1 flex-col', className)}>
       {hasHeader && (
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b bg-card px-3">
+        <header
+          data-testid="app-header"
+          className="flex min-h-14 shrink-0 items-center gap-3 border-b border-line bg-panel px-3 pt-[env(safe-area-inset-top)] md:px-4"
+        >
           {onBack && (
-            <Button variant="ghost" size="icon" onClick={onBack} aria-label="Back">
+            <Button variant="muted" size="icon-sm" onClick={onBack} aria-label="Back">
               <ArrowLeft className="size-5 rtl:-scale-x-100" />
             </Button>
           )}
-          <h1 className="min-w-0 flex-1 truncate px-1 text-lg font-semibold">{title}</h1>
+          <div className="min-w-0 flex-1">
+            <h1 className="truncate text-[17px] font-extrabold leading-tight tracking-tight">
+              {title}
+            </h1>
+            {subtitle != null && (
+              <p className="truncate text-xs text-fg2">{subtitle}</p>
+            )}
+          </div>
           {actions}
         </header>
       )}

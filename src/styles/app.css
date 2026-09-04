@@ -19,85 +19,110 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Palette. Clean modern SaaS, but the neutrals keep a trace of the old ledger
- * warmth (a hint of yellow in the greys) and money stays the ledger red.
- * Values are OKLCH: lightness, chroma, hue.
+ * Palette — "Daylight". Cobalt is the single accent: it carries every primary
+ * action, active state and data highlight. Red is no longer the brand; it means
+ * owed, out, or erase, and nothing else. Cool greys throughout so nothing
+ * competes with the accent.
+ *
+ * The `--desk`…`--shadow` names are the design spec's own tokens and are the
+ * source of truth. Everything below them is an alias so the shadcn primitives
+ * inherit the same palette without a second set of values to keep in sync.
  */
 :root {
-  --radius: 0.625rem;
+  --desk: #e7e9ee;
+  --bg: #f4f5f7;
+  --panel: #ffffff;
+  --panel2: #f6f7fa;
+  --line: #e3e6ec;
+  --fg: #101623;
+  --fg2: #616b7d;
 
-  --background: oklch(0.994 0.003 95);
-  --foreground: oklch(0.24 0.008 75);
+  --brand: #3549cf;
+  --brand-soft: #e9ecfb;
+  --brand-glow: rgb(53 73 207 / 28%);
+  --on-brand: #ffffff;
 
-  --card: oklch(1 0 0);
-  --card-foreground: var(--foreground);
-  --popover: oklch(1 0 0);
-  --popover-foreground: var(--foreground);
+  --ok: #12795a;
+  --ok-soft: #e2f2ec;
+  --warn: #a8722a;
+  --warn-soft: #fbf0dd;
+  --bad: #c33b32;
+  --bad-soft: #fbe9e7;
 
-  --muted: oklch(0.965 0.004 95);
-  --muted-foreground: oklch(0.52 0.01 75);
+  --shadow: rgb(16 22 35 / 7%);
 
-  --accent: oklch(0.955 0.006 95);
-  --accent-foreground: var(--foreground);
+  /* Shape. Cards 14px, controls 10–12px, sheets 18px. */
+  --radius: 0.75rem;
 
-  --border: oklch(0.9 0.006 90);
-  --input: oklch(0.9 0.006 90);
-  --ring: oklch(0.52 0.14 27);
+  /* ---- shadcn aliases ------------------------------------------------ */
+  --background: var(--bg);
+  --foreground: var(--fg);
 
-  --primary: oklch(0.52 0.15 27);
-  --primary-foreground: oklch(0.985 0.006 90);
+  --card: var(--panel);
+  --card-foreground: var(--fg);
+  --popover: var(--panel);
+  --popover-foreground: var(--fg);
 
-  --secondary: oklch(0.955 0.006 95);
-  --secondary-foreground: var(--foreground);
+  --muted: var(--panel2);
+  --muted-foreground: var(--fg2);
 
-  --destructive: oklch(0.52 0.19 27);
-  --destructive-foreground: oklch(0.985 0.006 90);
+  --accent: var(--panel2);
+  --accent-foreground: var(--fg);
 
-  --success: oklch(0.55 0.11 155);
-  --success-foreground: oklch(0.985 0.006 90);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--brand);
 
-  --warning: oklch(0.62 0.12 75);
-  --warning-foreground: oklch(0.24 0.02 75);
+  --primary: var(--brand);
+  --primary-foreground: var(--on-brand);
 
-  /* The one colour for a figure where cash changes hands. */
-  --money: oklch(0.5 0.16 27);
+  --secondary: var(--panel2);
+  --secondary-foreground: var(--fg);
+
+  --destructive: var(--bad);
+  --destructive-foreground: #ffffff;
+
+  --success: var(--ok);
+  --success-foreground: #ffffff;
+
+  --warning: var(--warn);
+  --warning-foreground: #ffffff;
+
+  /*
+   * A neutral total. Under the new colour rules a figure is only coloured when
+   * it carries a direction — received is `--ok`, owed is `--bad` — so plain
+   * money sits in the body colour like every other number.
+   */
+  --money: var(--fg);
 }
 
+/* Palette — "Night". Same roles, same rules; only the values move. */
 .dark {
-  --background: oklch(0.19 0.008 75);
-  --foreground: oklch(0.95 0.005 90);
+  --desk: #070a10;
+  --bg: #0c0f16;
+  --panel: #141926;
+  --panel2: #1b2130;
+  --line: #28303f;
+  --fg: #eef1f7;
+  --fg2: #98a2b4;
 
-  --card: oklch(0.225 0.008 75);
-  --card-foreground: var(--foreground);
-  --popover: oklch(0.225 0.008 75);
-  --popover-foreground: var(--foreground);
+  --brand: #7286ff;
+  --brand-soft: #1c2444;
+  --brand-glow: rgb(114 134 255 / 30%);
+  --on-brand: #0c0f16;
 
-  --muted: oklch(0.27 0.008 75);
-  --muted-foreground: oklch(0.7 0.008 80);
+  --ok: #3fbc90;
+  --ok-soft: #12271f;
+  --warn: #d9a054;
+  --warn-soft: #2a2113;
+  --bad: #f0736a;
+  --bad-soft: #2d1615;
 
-  --accent: oklch(0.3 0.008 75);
-  --accent-foreground: var(--foreground);
+  --shadow: rgb(0 0 0 / 50%);
 
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 14%);
-  --ring: oklch(0.68 0.14 25);
-
-  --primary: oklch(0.63 0.16 25);
-  --primary-foreground: oklch(0.98 0.006 90);
-
-  --secondary: oklch(0.3 0.008 75);
-  --secondary-foreground: var(--foreground);
-
-  --destructive: oklch(0.62 0.19 25);
-  --destructive-foreground: oklch(0.98 0.006 90);
-
-  --success: oklch(0.66 0.12 158);
-  --success-foreground: oklch(0.16 0.02 160);
-
-  --warning: oklch(0.75 0.12 78);
-  --warning-foreground: oklch(0.2 0.02 78);
-
-  --money: oklch(0.7 0.15 25);
+  --destructive-foreground: #0c0f16;
+  --success-foreground: #0c0f16;
+  --warning-foreground: #0c0f16;
 }
 
 @theme inline {
@@ -126,13 +151,64 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-money: var(--money);
 
-  --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  /* The spec's own names, usable directly: bg-panel, text-fg2, border-line…
+     `--color-bg` matters on its own: an inverted chip is `--fg` behind `--bg`
+     text, and without this token that text silently loses its colour. */
+  --color-bg: var(--bg);
+  --color-desk: var(--desk);
+  --color-panel: var(--panel);
+  --color-panel2: var(--panel2);
+  --color-line: var(--line);
+  --color-fg: var(--fg);
+  --color-fg2: var(--fg2);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-on-brand: var(--on-brand);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --color-warn: var(--warn);
+  --color-warn-soft: var(--warn-soft);
+  --color-bad: var(--bad);
+  --color-bad-soft: var(--bad-soft);
+
+  --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, 'Segoe UI', roboto, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', menlo, monospace;
   --font-arabic: 'IBM Plex Sans Arabic', 'Noto Naskh Arabic', 'Noto Sans Arabic', tahoma, sans-serif;
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: 0.5rem;
+  --radius-md: 0.625rem;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --radius-xl: 0.875rem;
+  --radius-2xl: 1.125rem;
+
+  --shadow-card: 0 1px 2px var(--shadow);
+  --shadow-glow: 0 2px 10px var(--brand-glow);
+  --shadow-sheet: 0 10px 40px var(--shadow);
+
+  /* Motion, per the spec: short and functional only. */
+  --animate-sheet-up: sheet-up 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  --animate-line-in: line-in 0.16s ease;
+  --animate-screen-in: screen-in 0.18s ease;
+
+  @keyframes sheet-up {
+    from {
+      transform: translateY(14px);
+      opacity: 0.4;
+    }
+  }
+
+  @keyframes line-in {
+    from {
+      transform: scale(0.97);
+      opacity: 0;
+    }
+  }
+
+  @keyframes screen-in {
+    from {
+      opacity: 0;
+    }
+  }
 }
 
 @layer base {
@@ -159,17 +235,61 @@
     font-family: var(--font-arabic);
   }
 
-  /*
-   * Numbers and dates are isolated LTR runs in both languages: without this the
-   * bidi algorithm reorders a leading "+", "Rs" or a date separator in Urdu.
-   */
-  .num,
-  .money {
-    direction: ltr;
-    unicode-bidi: isolate;
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand);
   }
 
-  .money {
-    font-variant-numeric: tabular-nums;
+  /* A thin scrollbar so a 392px cart pane does not lose 15px to chrome. */
+  ::-webkit-scrollbar {
+    inline-size: 10px;
+    block-size: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: color-mix(in srgb, var(--fg2) 35%, transparent);
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background-clip: content-box;
+  }
+}
+
+@layer components {
+  /* The section label used above every card group and table header. */
+  .label-caps {
+    font-size: 0.71875rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--fg2);
+  }
+}
+
+/*
+ * Every numeral in the app is mono with tabular figures, so a column of amounts
+ * never shifts as the digits change. `.num` and `.money` also isolate the run
+ * as LTR: without that the bidi algorithm reorders a leading "+", "Rs" or a
+ * date separator once the UI is in Urdu — "+487.20" comes out "487.20+".
+ *
+ * Deliberately unlayered, so it outranks the legacy stylesheets. Alignment is
+ * NOT set here: each call site decides, because a hero figure and a table
+ * column want opposite answers.
+ */
+.num,
+.money {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
