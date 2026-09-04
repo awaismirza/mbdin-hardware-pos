@@ -89,7 +89,7 @@ export function CustomerDetail() {
       }
     >
       <div className="flex flex-col gap-3 p-4">
-        <div className="grid items-start gap-3 xl:grid-cols-[1.55fr_1fr]">
+        <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[1.55fr_1fr] xl:items-start">
           {/* Spec: the balance card is solid cobalt with white text — the one
               place in the app where the accent fills a whole surface. */}
           <div className="rounded-2xl bg-brand p-[18px] text-white shadow-[0_6px_24px_var(--brand-glow)]">

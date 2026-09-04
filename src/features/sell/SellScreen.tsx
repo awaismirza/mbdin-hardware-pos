@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HandCoins, PackagePlus, PauseCircle, ScanLine, Zap } from 'lucide-react';
+import { HandCoins, PackagePlus, ScanLine, Zap } from 'lucide-react';
 
 import { useApp, useT, useToast } from '@/appStore';
 import { Dialog, Sheet } from '@/components/Dialog';
@@ -12,24 +12,19 @@ import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/cn';
 import { getCustomer } from '@/db/repos/customersRepo';
 import { findByBarcode } from '@/db/repos/productsRepo';
-import {
-  completeSale,
-  countHeldCarts,
-  discardHeldCart,
-  listHeldCarts,
-} from '@/db/repos/salesRepo';
-import { formatDateTime } from '@/lib/dates';
+import { completeSale } from '@/db/repos/salesRepo';
 import { formatPKR } from '@/lib/money';
-import type { HeldCart, PaymentMethod } from '@/types/domain';
+import type { PaymentMethod } from '@/types/domain';
 import { AddToCartSheet } from './AddToCartSheet';
 import { BarcodeScanner } from './BarcodeScanner';
 import { CartPane } from './CartPane';
+import { CartTabs } from './CartTabs';
 import { CatalogueGrid } from './CatalogueGrid';
 import { CheckoutSheet } from './CheckoutSheet';
 import { CustomerPicker } from './CustomerPicker';
 import { useCart } from './cartStore';
 
-type Overlay = 'none' | 'scan' | 'customer' | 'quick' | 'held' | 'hold';
+type Overlay = 'none' | 'scan' | 'customer' | 'quick';
 
 export function SellScreen() {
   const t = useT();
@@ -42,24 +37,25 @@ export function SellScreen() {
   const hydrated = useCart((state) => state.hydrated);
   const restored = useCart((state) => state.restored);
   const acknowledgeRestore = useCart((state) => state.acknowledgeRestore);
-  const lines = useCart((state) => state.lines);
-  const customerId = useCart((state) => state.customerId);
+  const cart = useCart((state) => state.current());
   const total = useCart((state) => state.totalPaisa());
   const addProduct = useCart((state) => state.addProduct);
   const addAdHoc = useCart((state) => state.addAdHoc);
   const setCustomer = useCart((state) => state.setCustomer);
-  const clear = useCart((state) => state.clear);
+  const closeCart = useCart((state) => state.closeCart);
+
+  const lines = cart?.lines ?? [];
+  const customerId = cart?.customerId ?? null;
 
   const [search, setSearch] = useState('');
   const [overlay, setOverlay] = useState<Overlay>('none');
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [customerName, setCustomerName] = useState<string | null>(null);
-  const [heldCount, setHeldCount] = useState(0);
-  const [held, setHeld] = useState<HeldCart[]>([]);
   const [unknownBarcode, setUnknownBarcode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
   const [pickedId, setPickedId] = useState<number | null>(null);
+  const [closingCartId, setClosingCartId] = useState<number | null>(null);
   const searchInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -72,10 +68,6 @@ export function SellScreen() {
       acknowledgeRestore();
     }
   }, [restored, acknowledgeRestore, toast, t]);
-
-  useEffect(() => {
-    void countHeldCarts().then(setHeldCount);
-  }, [overlay]);
 
   useEffect(() => {
     if (customerId === null) {
@@ -123,15 +115,21 @@ export function SellScreen() {
   }) {
     setBusy(true);
     try {
+      const state = useCart.getState();
+      const soldCartId = state.currentId;
+      const snap = state.snapshot();
       const sale = await completeSale({
-        lines: useCart.getState().lines,
-        customerId: useCart.getState().customerId,
-        discountPaisa: useCart.getState().discountPaisa(),
+        lines: snap.lines,
+        customerId: snap.customerId,
+        discountPaisa: snap.discountPaisa,
         paidPaisa: result.paidPaisa,
         paymentMethod: result.method,
         note: result.note,
+        cartId: soldCartId ?? undefined,
       });
-      clear();
+      // The sale transaction already deleted the sold cart's row; drop it from
+      // memory and move to the next open cart (or a fresh one).
+      if (soldCartId !== null) await state.afterSale(soldCartId);
       setCheckoutOpen(false);
       setOverlay('none');
       await refreshSettings();
@@ -211,18 +209,9 @@ export function SellScreen() {
           sub={t('sell.receiveStockSub')}
           onClick={() => navigate('/stock')}
         />
-        {heldCount > 0 && (
-          <QuickAction
-            icon={PauseCircle}
-            label={t('sell.held')}
-            sub={t('sell.heldSub', { count: heldCount })}
-            onClick={() => {
-              void listHeldCarts().then(setHeld);
-              setOverlay('held');
-            }}
-          />
-        )}
       </div>
+
+      <CartTabs onCloseWithLines={(id) => setClosingCartId(id)} />
 
       <div className="flex min-h-0 min-w-0 flex-1 lg:landscape:flex-row">
         <CatalogueGrid
@@ -237,7 +226,6 @@ export function SellScreen() {
             customerLabel={customerLabel}
             onPickCustomer={() => setOverlay('customer')}
             onCheckout={() => setCheckoutOpen(true)}
-            onHold={() => setOverlay('hold')}
           />
         </div>
       </div>
@@ -268,10 +256,6 @@ export function SellScreen() {
               onCheckout={() => {
                 setCartOpen(false);
                 setCheckoutOpen(true);
-              }}
-              onHold={() => {
-                setCartOpen(false);
-                setOverlay('hold');
               }}
             />
           </div>
@@ -317,52 +301,31 @@ export function SellScreen() {
         />
       )}
 
-      {overlay === 'hold' && (
-        <HoldDialog onClose={() => setOverlay('none')} disabled={lines.length === 0} />
-      )}
-
-      {overlay === 'held' && (
-        <Sheet title={t('sell.held')} onClose={() => setOverlay('none')}>
-          {held.length === 0 && (
-            <p className="py-6 text-center text-muted-foreground">{t('sell.heldEmpty')}</p>
-          )}
-          <div className="divide-y">
-            {held.map((cart) => (
-              <div key={cart.id} className="flex items-center gap-3 py-3">
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate">
-                    {cart.label ?? <span className="num">{formatDateTime(cart.createdAt)}</span>}
-                  </span>
-                  <span className="num block text-sm text-muted-foreground">
-                    {cart.lineCount} · {formatPKR(cart.totalPaisa)}
-                  </span>
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    void useCart
-                      .getState()
-                      .resume(cart.id)
-                      .then(() => setOverlay('none'));
-                  }}
-                >
-                  {t('sell.resume')}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => {
-                    void discardHeldCart(cart.id).then(() => listHeldCarts().then(setHeld));
-                  }}
-                  aria-label={t('action.delete')}
-                >
-                  ×
-                </Button>
-              </div>
-            ))}
-          </div>
-        </Sheet>
+      {closingCartId !== null && (
+        <Dialog
+          title={t('sell.closeCartTitle')}
+          onClose={() => setClosingCartId(null)}
+          footer={
+            <>
+              <Button variant="outline" onClick={() => setClosingCartId(null)}>
+                {t('action.cancel')}
+              </Button>
+              <Button
+                variant="destructive"
+                data-testid="confirm-close-cart"
+                onClick={() => {
+                  const id = closingCartId;
+                  setClosingCartId(null);
+                  if (id !== null) void closeCart(id);
+                }}
+              >
+                {t('sell.closeCart')}
+              </Button>
+            </>
+          }
+        >
+          <p>{t('sell.closeCartBody')}</p>
+        </Dialog>
       )}
 
       {!hydrated && <div className="sr-only">{t('common.loading')}</div>}
@@ -446,45 +409,6 @@ function QuickSellDialog({
           }
         }}
       />
-    </Dialog>
-  );
-}
-
-function HoldDialog({ onClose, disabled }: { onClose: () => void; disabled: boolean }) {
-  const t = useT();
-  const hold = useCart((state) => state.hold);
-  const [label, setLabel] = useState('');
-
-  return (
-    <Dialog
-      title={t('sell.hold')}
-      onClose={onClose}
-      footer={
-        <>
-          <Button variant="outline" onClick={onClose}>
-            {t('action.cancel')}
-          </Button>
-          <Button
-            disabled={disabled}
-            onClick={() => {
-              void hold(label.trim() || null).then(onClose);
-            }}
-          >
-            {t('sell.hold')}
-          </Button>
-        </>
-      }
-    >
-      <div className="grid gap-2">
-        <Label htmlFor="hold-label">{t('sell.holdLabel')}</Label>
-        <Input
-          id="hold-label"
-          autoFocus
-          value={label}
-          onChange={(event) => setLabel(event.target.value)}
-          placeholder={t('common.optional')}
-        />
-      </div>
     </Dialog>
   );
 }

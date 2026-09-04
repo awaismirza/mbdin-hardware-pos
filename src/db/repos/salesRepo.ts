@@ -1,13 +1,7 @@
 import { nowIso } from '../../lib/dates';
 import { ADVANCE_INVOICE_SQL, NEXT_INVOICE_SQL } from '../../lib/invoice';
 import { clampDiscount, lineTotal, roundQty, sumPaisa } from '../../lib/money';
-import type {
-  CartLine,
-  HeldCart,
-  PaymentMethod,
-  Sale,
-  SaleWithItems,
-} from '../../types/domain';
+import type { CartLine, PaymentMethod, Sale, SaleWithItems } from '../../types/domain';
 import type { TxStep } from '../api';
 import { db, lastIdOf } from '../client';
 import { toSale, toSaleItem, type SaleItemRow, type SaleRow } from './rows';
@@ -19,6 +13,11 @@ export interface CompleteSaleInput {
   paidPaisa: number;
   paymentMethod: PaymentMethod;
   note?: string | null;
+  /**
+   * The open cart this sale is being rung from, cleared inside the same
+   * transaction. Omitted only by tests that never opened one.
+   */
+  cartId?: number;
 }
 
 export interface CompletedSale {
@@ -123,7 +122,15 @@ export async function completeSale(input: CompleteSaleInput): Promise<CompletedS
   }
 
   steps.push({ sql: ADVANCE_INVOICE_SQL });
-  steps.push({ sql: `DELETE FROM held_carts WHERE kind = 'active'` });
+  // Clear exactly the cart this sale was rung from, in the same transaction, so
+  // a sale and the disappearance of its cart can never come apart. The other
+  // open carts are untouched.
+  if (input.cartId !== undefined) {
+    steps.push({
+      sql: `DELETE FROM held_carts WHERE id = ? AND kind = 'active'`,
+      params: [input.cartId],
+    });
+  }
 
   const results = await db.transaction(steps);
   const saleId = results[0]!.lastId;
@@ -234,90 +241,60 @@ export interface CartSnapshot {
   discountPaisa: number;
 }
 
+export interface ActiveCart {
+  /** The held_carts row id — stable for the life of the cart, and the tab key. */
+  id: number;
+  snapshot: CartSnapshot;
+}
+
 /**
- * Writes the live cart. Called after every change, which is what makes a power
- * cut survivable: the cart is in the database, never only in memory.
+ * The open carts.
+ *
+ * A busy counter serves several customers at once, so there are N carts, not
+ * one, each an independent `kind = 'active'` row in held_carts. They are the
+ * tabs on the Sell screen; there is no separate "hold" concept any more —
+ * parking a basket just means opening another tab. Every cart is written to the
+ * database after each change, so a power cut or a killed tab loses none of them,
+ * and because held_carts is in BACKUP_TABLES they ride in a backup too.
+ *
+ * Ordered by id, i.e. by the order they were opened.
  */
-export async function saveActiveCart(snapshot: CartSnapshot): Promise<void> {
-  const now = nowIso();
-  const payload = JSON.stringify(snapshot);
-  if (snapshot.lines.length === 0) {
-    await db.exec(`DELETE FROM held_carts WHERE kind = 'active'`);
-    return;
-  }
-  await db.transaction([
-    { sql: `DELETE FROM held_carts WHERE kind = 'active'` },
-    {
-      sql: `INSERT INTO held_carts (label, payload, kind, created_at, updated_at)
-            VALUES (NULL, ?, 'active', ?, ?)`,
-      params: [payload, now, now],
-    },
-  ]);
-}
-
-export async function loadActiveCart(): Promise<CartSnapshot | null> {
-  const row = await db.queryOne<{ payload: string }>(
-    `SELECT payload FROM held_carts WHERE kind = 'active' ORDER BY id DESC LIMIT 1`,
+export async function listActiveCarts(): Promise<ActiveCart[]> {
+  const rows = await db.query<{ id: number; payload: string }>(
+    `SELECT id, payload FROM held_carts WHERE kind = 'active' ORDER BY id`,
   );
-  return row ? parseSnapshot(row.payload) : null;
-}
-
-export async function holdCart(snapshot: CartSnapshot, label: string | null): Promise<void> {
-  const now = nowIso();
-  await db.transaction([
-    {
-      sql: `INSERT INTO held_carts (label, payload, kind, created_at, updated_at)
-            VALUES (?, ?, 'held', ?, ?)`,
-      params: [label, JSON.stringify(snapshot), now, now],
-    },
-    { sql: `DELETE FROM held_carts WHERE kind = 'active'` },
-  ]);
-}
-
-export async function listHeldCarts(): Promise<HeldCart[]> {
-  const rows = await db.query<{
-    id: number;
-    label: string | null;
-    payload: string;
-    created_at: string;
-    updated_at: string;
-  }>(`SELECT * FROM held_carts WHERE kind = 'held' ORDER BY created_at DESC`);
-
-  return rows.map((row) => {
+  const carts: ActiveCart[] = [];
+  for (const row of rows) {
     const snapshot = parseSnapshot(row.payload);
-    const lines = snapshot?.lines ?? [];
-    return {
-      id: row.id,
-      label: row.label,
-      createdAt: row.created_at,
-      updatedAt: row.updated_at,
-      lineCount: lines.length,
-      totalPaisa:
-        sumPaisa(lines.map((line) => lineTotal(line.pricePaisa, line.qty))) -
-        (snapshot?.discountPaisa ?? 0),
-    };
-  });
+    // A corrupt row is skipped rather than allowed to take the screen down.
+    if (snapshot) carts.push({ id: row.id, snapshot });
+  }
+  return carts;
 }
 
-export async function resumeHeldCart(id: number): Promise<CartSnapshot | null> {
-  const row = await db.queryOne<{ payload: string }>(
-    `SELECT payload FROM held_carts WHERE id = ? AND kind = 'held'`,
-    [id],
+const EMPTY_SNAPSHOT: CartSnapshot = { lines: [], customerId: null, discountPaisa: 0 };
+
+/** Opens a new cart and returns its id. */
+export async function createCart(snapshot: CartSnapshot = EMPTY_SNAPSHOT): Promise<number> {
+  const now = nowIso();
+  const result = await db.exec(
+    `INSERT INTO held_carts (label, payload, kind, created_at, updated_at)
+     VALUES (NULL, ?, 'active', ?, ?)`,
+    [JSON.stringify(snapshot), now, now],
   );
-  if (!row) return null;
-  await db.exec('DELETE FROM held_carts WHERE id = ?', [id]);
-  return parseSnapshot(row.payload);
+  return result.lastId;
 }
 
-export async function discardHeldCart(id: number): Promise<void> {
-  await db.exec(`DELETE FROM held_carts WHERE id = ? AND kind = 'held'`, [id]);
-}
-
-export async function countHeldCarts(): Promise<number> {
-  const row = await db.queryOne<{ n: number }>(
-    `SELECT COUNT(*) AS n FROM held_carts WHERE kind = 'held'`,
+/** Overwrites one cart's contents. Fire-and-forget from the store. */
+export async function saveCart(id: number, snapshot: CartSnapshot): Promise<void> {
+  await db.exec(
+    `UPDATE held_carts SET payload = ?, updated_at = ? WHERE id = ? AND kind = 'active'`,
+    [JSON.stringify(snapshot), nowIso(), id],
   );
-  return row?.n ?? 0;
+}
+
+export async function deleteCart(id: number): Promise<void> {
+  await db.exec(`DELETE FROM held_carts WHERE id = ? AND kind = 'active'`, [id]);
 }
 
 /** A corrupt payload must not stop the app opening; treat it as no cart. */

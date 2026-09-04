@@ -14,12 +14,16 @@ interface CartPaneProps {
   customerLabel: string;
   onPickCustomer: () => void;
   onCheckout: () => void;
-  onHold: () => void;
 }
 
-export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: CartPaneProps) {
+/** Stable reference for "no cart yet" — a fresh `[]` in the selector loops. */
+const NO_LINES: CartLine[] = [];
+
+export function CartPane({ customerLabel, onPickCustomer, onCheckout }: CartPaneProps) {
   const t = useT();
-  const lines = useCart((state) => state.lines);
+  // Select the cart (a stable reference), derive lines outside the selector.
+  const cart = useCart((state) => state.current());
+  const lines = cart?.lines ?? NO_LINES;
   const subtotal = useCart((state) => state.subtotalPaisa());
   const discount = useCart((state) => state.discountPaisa());
   const total = useCart((state) => state.totalPaisa());
@@ -86,19 +90,14 @@ export function CartPane({ customerLabel, onPickCustomer, onCheckout, onHold }: 
           </span>
         </div>
 
-        <div className="mt-1 flex gap-2">
-          <Button variant="outline" className="flex-1" onClick={onHold} disabled={lines.length === 0}>
-            {t('sell.hold')}
-          </Button>
-          <Button
-            className="h-[46px] flex-[2] text-[14.5px]"
-            onClick={onCheckout}
-            disabled={lines.length === 0}
-            data-testid="charge"
-          >
-            {t('sell.charge')}
-          </Button>
-        </div>
+        <Button
+          className="mt-1 h-[46px] w-full text-[14.5px]"
+          onClick={onCheckout}
+          disabled={lines.length === 0}
+          data-testid="charge"
+        >
+          {t('sell.charge')}
+        </Button>
       </div>
 
       {editingQty && <QtyDialog line={editingQty} onClose={() => setEditingQty(null)} />}
@@ -234,8 +233,8 @@ function PriceDialog({ line, onClose }: { line: CartLine; onClose: () => void })
 
 function DiscountDialog({ onClose }: { onClose: () => void }) {
   const t = useT();
-  const mode = useCart((state) => state.discountMode);
-  const input = useCart((state) => state.discountInput);
+  const mode = useCart((state) => state.current()?.discountMode ?? 'rupees');
+  const input = useCart((state) => state.current()?.discountInput ?? 0);
   const setDiscount = useCart((state) => state.setDiscount);
   const [pending, setPending] = useState<DiscountMode>(mode);
 

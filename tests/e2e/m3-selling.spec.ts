@@ -120,7 +120,7 @@ test('an udhaar sale charges the customer and voiding it reverses everything', a
   await expect(page.getByRole('button', { name: /Atta/ })).toContainText('100');
 });
 
-test('quick sell adds an unlisted item and holding parks the cart', async ({ page }) => {
+test('quick sell adds an unlisted item to the cart', async ({ page }) => {
   await useEnglish(page);
   await page.goto('/sell');
 
@@ -132,18 +132,64 @@ test('quick sell adds an unlisted item and holding parks the cart', async ({ pag
   await quick.getByRole('button', { name: 'Add', exact: true }).click();
 
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 50');
+});
 
-  await page.getByRole('button', { name: 'Hold', exact: true }).click();
-  const holdDialog = page.getByRole('dialog');
-  await holdDialog.getByLabel('Label this cart').fill('Blue shirt man');
-  await holdDialog.getByRole('button', { name: 'Hold' }).click();
+test('two carts run side by side, each keeping its own lines and customer', async ({ page }) => {
+  await useEnglish(page);
+  await addProduct(page, 'Rice', '200', '50');
+  await addProduct(page, 'Dal', '300', '50');
 
+  await page.goto('/people/customer/new');
+  await page.getByLabel('Name', { exact: true }).fill('Bilal');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await page.goto('/sell');
+
+  // Cart 1: two Rice for a walk-in.
+  await addProductToCart(page, 'Rice', 2);
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 400');
+
+  // Open a second cart — the first is untouched, the new one is empty.
+  await page.getByTestId('new-cart').click();
   await expect(page.getByTestId('cart-total')).toHaveText('Rs 0');
+  await addProductToCart(page, 'Dal', 1);
+  await page.getByRole('button', { name: 'Change' }).click();
+  await page.getByRole('button', { name: /Bilal/ }).first().click();
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 300');
 
-  // The held cart is listed and can be resumed. The quick-action strip only
-  // grows a "Held carts" pill once something is actually parked.
-  await page.getByRole('button', { name: /Held carts/ }).click();
-  await expect(page.getByText('Blue shirt man')).toBeVisible();
-  await page.getByRole('button', { name: 'Resume' }).click();
-  await expect(page.getByTestId('cart-total')).toHaveText('Rs 50');
+  // The tab strip now shows both; switching back restores cart 1 exactly.
+  await expect(page.getByTestId('cart-tab')).toHaveCount(2);
+  await page.getByTestId('cart-tab').first().click();
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 400');
+
+  // Ring up cart 1. The sale clears only that cart; Bilal's cart is still there.
+  await page.getByTestId('charge').click();
+  await page.getByTestId('method-cash').click();
+  await page.getByTestId('confirm-sale').click();
+  await expect(page.locator('.slip')).toContainText('Rs 400');
+
+  await page.goto('/sell');
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 300');
+  await expect(page.getByTestId('cart-tabs')).toContainText('Bilal');
+});
+
+test('a cart with items warns before it is closed, and survives a reload', async ({ page }) => {
+  await useEnglish(page);
+  await addProduct(page, 'Sugar', '210', '40');
+  await page.goto('/sell');
+
+  await addProductToCart(page, 'Sugar', 1);
+  await page.getByTestId('new-cart').click();
+  await addProductToCart(page, 'Sugar', 3);
+  await expect(page.getByTestId('cart-tab')).toHaveCount(2);
+
+  // Closing the active cart (it has lines) asks first.
+  await page.getByTestId('cart-tab').nth(1).getByRole('button', { name: 'Close cart' }).click();
+  await page.getByTestId('confirm-close-cart').click();
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 210');
+
+  // Both carts are in the database, not just memory.
+  await page.reload();
+  await expect(page.getByTestId('app-ready')).toBeVisible();
+  await expect(page.getByTestId('cart-total')).toHaveText('Rs 210');
 });

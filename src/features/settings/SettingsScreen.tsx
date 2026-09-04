@@ -18,6 +18,7 @@ import {
 import { APP_VERSION, buildDate } from '@/version';
 import { DataSection } from './DataSection';
 import { PinSection } from './PinSection';
+import { PrivacySection } from './PrivacySection';
 
 const SHOP_FIELDS = [
   ['shop_name', 'settings.shopName'],
@@ -146,7 +147,7 @@ export function SettingsScreen() {
       subtitle={t('settings.subtitle')}
       contentClassName="p-4"
     >
-      <div className="grid items-start gap-3 xl:grid-cols-[1.55fr_1fr]">
+      <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[1.55fr_1fr] xl:items-start">
         <div className="flex flex-col gap-3">
           <Section title={t('settings.shop')}>
             <div className="grid gap-3 sm:grid-cols-2">
@@ -221,6 +222,7 @@ export function SettingsScreen() {
 
         <div className="flex flex-col gap-3">
           <PinSection />
+          <PrivacySection />
           <DataSection />
           <Button
             variant="outline"

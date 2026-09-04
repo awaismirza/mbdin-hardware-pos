@@ -44,9 +44,19 @@ live line total; fractional quantities for weighed units). Cart is a right pane
 in landscape, a bottom drawer on a phone. Per-line price override, cart discount
 (rupees or percent). Checkout: cash / udhaar / Easypaisa / JazzCash / bank, with
 change and part-payment maths; a part-paid credit sale records as `mixed` so the
-cash figure stays right. 58 mm printable receipt + `wa.me` share. Held carts.
-Quick-sell for unlisted items. Camera and USB-keyboard barcode scanning; the
-search field is never autofocused (it raises the keyboard on a tablet).
+cash figure stays right. 58 mm printable receipt + `wa.me` share. Quick-sell for
+unlisted items. Camera and USB-keyboard barcode scanning; the search field is
+never autofocused (it raises the keyboard on a tablet).
+
+**Multiple carts.** A busy counter serves several customers at once, so the Sell
+screen carries cart tabs — tap to switch, `+` to open one, `×` to close one
+(with a confirm when it has items). Each cart is an independent `kind='active'`
+row in `held_carts` with its own lines, customer and discount, written after
+every change, so a power cut or a killed tab loses none of them; they ride in a
+backup too. There is always at least one cart. Completing a sale clears only the
+cart it was rung from — inside the same transaction — and drops the shopkeeper
+onto the next open cart. There is no separate "hold" concept: parking a basket
+is just another tab.
 
 ### Stock
 Product list with photos, low/out flags, a summary bar. Product detail: quantity
@@ -65,13 +75,19 @@ visible copy says "Customers".
 ### Reports (behind PIN)
 Range: today / yesterday / week / month / custom. Takings hero, day-bars, cash /
 credit given / payments received / discount / estimated profit (selling price
-less cost snapshot). Top products by revenue and by quantity. Outstanding total +
-debtors list. Low-stock list. CSV export of the range, money in rupees.
+less cost snapshot) / average basket. Top products by revenue and by quantity.
+Outstanding total + debtors list. Low-stock list. CSV export of the range, money
+in rupees. When **hide profit** is on (see Settings) the estimated-profit figure
+renders masked as `••••`; the CSV still carries the real number — it is an
+export of the shopkeeper's own data, not a screen.
 
 ### Settings (behind PIN, except first run)
 Shop details for the receipt; appearance (theme swatches + language); install;
-optional 4-digit PIN; automatic-backup folder where the browser supports one;
-**About** (version + build date); a link to storage diagnostics.
+optional 4-digit PIN; a **Privacy** toggle — *hide profit in Reports* — that is
+itself gated by the PIN, so an assistant already past the Settings gate still
+cannot flip it without the number (if no PIN is set it just toggles);
+automatic-backup folder where the browser supports one; **About** (version +
+build date); a link to storage diagnostics.
 
 ### Install (never behind the PIN)
 A bar appears whenever the app is running in a browser tab, offering the install

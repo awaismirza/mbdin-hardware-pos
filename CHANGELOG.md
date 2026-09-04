@@ -12,6 +12,35 @@ a release moves the `[Unreleased]` items into a dated section — see
 
 _On `main` and deployed; not yet tagged. Cut `1.1.0` to release._
 
+### Added
+
+- **Multiple carts at once.** A busy counter serves several customers at a time,
+  so the Sell screen now has cart tabs: tap to switch, `+` for another, `×` to
+  close one. Each cart keeps its own lines, customer and discount, and every
+  cart is saved to the database, so a power cut or a killed tab loses none of
+  them. Completing a sale clears only that cart and drops you onto the next.
+  This replaces the old Hold / Held-carts flow — parking a basket is now just a
+  new tab.
+- **Hide profit in Reports.** A Settings → Privacy switch masks the "Estimated
+  profit" figure as `••••`, for when the till is handed to an assistant who
+  should see takings and stock but not the margins. Flipping it either way asks
+  for the 4-digit PIN. Takings, cash and everything else stay visible, and the
+  CSV export is unchanged — it is the shopkeeper's own data, not a screen.
+- **One-tap install, and a guide for every device.** A cobalt bar appears when
+  Dukaan is running in a browser tab and offers the install directly where the
+  browser supports it. `/install` explains the actual gesture per platform —
+  iOS Safari, iOS Chrome/Firefox (which cannot install, and says so), Android,
+  desktop Chromium, desktop Safari — and shows whether the browser has granted
+  persistent storage. Dismissal is a snooze until the next day, not a mute.
+- **Automatic daily backup to a folder** where the browser can do it (desktop
+  Chromium). Choose a folder once — one your Google Drive, iCloud Drive or
+  OneDrive client already syncs — and the daily copy lands there with no tap.
+  Everywhere else Settings says plainly that no browser on a phone or tablet can
+  do this, and the daily one-tap reminder stands. Full analysis in
+  [`docs/auto-backup.md`](docs/auto-backup.md).
+- Low-stock and outstanding-balance counts as badges on the navigation.
+- Average basket as a fourth KPI on Reports.
+
 ### Changed
 
 - **Complete visual redesign** to the cobalt design system in
@@ -35,25 +64,14 @@ _On `main` and deployed; not yet tagged. Cut `1.1.0` to release._
   solid cobalt; Settings is two columns with real theme swatches and a PIN
   display; the receipt slip is white paper in both themes.
 
-### Added
-
-- **One-tap install, and a guide for every device.** A cobalt bar appears when
-  Dukaan is running in a browser tab and offers the install directly where the
-  browser supports it. `/install` explains the actual gesture per platform —
-  iOS Safari, iOS Chrome/Firefox (which cannot install, and says so), Android,
-  desktop Chromium, desktop Safari — and shows whether the browser has granted
-  persistent storage. Dismissal is a snooze until the next day, not a mute.
-- **Automatic daily backup to a folder** where the browser can do it (desktop
-  Chromium). Choose a folder once — one your Google Drive, iCloud Drive or
-  OneDrive client already syncs — and the daily copy lands there with no tap.
-  Everywhere else Settings says plainly that no browser on a phone or tablet can
-  do this, and the daily one-tap reminder stands. Full analysis in
-  [`docs/auto-backup.md`](docs/auto-backup.md).
-- Low-stock and outstanding-balance counts as badges on the navigation.
-- Average basket as a fourth KPI on Reports.
-
 ### Fixed
 
+- **Settings scrolled sideways on a narrow phone.** Four screens laid their
+  two-column view out as a CSS grid with no mobile column, so the single column
+  sized itself to its widest child and overflowed ~36px inside the scroll
+  region (the page itself never scrolled, which is why it slipped past the
+  existing check). Now flex on mobile, grid only from `xl`, with a regression
+  test at 320px.
 - `.money` lost its intended font because a legacy stylesheet in a higher
   cascade layer redefined it. The numeric styles are now declared once, and
   unlayered, so nothing can outrank them.

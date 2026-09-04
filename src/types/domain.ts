@@ -185,11 +185,3 @@ export interface CartLine {
   adHoc: boolean;
 }
 
-export interface HeldCart {
-  id: number;
-  label: string | null;
-  createdAt: string;
-  updatedAt: string;
-  lineCount: number;
-  totalPaisa: number;
-}
