@@ -6,7 +6,7 @@ change what the spec says do **not** get an entry here (they go in
 `CHANGELOG.md`). The spec is snapshotted to `docs/specs/product-spec-v<version>.md`
 at every release regardless.
 
-## Unreleased
+## v1.1.0 — 2026-09-04
 
 - **Install** promoted to a spec'd capability: an in-tab prompt plus a
   per-platform `/install` guide, never behind the PIN. The honest statement that

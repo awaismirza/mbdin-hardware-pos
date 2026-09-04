@@ -12,9 +12,11 @@ landed.
 | View-layer redesign (Tailwind + shadcn, dark mode) | Modern, consistent UI | Done — 1.0.0 |
 | Backup/restore robustness + photo coverage | Reported data loss on JSON restore; `.sqlite3` unpickable on iOS | Done — 1.0.0 |
 | Version in Settings + release process | Know what is deployed; repeatable releases | Done — 1.0.0 |
-| Cobalt redesign to `docs/design-spec.md` | A modern POS surface, not a bahi-khata | Done — on `feature/redesign-cobalt`, awaiting manual testing |
-| One-tap install + per-platform install guide | Shopkeepers left it in a browser tab, where the ledger can be evicted | Done — same branch |
-| Automatic daily backup to a folder | "Can it export by itself at the end of the day?" | Done where the browser allows it (desktop Chromium); see `docs/auto-backup.md` |
+| Cobalt redesign to `docs/design-spec.md` | A modern POS surface, not a bahi-khata | Done — 1.1.0 |
+| One-tap install + per-platform install guide | Shopkeepers left it in a browser tab, where the ledger can be evicted | Done — 1.1.0 |
+| Automatic daily backup to a folder | "Can it export by itself at the end of the day?" | Done — 1.1.0 (desktop Chromium only; see `docs/auto-backup.md`) |
+| Multiple carts at the counter | Several customers served at once | Done — 1.1.0 |
+| Hide profit in Reports | Till handed to an assistant | Done — 1.1.0 (PIN-gated toggle) |
 | Day session (open/close the till, cash in drawer) | In the design spec; no data model for it yet | Not started — spec'd, deliberately unbuilt |
 | Purchase orders / supplier invoices | In the design spec; needs a suppliers table | Not started — spec'd, deliberately unbuilt |
 | Returns and refunds flow | In the design spec; voiding a whole sale is the only reversal today | Not started — spec'd, deliberately unbuilt |
