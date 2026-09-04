@@ -10,9 +10,11 @@ something is half-built, say so and say what is left.
 
 ---
 
-**Last release:** `1.1.0` — 2026-09-04 (tag `v1.1.0`). The cobalt redesign, the
-install experience, automatic daily backup, multiple carts and the hide-profit
-toggle.
+**Last release:** `1.1.1` — 2026-09-04 (tag `v1.1.1`). Patch: the printed
+receipt was clipping off the right edge (the redesign nested the slip in a
+styled card the print stylesheet did not reset). `1.1.0` before it: the cobalt
+redesign, install experience, automatic daily backup, multiple carts and the
+hide-profit toggle.
 **Branch:** all work merged to `main`; nothing outstanding on a feature branch.
 **Deploy:** GitHub Pages, automatic on merge to `main` →
 <https://awaismirza.github.io/mbdin-hardware-pos/>
