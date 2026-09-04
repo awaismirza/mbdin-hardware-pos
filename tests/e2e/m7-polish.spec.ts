@@ -296,16 +296,31 @@ test.describe('the printed receipt', () => {
 
     await page.emulateMedia({ media: 'print' });
 
-    // App chrome is not paper. Nothing but the slip goes through the printer.
+    // App chrome is not paper. Nothing but the slip goes through the printer —
+    // including the on-screen success card the slip is nested inside.
     await expect(page.getByTestId('app-header')).toBeHidden();
     await expect(page.getByTestId('tab-bar')).toBeHidden();
     await expect(page.locator('.receipt__actions')).toBeHidden();
+    await expect(page.locator('.receipt__success')).toBeHidden();
+    await expect(page.locator('.receipt__success').getByText('Sale saved')).toBeHidden();
     await expect(page.locator('.slip')).toBeVisible();
 
-    // 58mm paper has about 54mm of printable width — roughly 204 CSS px.
-    const width = await page.locator('.slip').evaluate((el) => el.getBoundingClientRect().width);
-    expect(width).toBeGreaterThan(150);
-    expect(width).toBeLessThan(230);
+    // The slip sits flush at the start edge, 58mm wide at most, and NOTHING
+    // inside it runs off the right — the bug this guards against printed the
+    // slip shifted right by an ancestor's padding so amounts were cut off.
+    const box = await page.evaluate(() => {
+      const slip = document.querySelector('.slip')!.getBoundingClientRect();
+      const pageWidthPx = (58 * 96) / 25.4; // 58mm at 96dpi ≈ 219
+      let widest = slip.right;
+      for (const el of Array.from(document.querySelectorAll('.slip *'))) {
+        widest = Math.max(widest, el.getBoundingClientRect().right);
+      }
+      return { left: slip.left, width: slip.width, widest, pageWidthPx };
+    });
+    expect(box.left).toBeLessThanOrEqual(2);
+    expect(box.width).toBeGreaterThan(150);
+    expect(box.width).toBeLessThanOrEqual(box.pageWidthPx);
+    expect(box.widest).toBeLessThanOrEqual(box.pageWidthPx + 1);
 
     await page.emulateMedia({ media: 'screen' });
   });

@@ -1,10 +1,12 @@
 /*
  * 58 mm thermal receipt.
  *
- * A 58 mm roll has about 48 mm of printable width. Everything that is not the
- * slip is removed from the page, colour is dropped entirely (a thermal head has
- * one colour and dithering a background turns a receipt into a grey smear), and
- * amounts are tabular so the column lines up under a customer's finger.
+ * A 58 mm roll has about 54 mm of printable width. The rule here is blunt on
+ * purpose: hide every ink on the page, turn the ink for `.slip` back on, and
+ * lift the slip to the page origin so no ancestor's padding, border or (in
+ * dark mode) dark background can shift it right and clip it off the paper.
+ * Colour is dropped entirely — a thermal head has one colour and dithering a
+ * background turns a receipt into a grey smear.
  */
 
 @page {
@@ -14,25 +16,29 @@
 
 @media print {
   html,
-  body {
+  body,
+  #root {
     inline-size: 58mm;
-    background: #fff;
+    block-size: auto;
+    background: #fff !important;
     color: #000;
+    overflow: visible;
   }
 
-  /* Everything except the slip is chrome, and chrome does not print. */
+  /* The big chrome is removed outright, not just hidden, so a tall hidden
+     element cannot push a blank trailing page. */
   [data-testid='app-header'],
   [data-testid='tab-bar'],
   [data-testid='side-rail'],
   [data-testid='side-nav'],
   [data-testid='install-prompt'],
-  .shell__header,
-  .shell__nav,
+  [data-testid='cart-tabs'],
+  [data-testid='cart-bar'],
+  .amber-bar,
   .toasts,
   [data-sonner-toaster],
-  .amber-bar,
   .receipt__actions,
-  .screen__head,
+  .receipt__success,
   .dialog-backdrop,
   .sheet-backdrop,
   .scanner,
@@ -40,27 +46,26 @@
     display: none !important;
   }
 
-  [data-testid='app-ready'],
-  [data-testid='app-ready'] > div,
-  main,
-  .shell,
-  .shell__main,
-  .screen,
-  .screen__body,
-  .receipt {
-    display: block;
-    block-size: auto;
-    overflow: visible;
-    max-inline-size: none;
-    padding: 0;
-    margin: 0;
-    background: #fff;
+  /* Everything keeps its box but prints nothing... */
+  body * {
+    visibility: hidden;
+  }
+
+  /* ...except the slip and its contents. `position: absolute` takes the slip
+     out of flow to the top-inline-start of the page, so the styled cards it
+     sits inside on screen have no say over where it lands on paper. */
+  .slip,
+  .slip * {
+    visibility: visible;
   }
 
   .slip {
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 0;
     inline-size: 54mm;
     max-inline-size: 54mm;
-    margin: 0 auto;
+    margin: 0;
     padding: 2mm 0 6mm;
     border: 0;
     border-radius: 0;

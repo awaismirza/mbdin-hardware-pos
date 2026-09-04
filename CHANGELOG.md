@@ -10,7 +10,14 @@ a release moves the `[Unreleased]` items into a dated section — see
 
 ## [Unreleased]
 
-_Nothing yet._
+### Fixed
+
+- **The printed receipt was clipped on the right.** The redesign nested the
+  slip inside a rounded card with its own padding, border and (in dark mode)
+  dark background; on paper that shifted the slip right so amounts ran off the
+  edge, and the "Sale saved" header printed too. The print stylesheet now hides
+  every ink on the page and lifts only `.slip` to the page origin, so no
+  ancestor's styling can reach it.
 
 ## [1.1.0] — 2026-09-04
 
