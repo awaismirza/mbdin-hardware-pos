@@ -3,6 +3,11 @@
 Offline-first PWA point of sale for a single shop in Pakistan. No backend, no auth,
 no analytics. SQLite WASM on OPFS inside a Web Worker is the source of truth.
 
+> **[AGENTS.md](AGENTS.md) is canonical for process** — read it first (it points
+> to `STATUS.md`, the spec, the docs map, and the release runbook). This file is
+> the engineering non-negotiables and the storage/base-path context worth not
+> rediscovering from code. Where the two disagree, AGENTS.md wins.
+
 ## Non-negotiables
 
 - Money is stored as integer paisa. Never a float. Format only at render, via `formatPKR`.

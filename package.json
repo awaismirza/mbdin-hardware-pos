@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "typecheck": "tsc -b --noEmit --pretty",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "release": "node scripts/bump-version.mjs"
   },
   "dependencies": {
     "@sqlite.org/sqlite-wasm": "^3.50.1-build1",

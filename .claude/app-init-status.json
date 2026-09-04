@@ -1,0 +1,20 @@
+{
+  "stack": "web-pwa",
+  "framework": "react-vite",
+  "verification": "e2e",
+  "monetization": "none",
+  "privacyTerms": "not-applicable",
+  "phase1": {
+    "agentsMd": "done",
+    "claudeMdPointer": "done",
+    "productSpec": "done",
+    "specSnapshots": "done",
+    "changelog": "done",
+    "specChangelog": "done",
+    "roadmap": "done",
+    "releaseDocs": "done",
+    "statusLog": "done"
+  },
+  "phase2": "n/a — ios-common-features playbook does not apply to a web PWA",
+  "notes": "Version surfaced in Settings > About via src/version.ts + vite define __BUILD_TIME__. Release flow: scripts/bump-version.mjs (npm run release) + docs/RELEASING.md. Deploy is automatic on merge to main (GitHub Pages)."
+}

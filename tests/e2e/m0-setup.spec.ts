@@ -16,6 +16,9 @@ test('first launch starts in English and saves the chosen shop details', async (
   await page.goto('/settings');
   await expect(page.getByLabel('Shop name')).toHaveValue('Corner Store');
   await expect(page.getByLabel('Shop phone')).toHaveValue('03001234567');
+
+  // Settings shows the app version from package.json.
+  await expect(page.getByTestId('app-version')).toHaveText(/^v\d+\.\d+\.\d+$/);
 });
 
 test('first launch can be completed in Urdu', async ({ page }) => {
