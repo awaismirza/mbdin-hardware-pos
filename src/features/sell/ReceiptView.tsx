@@ -75,22 +75,29 @@ export function ReceiptView() {
       }
     >
       {/* Spec: success header, then the white slip, then a stack of full-width
-          actions with New sale primary. Two columns where there is room. */}
+          actions with New sale primary. Two columns where there is room.
+
+          The slip is a sibling of the success card, not nested inside it —
+          print.css lifts `.slip` to the page origin and a styled ancestor
+          (padding, border, dark background) would otherwise shift and clip it
+          on paper. */}
       <div className="flex flex-col gap-3.5 p-4 xl:grid xl:grid-cols-[1.55fr_1fr] xl:items-start">
-        <div className="rounded-2xl border border-line bg-panel p-5 shadow-card">
-          <div className="mb-4 flex items-center gap-2.5">
-            <span className="grid size-[34px] place-items-center rounded-full bg-ok-soft text-ok">
-              <Check className="size-4" />
-            </span>
-            <span>
-              <span className="block text-[15.5px] font-bold">{t('sell.saleSaved')}</span>
-              <span className="num block text-[11.5px] text-fg2">
-                {sale.invoiceNo} · {formatDateTime(sale.createdAt)}
+        <div className="flex min-w-0 flex-col gap-3.5">
+          <div className="receipt__success rounded-2xl border border-line bg-panel p-5 shadow-card">
+            <div className="flex items-center gap-2.5">
+              <span className="grid size-[34px] place-items-center rounded-full bg-ok-soft text-ok">
+                <Check className="size-4" />
               </span>
-            </span>
+              <span>
+                <span className="block text-[15.5px] font-bold">{t('sell.saleSaved')}</span>
+                <span className="num block text-[11.5px] text-fg2">
+                  {sale.invoiceNo} · {formatDateTime(sale.createdAt)}
+                </span>
+              </span>
+            </div>
           </div>
 
-        <div className="slip" lang={language}>
+          <div className="slip" lang={language}>
           {shop.name && <div className="slip__shop">{shop.name}</div>}
           {shop.phone && <div className="slip__meta num">{shop.phone}</div>}
           {settings['shop_address'] && <div className="slip__meta">{settings['shop_address']}</div>}
@@ -168,7 +175,7 @@ export function ReceiptView() {
 
           <hr className="slip__rule" />
           <div className="slip__footer">{shop.footer || t('receipt.thankYou')}</div>
-        </div>
+          </div>
         </div>
 
         <div className="receipt__actions grid gap-2.5">
