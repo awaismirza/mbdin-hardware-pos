@@ -40,6 +40,8 @@ import type {
 } from './api';
 import { Engine, type SqliteHandle } from './engine';
 import { clearImage, loadImage, saveImage } from './idbStore';
+import { buildRestoreSteps, looksLikeJsonBackup } from './jsonRestore';
+import { LATEST_SCHEMA_VERSION } from './migrations';
 
 const DB_FILENAME = '/dukaan.sqlite3';
 
@@ -346,6 +348,33 @@ const api: DbApi = {
     // An older file is migrated forward; a newer one throws, and the caller
     // restores the pre-restore copy.
     await requireEngine().open();
+  },
+
+  /**
+   * Replaces the live database from a parsed JSON backup. Runs entirely in the
+   * worker: the steps array (thousands of INSERTs, decoded photo bytes and all)
+   * is built and executed here, never posted across the Comlink boundary.
+   */
+  async restoreJson(backup: unknown): Promise<void> {
+    if (!looksLikeJsonBackup(backup)) {
+      throw new Error('That backup file could not be read.');
+    }
+    if (backup.schemaVersion > LATEST_SCHEMA_VERSION) {
+      throw new Error(
+        'This backup was made by a newer version of Dukaan. Update the app, then restore it.',
+      );
+    }
+
+    const steps = buildRestoreSteps(backup);
+    await requireEngine().transaction(steps);
+
+    // A file from an older schema has been loaded into the current schema, so
+    // record the version it now genuinely is.
+    await requireEngine().exec(
+      `INSERT INTO meta(key, value) VALUES('schema_version', ?)
+       ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+      [String(LATEST_SCHEMA_VERSION)],
+    );
   },
 
   async vacuum(): Promise<void> {

@@ -82,6 +82,13 @@ export interface DbApi {
    */
   inspectBytes(bytes: Uint8Array): Promise<BackupSummary>;
   importBytes(bytes: Uint8Array): Promise<void>;
+  /**
+   * Replaces every table's contents from a parsed JSON backup, in one
+   * transaction. The parsed object crosses the worker boundary once as plain
+   * JSON — the base64 BLOBs are decoded to bytes on this side, so a large
+   * backup with photos is never posted as a giant array of bound statements.
+   */
+  restoreJson(backup: unknown): Promise<void>;
   vacuum(): Promise<void>;
   /** Byte size of the database as it stands, for the Settings screen. */
   byteSize(): Promise<number>;

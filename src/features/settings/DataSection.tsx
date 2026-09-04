@@ -272,10 +272,13 @@ export function DataSection() {
 
       <Section title={t('backup.restore')}>
         <div className="grid gap-3">
+          {/* A wide-open accept list on purpose: iOS Files greys out a
+              .sqlite3 that arrived by AirDrop unless every file is selectable,
+              and pickRestoreFile validates the contents on read regardless. */}
           <input
             ref={fileInput}
             type="file"
-            accept=".sqlite3,.json,application/json,application/vnd.sqlite3"
+            accept="*/*,.sqlite3,.sqlite,.db,.json,application/json,application/octet-stream"
             className="sr-only"
             onChange={(event) => void pickRestoreFile(event.target.files?.[0])}
             data-testid="restore-input"
