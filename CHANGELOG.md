@@ -10,7 +10,12 @@ a release moves the `[Unreleased]` items into a dated section — see
 
 ## [Unreleased]
 
-_On `main` and deployed; not yet tagged. Cut `1.1.0` to release._
+_Nothing yet._
+
+## [1.1.0] — 2026-09-04
+
+The cobalt redesign, the install experience, multiple carts, and a hide-profit
+toggle — plus the fixes that came with them.
 
 ### Added
 
@@ -140,5 +145,6 @@ GitHub Pages deploy under a subpath → home-screen install detection →
 selling / stock / customers / onboarding pass → portrait-tablet scroll fixes →
 the shadcn redesign → the backup/restore robustness pass.
 
-[Unreleased]: https://github.com/awaismirza/mbdin-hardware-pos/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/awaismirza/mbdin-hardware-pos/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/awaismirza/mbdin-hardware-pos/releases/tag/v1.1.0
 [1.0.0]: https://github.com/awaismirza/mbdin-hardware-pos/releases/tag/v1.0.0

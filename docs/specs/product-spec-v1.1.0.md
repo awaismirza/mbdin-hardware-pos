@@ -1,7 +1,7 @@
 # Dukaan POS — product spec
 
 **Version:** 1.1.0
-**Status:** current
+**Status:** snapshot — immutable. The current spec is `docs/product-spec.md`.
 **Stable path:** this file. Every version is snapshotted to
 `docs/specs/product-spec-v<version>.md` at release time; spec bumps are logged in
 `docs/spec-changelog.md`. Narrative detail and the manual pre-release checklist
