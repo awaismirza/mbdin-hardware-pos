@@ -8,6 +8,7 @@
  */
 
 import { db } from '../db/client';
+import { BACKUP_TABLES, toBase64, type JsonBackup } from '../db/jsonRestore';
 import { LATEST_SCHEMA_VERSION } from '../db/migrations';
 import { getAllSettings, shopSlug } from '../db/repos/settingsRepo';
 import { toCsv } from '../lib/csv';
@@ -22,31 +23,8 @@ export interface ExportedFile {
   blob: Blob;
 }
 
-/** Every table the backup carries, in foreign-key-safe insert order. */
-export const BACKUP_TABLES = [
-  'meta',
-  'settings',
-  'categories',
-  'products',
-  'product_images',
-  'customers',
-  'customer_images',
-  'sales',
-  'sale_items',
-  'ledger_entries',
-  'stock_movements',
-  'held_carts',
-] as const;
-
-export type BackupTable = (typeof BACKUP_TABLES)[number];
-
-export interface JsonBackup {
-  format: 'dukaan-backup';
-  schemaVersion: number;
-  exportedAt: string;
-  shopName: string;
-  tables: Record<string, Record<string, unknown>[]>;
-}
+export { BACKUP_TABLES, toBase64, fromBase64, isBase64Value } from '../db/jsonRestore';
+export type { BackupTable, JsonBackup } from '../db/jsonRestore';
 
 export async function backupFilename(extension: string): Promise<string> {
   const settings = await getAllSettings();
@@ -61,19 +39,6 @@ export async function exportSqlite(): Promise<ExportedFile> {
     // Copy into a plain buffer: the view may be over a larger allocation.
     blob: new Blob([bytes.slice()], { type: 'application/vnd.sqlite3' }),
   };
-}
-
-/**
- * Base64 marker for BLOB columns. JSON has no binary type, and product photos
- * are BLOBs — dropping them would make the JSON backup quietly lossy, which is
- * exactly the sort of surprise a backup format must not have.
- */
-interface Base64Value {
-  $b64: string;
-}
-
-export function isBase64Value(value: unknown): value is Base64Value {
-  return typeof value === 'object' && value !== null && '$b64' in value;
 }
 
 export async function buildJsonBackup(): Promise<JsonBackup> {
@@ -109,25 +74,6 @@ function encodeRow(row: Record<string, unknown>): Record<string, unknown> {
     out[key] = value instanceof Uint8Array ? { $b64: toBase64(value) } : value;
   }
   return out;
-}
-
-export function toBase64(bytes: Uint8Array): string {
-  let binary = '';
-  // Chunked, because String.fromCharCode(...bytes) blows the stack on a photo.
-  const chunk = 0x8000;
-  for (let offset = 0; offset < bytes.length; offset += chunk) {
-    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunk));
-  }
-  return btoa(binary);
-}
-
-export function fromBase64(text: string): Uint8Array {
-  const binary = atob(text);
-  const bytes = new Uint8Array(binary.length);
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index);
-  }
-  return bytes;
 }
 
 // ---- CSV -------------------------------------------------------------------

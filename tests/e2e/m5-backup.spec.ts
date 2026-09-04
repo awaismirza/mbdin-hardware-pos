@@ -5,6 +5,51 @@ import { join } from 'node:path';
 import { expect, test, type Page } from '@playwright/test';
 import { completeSetup } from './setup';
 
+/** A real 16x16 PNG, so createImageBitmap in the photo pipeline has something to decode. */
+const TINY_PNG = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAIAAACQkWg2AAAAFklEQVR4nGM4YWNDEmIY1TCqYfhqAACrxkAQIqaBzAAAAABJRU5ErkJggg==',
+  'base64',
+);
+
+/** Attaches a product photo to Sugar and a customer photo to Akram. */
+async function attachPhotos(page: Page, dir: string): Promise<void> {
+  const png = join(dir, 'shot.png');
+  writeFileSync(png, TINY_PNG);
+
+  await page.goto('/stock');
+  await page.getByRole('button', { name: /چینی|Sugar/ }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.locator('input[type="file"]').setInputFiles(png);
+  // The picked photo shows in the field's preview frame before it is saved.
+  await expect(page.getByRole('button', { name: /Retake photo/ })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page).toHaveURL(/\/stock$/);
+
+  await page.goto('/people');
+  await page.getByRole('button', { name: /Akram/ }).click();
+  await page.getByRole('button', { name: 'Edit' }).click();
+  await page.locator('input[type="file"]').setInputFiles(png);
+  await expect(page.getByRole('button', { name: /Retake photo/ })).toBeVisible({ timeout: 15_000 });
+  await page.getByRole('button', { name: 'Save' }).click();
+  await expect(page).toHaveURL(/\/people\/\d+$/);
+
+  // And the product detail now shows the image, not the letter fallback.
+  await page.goto('/stock');
+  await page.getByRole('button', { name: /چینی|Sugar/ }).click();
+  await expect(page.locator('img.product-photo')).toBeVisible({ timeout: 15_000 });
+}
+
+/** After a restore: the product and customer photos are back, not the letter fallback. */
+async function expectPhotosRestored(page: Page): Promise<void> {
+  await page.goto('/stock');
+  await page.getByRole('button', { name: /چینی|Sugar/ }).click();
+  await expect(page.locator('img.product-photo')).toBeVisible({ timeout: 15_000 });
+
+  await page.goto('/people');
+  await page.getByRole('button', { name: /Akram/ }).click();
+  await expect(page.locator('img.customer-avatar')).toBeVisible({ timeout: 15_000 });
+}
+
 /**
  * M5 acceptance.
  *
@@ -85,7 +130,13 @@ async function snapshot(page: Page): Promise<Snapshot> {
   const products = await count.innerText();
 
   await page.goto('/stock');
-  const stock = await page.getByRole('button', { name: /چینی|Sugar/ }).innerText();
+  // The stock card's photo renders a one-letter fallback for a frame before the
+  // image loads; read the quantity line only so the snapshot is stable.
+  const stock = await page
+    .getByRole('button', { name: /چینی|Sugar/ })
+    .locator('.num')
+    .first()
+    .innerText();
 
   await page.goto('/people');
   await page.getByRole('button', { name: /Akram/ }).click();
@@ -101,6 +152,7 @@ test('export, wipe, restore — and every number comes back', async ({ page }, t
   await useEnglish(page);
   await setUpShop(page);
   await seedALedger(page);
+  await attachPhotos(page, mkdtempSync(join(tmpdir(), 'dukaan-shots-')));
 
   const before = await snapshot(page);
   expect(before.products).toBe('1');
@@ -153,6 +205,9 @@ test('export, wipe, restore — and every number comes back', async ({ page }, t
   expect(after.products).toBe(before.products);
   expect(after.stock).toBe(before.stock);
   expect(after.balance).toBe(before.balance);
+
+  // The product and customer photos survived the .sqlite3 round-trip.
+  await expectPhotosRestored(page);
 
   // A sale after the restore must not collide with a restored invoice number.
   await page.goto('/sell');
@@ -221,6 +276,7 @@ test('a JSON backup round-trips too, photos and all', async ({ page }) => {
   await useEnglish(page);
   await setUpShop(page);
   await seedALedger(page);
+  await attachPhotos(page, mkdtempSync(join(tmpdir(), 'dukaan-shots-')));
   const before = await snapshot(page);
 
   await page.goto('/settings');
@@ -263,4 +319,7 @@ test('a JSON backup round-trips too, photos and all', async ({ page }) => {
   expect(after.products).toBe(before.products);
   expect(after.stock).toBe(before.stock);
   expect(after.balance).toBe(before.balance);
+
+  // The photos survived the JSON round-trip — base64 in, bytes back out.
+  await expectPhotosRestored(page);
 });

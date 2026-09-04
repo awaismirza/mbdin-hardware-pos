@@ -121,6 +121,7 @@ export interface DbGateway {
   exportBytes(): Promise<Uint8Array>;
   inspectBytes(bytes: Uint8Array): Promise<BackupSummary>;
   importBytes(bytes: Uint8Array): Promise<void>;
+  restoreJson(backup: unknown): Promise<void>;
   vacuum(): Promise<void>;
   byteSize(): Promise<number>;
   resetEverything(): Promise<void>;
@@ -149,6 +150,9 @@ const workerGateway: DbGateway = {
   },
   importBytes(bytes: Uint8Array): Promise<void> {
     return connect().importBytes(Comlink.transfer(bytes, [bytes.buffer]));
+  },
+  restoreJson(backup: unknown): Promise<void> {
+    return connect().restoreJson(backup);
   },
   vacuum(): Promise<void> {
     return connect().vacuum();
@@ -179,6 +183,7 @@ export const db: DbGateway = {
   exportBytes: () => gateway.exportBytes(),
   inspectBytes: (bytes) => gateway.inspectBytes(bytes),
   importBytes: (bytes) => gateway.importBytes(bytes),
+  restoreJson: (backup) => gateway.restoreJson(backup),
   vacuum: () => gateway.vacuum(),
   byteSize: () => gateway.byteSize(),
   resetEverything: () => gateway.resetEverything(),

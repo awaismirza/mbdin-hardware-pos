@@ -12,6 +12,8 @@ import sqlite3InitModule from '@sqlite.org/sqlite-wasm';
 import type { SqlParam } from './api';
 import { setDbGateway, type DbGateway } from './client';
 import { Engine, type SqliteHandle } from './engine';
+import { buildRestoreSteps, looksLikeJsonBackup } from './jsonRestore';
+import { LATEST_SCHEMA_VERSION } from './migrations';
 
 export interface TestDb {
   engine: Engine;
@@ -57,6 +59,15 @@ export function gatewayFor(engine: Engine): DbGateway {
     },
     async importBytes() {
       throw new Error('importBytes is not supported against the in-memory test database');
+    },
+    async restoreJson(backup) {
+      if (!looksLikeJsonBackup(backup)) throw new Error('That backup file could not be read.');
+      await engine.transaction(buildRestoreSteps(backup));
+      await engine.exec(
+        `INSERT INTO meta(key, value) VALUES('schema_version', ?)
+         ON CONFLICT(key) DO UPDATE SET value = excluded.value`,
+        [String(LATEST_SCHEMA_VERSION)],
+      );
     },
     vacuum: () => engine.vacuum(),
     async byteSize() {
