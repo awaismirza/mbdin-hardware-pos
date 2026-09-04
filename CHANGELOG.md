@@ -10,6 +10,8 @@ a release moves the `[Unreleased]` items into a dated section — see
 
 ## [Unreleased]
 
+_On `main` and deployed; not yet tagged. Cut `1.1.0` to release._
+
 ### Changed
 
 - **Complete visual redesign** to the cobalt design system in

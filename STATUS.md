@@ -10,13 +10,13 @@ something is half-built, say so and say what is left.
 
 ---
 
-**Last release:** `1.0.0` — 2026-09-04 (tag `v1.0.0`)
-**Branch:** `feature/redesign-cobalt` — pushed, **awaiting the user's manual
-testing**. Do not cut a release from it until they say so.
+**Last release:** `1.0.0` — 2026-09-04 (tag `v1.0.0`). The cobalt redesign is on
+`main` and deployed but **not yet tagged** — cut `1.1.0` when asked.
+**Branch:** all work merged to `main`; nothing outstanding on a feature branch.
 **Deploy:** GitHub Pages, automatic on merge to `main` →
 <https://awaismirza.github.io/mbdin-hardware-pos/>
-**Health:** `npm test` · `npm run typecheck` · `npm run lint` ·
-`npm run build` · `npm run test:e2e` — all green on the branch
+**Health:** `npm test` 120 · `npm run test:e2e` 34 · typecheck · lint · build —
+all green
 
 ---
 
@@ -35,21 +35,21 @@ testing**. Do not cut a release from it until they say so.
 - **Version surfaced** in Settings → About; release process written up in
   `docs/RELEASING.md`; `CHANGELOG.md`, `docs/product-spec.md`,
   `docs/roadmap.md` and this file established.
-
-- **Cobalt redesign** (`feature/redesign-cobalt`) — the whole view layer rebuilt
-  against `docs/design-spec.md`: new palette and type stack, sidebar/rail/tab-bar
-  navigation, every screen re-laid-out. No behaviour or data changes.
+- **Cobalt redesign** (PR #11, merged) — the whole view layer rebuilt against
+  `docs/design-spec.md`: new palette and IBM Plex Mono type stack, sidebar / rail
+  / tab-bar navigation, every screen re-laid-out. No behaviour or data changes.
+  Fixed a real bug on the way — `.money` had lost its font to a legacy stylesheet
+  in a higher cascade layer.
 - **Install experience** — an in-tab prompt plus a per-platform `/install` guide
-  (`src/features/install/`), with the platform detection unit-tested.
-- **Automatic daily backup** to a chosen folder where the browser allows it
-  (`src/backup/autoExport.ts`), with the full capability analysis written up in
-  `docs/auto-backup.md`.
+  (`src/features/install/`), with the platform detection unit-tested. Says
+  plainly that Chrome/Firefox on iOS cannot install.
+- **Automatic daily backup** to a chosen folder where the browser allows it —
+  desktop Chromium only (`src/backup/autoExport.ts`). No phone/tablet browser
+  can, and the UI says so; full capability analysis in `docs/auto-backup.md`.
 
 ## In progress
 
-- The cobalt redesign is code-complete and green, but **not merged**: it is
-  waiting on the user's manual testing on their own devices. The next action on
-  it is theirs, not an agent's.
+_Nothing._
 
 ## Blocked
 
