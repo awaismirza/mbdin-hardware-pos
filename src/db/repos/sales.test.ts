@@ -9,15 +9,14 @@ import { listLedger, takePayment } from './ledgerRepo';
 import { createProduct, getProduct } from './productsRepo';
 import {
   completeSale,
+  createCart,
   CreditWithoutCustomerError,
+  deleteCart,
   EmptyCartError,
   getSale,
-  holdCart,
-  listHeldCarts,
+  listActiveCarts,
   listSales,
-  loadActiveCart,
-  resumeHeldCart,
-  saveActiveCart,
+  saveCart,
   voidSale,
 } from './salesRepo';
 import { listMovements } from './stockRepo';
@@ -323,75 +322,73 @@ describe('voiding', () => {
 });
 
 describe('carts that survive a power cut', () => {
-  it('stores the live cart and reads it back', async () => {
+  it('stores a cart and reads it back', async () => {
     const productId = await sugar();
-    const snapshot = {
+    const id = await createCart();
+    await saveCart(id, {
       lines: [line(productId, { qty: 2.5 })],
       customerId: null,
       discountPaisa: 500,
-    };
-    await saveActiveCart(snapshot);
+    });
 
-    const restored = await loadActiveCart();
-    expect(restored?.lines).toHaveLength(1);
-    expect(restored?.lines[0]?.qty).toBe(2.5);
-    expect(restored?.discountPaisa).toBe(500);
+    const carts = await listActiveCarts();
+    expect(carts).toHaveLength(1);
+    expect(carts[0]!.id).toBe(id);
+    expect(carts[0]!.snapshot.lines[0]?.qty).toBe(2.5);
+    expect(carts[0]!.snapshot.discountPaisa).toBe(500);
   });
 
-  it('keeps only one live cart', async () => {
+  it('keeps several independent carts, ordered by when they were opened', async () => {
     const productId = await sugar();
-    await saveActiveCart({ lines: [line(productId)], customerId: null, discountPaisa: 0 });
-    await saveActiveCart({
+    const first = await createCart();
+    const second = await createCart();
+    await saveCart(first, { lines: [line(productId)], customerId: null, discountPaisa: 0 });
+    await saveCart(second, {
       lines: [line(productId), line(productId)],
-      customerId: null,
+      customerId: 7,
       discountPaisa: 0,
     });
-    const rows = await db.query(`SELECT * FROM held_carts WHERE kind = 'active'`);
-    expect(rows).toHaveLength(1);
-    expect((await loadActiveCart())?.lines).toHaveLength(2);
+
+    const carts = await listActiveCarts();
+    expect(carts.map((cart) => cart.id)).toEqual([first, second]);
+    expect(carts[0]!.snapshot.lines).toHaveLength(1);
+    expect(carts[1]!.snapshot.lines).toHaveLength(2);
+    expect(carts[1]!.snapshot.customerId).toBe(7);
   });
 
-  it('clears the live cart when it empties', async () => {
-    const productId = await sugar();
-    await saveActiveCart({ lines: [line(productId)], customerId: null, discountPaisa: 0 });
-    await saveActiveCart({ lines: [], customerId: null, discountPaisa: 0 });
-    expect(await loadActiveCart()).toBeNull();
+  it('deletes one cart without touching the others', async () => {
+    const first = await createCart();
+    const second = await createCart();
+    await deleteCart(first);
+    expect((await listActiveCarts()).map((cart) => cart.id)).toEqual([second]);
   });
 
-  it('clears the live cart when the sale completes', async () => {
+  it('clears exactly the sold cart when the sale completes, leaving the rest', async () => {
     const productId = await sugar();
-    await saveActiveCart({ lines: [line(productId)], customerId: null, discountPaisa: 0 });
+    const sold = await createCart();
+    const other = await createCart();
+    await saveCart(sold, { lines: [line(productId)], customerId: null, discountPaisa: 0 });
+    await saveCart(other, { lines: [line(productId)], customerId: null, discountPaisa: 0 });
+
     await completeSale({
       lines: [line(productId)],
       customerId: null,
       discountPaisa: 0,
       paidPaisa: 17000,
       paymentMethod: 'cash',
+      cartId: sold,
     });
-    expect(await loadActiveCart()).toBeNull();
+
+    expect((await listActiveCarts()).map((cart) => cart.id)).toEqual([other]);
   });
 
-  it('holds a cart without it showing up as the live one', async () => {
-    const productId = await sugar();
-    await saveActiveCart({ lines: [line(productId)], customerId: null, discountPaisa: 0 });
-    await holdCart({ lines: [line(productId)], customerId: null, discountPaisa: 0 }, 'Blue shirt');
-
-    expect(await loadActiveCart()).toBeNull();
-    const held = await listHeldCarts();
-    expect(held).toHaveLength(1);
-    expect(held[0]).toMatchObject({ label: 'Blue shirt', lineCount: 1, totalPaisa: 17000 });
-
-    const resumed = await resumeHeldCart(held[0]!.id);
-    expect(resumed?.lines).toHaveLength(1);
-    expect(await listHeldCarts()).toHaveLength(0);
-  });
-
-  it('ignores an unreadable saved cart rather than failing to open', async () => {
+  it('skips an unreadable cart rather than failing to open', async () => {
+    const good = await createCart();
     await db.exec(
       `INSERT INTO held_carts (label, payload, kind, created_at, updated_at)
        VALUES (NULL, 'not json', 'active', '2026-01-01T00:00:00.000Z', '2026-01-01T00:00:00.000Z')`,
     );
-    expect(await loadActiveCart()).toBeNull();
+    expect((await listActiveCarts()).map((cart) => cart.id)).toEqual([good]);
   });
 });
 

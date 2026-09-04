@@ -16,6 +16,13 @@ at every release regardless.
   phone or tablet browser can. Rationale in `docs/auto-backup.md`.
 - **Platform** section now points at `docs/design-spec.md` as canonical for the
   visual system, and records the sidebar / rail / tab-bar navigation shape.
+- **Multiple carts** on the Sell screen: cart tabs, each an independent
+  `kind='active'` row in `held_carts`, replacing the single live cart and the
+  Hold / held-carts concept. `completeSale` clears only the cart it was rung
+  from. No schema change.
+- **Hide profit** added to Settings as a PIN-gated Privacy toggle
+  (`settings['hide_profit']`); Reports masks the estimated-profit figure when it
+  is on. CSV export is unchanged.
 
 ## v1.0.0 — 2026-09-04
 

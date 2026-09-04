@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Lock } from 'lucide-react';
 
 import { useApp, useLanguage, useT, useToast } from '@/appStore';
 import { Screen } from '@/components/app/Screen';
@@ -40,6 +41,9 @@ export function ReportsScreen() {
   const toast = useToast();
   const navigate = useNavigate();
   const settings = useApp((state) => state.settings);
+  // Profit is masked in the UI when the shopkeeper turns it off in Settings —
+  // it stays in the CSV export, which is their own data, not a screen.
+  const hideProfit = settings['hide_profit'] === '1';
 
   const [rangeKey, setRangeKey] = useState<RangeKey>('today');
   const [customFrom, setCustomFrom] = useState(karachiDay());
@@ -181,8 +185,9 @@ export function ReportsScreen() {
             <Kpi
               label={t('reports.profit')}
               value={formatPKR(totals?.profitPaisa ?? 0)}
-              sub={t('reports.profitHint')}
+              sub={hideProfit ? t('reports.profitHiddenHint') : t('reports.profitHint')}
               tone={totals && totals.profitPaisa < 0 ? 'bad' : 'ok'}
+              locked={hideProfit}
               testId="report-profit"
             />
             <Kpi
@@ -241,7 +246,7 @@ export function ReportsScreen() {
             )}
           </div>
 
-          <div className="grid gap-3 xl:grid-cols-[1.55fr_1fr] xl:items-start">
+          <div className="flex flex-col gap-3 xl:grid xl:grid-cols-[1.55fr_1fr] xl:items-start">
             <div className="flex flex-col gap-3">
               <Card title={t('reports.figures')}>
                 <Figure
@@ -336,26 +341,31 @@ function Kpi({
   value,
   sub,
   tone,
+  locked = false,
   testId,
 }: {
   label: string;
   value: string;
   sub: string;
   tone?: 'ok' | 'bad';
+  /** Masked as •••• behind a lock — used for profit when it is turned off. */
+  locked?: boolean;
   testId?: string;
 }) {
   return (
     <div className="rounded-[14px] border border-line bg-panel p-[15px] shadow-card">
-      <div className="label-caps mb-2">{label}</div>
+      <div className="label-caps mb-2 flex items-center gap-1.5">
+        {label}
+        {locked && <Lock className="size-3 text-fg2" />}
+      </div>
       <div
         className={cn(
           'money text-[23px] leading-none font-semibold tracking-[-0.03em] whitespace-nowrap',
-          tone === 'ok' && 'text-ok',
-          tone === 'bad' && 'text-bad',
+          locked ? 'text-fg2' : tone === 'ok' ? 'text-ok' : tone === 'bad' ? 'text-bad' : '',
         )}
         data-testid={testId}
       >
-        {value}
+        {locked ? '••••' : value}
       </div>
       <div className="mt-1 text-xs text-fg2">{sub}</div>
     </div>

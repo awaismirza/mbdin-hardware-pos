@@ -165,3 +165,54 @@ test('the range CSV export downloads real rows', async ({ page }) => {
   expect(text).toContain('145');
   expect(text).not.toContain('14500');
 });
+
+test('hiding profit masks it on Reports, and the PIN guards the toggle', async ({ page }) => {
+  test.setTimeout(120_000);
+  await useEnglish(page);
+
+  // A product with a real margin, and one cash sale, so profit is a number.
+  await page.goto('/stock/product/new');
+  await page.getByLabel('Name (English)').fill('Ghee');
+  await page.getByLabel('Price', { exact: true }).fill('900');
+  await page.getByLabel('Cost', { exact: true }).fill('700');
+  await page.getByLabel('Opening stock').fill('20');
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  await page.goto('/sell');
+  await addProductToCart(page, 'Ghee');
+  await page.getByTestId('charge').click();
+  await page.getByTestId('method-cash').click();
+  await page.getByTestId('confirm-sale').click();
+  await expect(page.locator('.slip')).toBeVisible();
+
+  await page.goto('/reports');
+  await expect(page.getByTestId('report-profit')).toHaveText('Rs 200');
+
+  // Set a PIN, then turn on "hide profit" — flipping it asks for the PIN.
+  await page.goto('/settings');
+  await page.getByTestId('set-pin').click();
+  const pinDialog = page.getByRole('dialog', { name: 'Set a 4-digit PIN' });
+  await pinDialog.getByLabel('Set a 4-digit PIN').fill('2468');
+  await pinDialog.getByTestId('confirm-pin').click();
+
+  await page.getByTestId('hide-profit').click();
+  const toggleGate = page.getByRole('dialog', { name: 'Enter your PIN' });
+  for (const digit of ['2', '4', '6', '8']) {
+    await toggleGate.getByRole('button', { name: digit, exact: true }).click();
+  }
+  await toggleGate.getByRole('button', { name: 'Confirm' }).click();
+  await expect(toggleGate).toBeHidden();
+
+  // Reports now masks the figure; every other number is untouched. (Reports
+  // itself is behind the same PIN, so unlock that gate on the way in.)
+  await page.goto('/reports');
+  await expect(page.getByRole('heading', { name: 'Enter your PIN' })).toBeVisible();
+  for (const digit of ['2', '4', '6', '8']) {
+    await page.getByRole('button', { name: digit, exact: true }).first().click();
+  }
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await expect(page.getByTestId('report-profit')).toHaveText('••••');
+  await expect(page.getByTestId('report-gross')).toHaveText('Rs 900');
+  await expect(page.getByTestId('report-cash')).toHaveText('Rs 900');
+});

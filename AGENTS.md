@@ -41,7 +41,11 @@ non-negotiable rules, and what must be updated alongside a change. Where it and
 - `src/components/ui/` — vendored shadcn primitives. `src/components/Dialog.tsx`
   wraps shadcn Dialog/Sheet behind the app's imperative `onClose` API.
 - `src/features/sell/` — catalogue, add-to-cart **sheet**, cart pane/drawer,
-  checkout, receipt, held carts, scanner, quick-sell.
+  checkout, receipt, **cart tabs** (`CartTabs`), scanner, quick-sell.
+  `cartStore` holds N carts (`{ carts, currentId }`), each a `kind='active'`
+  row in `held_carts`; selectors must not return a fresh `[]`/object (it loops).
+  `completeSale` takes a `cartId` and clears only that row in-transaction. There
+  is no "hold" concept.
 - `src/features/stock/` — products, photos, movements, CSV import, summaries.
 - `src/features/people/` — customer directory (route stays `/people`, copy says
   "Customers"), photos, ledger, payments.

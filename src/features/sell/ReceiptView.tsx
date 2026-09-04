@@ -76,7 +76,7 @@ export function ReceiptView() {
     >
       {/* Spec: success header, then the white slip, then a stack of full-width
           actions with New sale primary. Two columns where there is room. */}
-      <div className="grid items-start gap-3.5 p-4 xl:grid-cols-[1.55fr_1fr]">
+      <div className="flex flex-col gap-3.5 p-4 xl:grid xl:grid-cols-[1.55fr_1fr] xl:items-start">
         <div className="rounded-2xl border border-line bg-panel p-5 shadow-card">
           <div className="mb-4 flex items-center gap-2.5">
             <span className="grid size-[34px] place-items-center rounded-full bg-ok-soft text-ok">

@@ -10,12 +10,14 @@ something is half-built, say so and say what is left.
 
 ---
 
-**Last release:** `1.0.0` — 2026-09-04 (tag `v1.0.0`). The cobalt redesign is on
-`main` and deployed but **not yet tagged** — cut `1.1.0` when asked.
-**Branch:** all work merged to `main`; nothing outstanding on a feature branch.
+**Last release:** `1.0.0` — 2026-09-04 (tag `v1.0.0`). The cobalt redesign, the
+install experience, multi-cart and the profit toggle are on `main` and deployed
+but **not yet tagged** — cut `1.1.0` when asked.
+**Branch:** `feature/multicart-profit-lock` — pushed, **awaiting the user's
+manual testing**. Do not tag until they say so.
 **Deploy:** GitHub Pages, automatic on merge to `main` →
 <https://awaismirza.github.io/mbdin-hardware-pos/>
-**Health:** `npm test` 120 · `npm run test:e2e` 34 · typecheck · lint · build —
+**Health:** `npm test` 119 · `npm run test:e2e` 37 · typecheck · lint · build —
 all green
 
 ---
@@ -49,7 +51,16 @@ all green
 
 ## In progress
 
-_Nothing._
+- **`feature/multicart-profit-lock`** — code-complete and green, **not merged**,
+  waiting on manual testing. Three things:
+  - **Multiple carts** — the Sell screen has cart tabs now; each is an
+    independent `kind='active'` row in `held_carts`. `cartStore` holds
+    `{ carts, currentId }`; `completeSale` takes a `cartId` and clears just that
+    row. The old Hold / held-carts model and its repo functions are gone.
+  - **Hide profit** — `settings['hide_profit']`; a `Settings → Privacy` switch
+    gated by the PIN; Reports masks the profit KPI as `••••`. CSV untouched.
+  - **Settings sideways-scroll fix** — the four `xl:grid-cols-[1.55fr_1fr]`
+    wrappers are flex on mobile now; regression test at 320px in `m7-polish`.
 
 ## Blocked
 

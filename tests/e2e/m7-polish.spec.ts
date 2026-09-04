@@ -32,6 +32,24 @@ async function horizontalOverflow(page: Page): Promise<number> {
   });
 }
 
+/**
+ * The worst sideways overflow of any inner scroll region. The document itself
+ * can read 0 while a screen's `overflow-y-auto` region scrolls sideways inside
+ * it — which is exactly how the Settings two-column grid regressed once.
+ */
+async function regionHorizontalOverflow(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    let worst = 0;
+    const regions = Array.from(
+      document.querySelectorAll('.overflow-y-auto, [data-testid="catalogue-scroll"]'),
+    );
+    for (const el of regions) {
+      worst = Math.max(worst, el.scrollWidth - el.clientWidth);
+    }
+    return worst;
+  });
+}
+
 test.describe('layout', () => {
   test('no screen scrolls the page sideways, in either language', async ({ page }) => {
     test.setTimeout(120_000);
@@ -69,6 +87,23 @@ test.describe('layout', () => {
       await page.goto(route);
       await page.waitForTimeout(400);
       expect(await horizontalOverflow(page), `${route} in English`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('no inner scroll region scrolls sideways on a narrow phone', async ({ page }) => {
+    test.setTimeout(120_000);
+    await page.setViewportSize({ width: 320, height: 720 });
+    await completeSetup(page);
+    await seed(page);
+
+    // Settings is the one that regressed: a CSS grid with no mobile column
+    // sized itself to its widest child instead of the viewport.
+    for (const route of ['/settings', '/reports', '/people', '/stock', '/sell']) {
+      await page.goto(route);
+      await page.waitForTimeout(400);
+      expect(await regionHorizontalOverflow(page), `scroll region on ${route}`).toBeLessThanOrEqual(
+        1,
+      );
     }
   });
 
